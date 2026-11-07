@@ -95,6 +95,8 @@ canvas#gauge{width:100%;aspect-ratio:1/0.8;height:auto;display:block}
   box-shadow:0 18px 40px -12px var(--orb2), inset 0 -10px 22px rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.6);transition:transform .15s ease}
 .orb::after{content:"";position:absolute;inset:-12%;border-radius:50%;border:2px solid var(--orb1);opacity:.5;animation:ring 2.4s ease-out infinite}
 @keyframes ring{from{transform:scale(.86);opacity:.6}to{transform:scale(1.15);opacity:0}}
+.orb.again{font-size:clamp(12px,3.3vw,17px);letter-spacing:.08em}
+.stopbtn{font:700 14px var(--display);letter-spacing:.04em;color:var(--bad);border:1.5px solid var(--bad);background:var(--glass-strong);border-radius:999px;padding:10px 26px;cursor:pointer}
 .orb:hover{transform:translate(-50%,-50%) scale(1.04)} .orb:active{transform:translate(-50%,-50%) scale(.97)}
 .phase{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-height:18px;text-align:center}
 .netpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font:13px var(--mono);color:var(--muted)}
@@ -297,6 +299,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
         <canvas id="gauge" width="860" height="688" aria-label="Speed gauge"></canvas>
         <button class="orb" id="go" aria-label="Start speed test">GO</button>
       </div>
+      <button class="stopbtn" id="stopTest" hidden>Stop test</button>
       <button class="ghost shieldbtn" id="rtOpen" aria-controls="rtPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Router security check</button>
       <div class="phase" id="phase">Tap GO to start</div>
       <div class="netpick" id="netPick"><span>Network:</span><div class="seg" id="netSeg" role="radiogroup" aria-label="Network type"><button data-n="Wi-Fi" role="radio">Wi-Fi</button><button data-n="Mobile data" role="radio">Mobile</button><button data-n="Ethernet" role="radio">Ethernet</button></div><span class="auto" id="netAuto"></span></div>
@@ -622,9 +625,14 @@ async function refreshLibre(){
     const r=await fetch("https://librespeed.org/backend-servers/servers.php",{signal:ctl.signal,cache:"no-store"}); const j=await r.json();
     if(Array.isArray(j)&&j.length){ libre=j.filter(s=>s&&s.server&&s.dlURL).map(librespeed); renderServers() } }catch{}
 }
+/* A test can always end: every request has a time limit, and Stop aborts whatever is in flight. */
+let testCtl=null;
+const STOPPED="__stopped__";
+const linkStop=ctl=>{ if(testCtl) testCtl.signal.addEventListener("abort",()=>ctl.abort(),{once:true}) };
+const stopped=()=>!!(testCtl&&testCtl.signal.aborted);
 /* Time a single no-cors request: needs no permission headers from the server. */
 async function pingURL(url,timeout=4000){
-  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),timeout);
+  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),timeout); if(running) linkStop(ctl);
   try{ const t=performance.now(); const r=await fetch(url,{mode:"no-cors",cache:"no-store",signal:ctl.signal}); await r.arrayBuffer(); return performance.now()-t }
   finally{ clearTimeout(tm) }
 }
@@ -775,7 +783,8 @@ async function httpPing(s,n){
 }
 async function httpDown(s,streams,secs,tick){
   const S=sampler(tick,"down"), ctl=new AbortController(), until=performance.now()+secs*1000;
-  const worker=async()=>{ while(performance.now()<until){
+  linkStop(ctl); const hardEnd=setTimeout(()=>ctl.abort(),secs*1000+500);
+  const worker=async()=>{ while(performance.now()<until&&!ctl.signal.aborted){
     let r; try{ r=await fetch(s.down(25e6),{cache:"no-store",signal:ctl.signal}) }
     catch(e){ if(e.name==="AbortError") return; throw new Error(`${s.name} doesn't allow browser downloads. Pick another server`) }
     if(!r.ok) throw new Error(`${s.name} returned HTTP ${r.status}. Pick another server`);
@@ -783,23 +792,32 @@ async function httpDown(s,streams,secs,tick){
     try{ while(true){ const {done,value}=await rd.read(); if(done) break; S.add(value.byteLength); if(performance.now()>=until){ctl.abort();return} } }
     catch(e){ if(e.name==="AbortError") return; throw e }
   }};
-  await Promise.all(Array.from({length:streams},worker));
-  return S.stop();
+  try{ await Promise.all(Array.from({length:streams},worker)) } finally{ clearTimeout(hardEnd) }
+  if(stopped()){ S.stop(); throw new Error(STOPPED) }
+  const v=S.stop(); if(!fin(v)||v<=0) throw new Error(`${s.name} sent no data. Pick another server`);
+  return v;
 }
 // Upload: plain POSTs that need no permission from the server, timed to completion; size adapts to ~0.6 s each.
 async function httpUp(s,streams,secs,tick){
   const S=sampler(tick,"up"), until=performance.now()+secs*1000, pool=new Blob([randomBytes(32e6)]);
+  let fails=0;
   const worker=async()=>{ let size=256e3;
-    while(performance.now()<until){
+    while(performance.now()<until&&!stopped()){
       const off=Math.floor(Math.random()*(pool.size-size)), body=pool.slice(off,off+size,"text/plain"), t=performance.now();
-      try{ await fetch(s.up(),{method:"POST",body,mode:"no-cors",cache:"no-store"}) }
-      catch{ throw new Error(`Upload to ${s.name} failed. Pick another server`) }
+      // each request must finish by the phase end (+3 s grace) or it is abandoned and not counted
+      const rc=new AbortController(); linkStop(rc);
+      const tmo=setTimeout(()=>rc.abort(),Math.max(3000,until-performance.now()+3000));
+      try{ await fetch(s.up(),{method:"POST",body,mode:"no-cors",cache:"no-store",signal:rc.signal}); fails=0 }
+      catch(e){ clearTimeout(tmo); if(stopped()||e.name==="AbortError") return;
+        if(++fails>=3) throw new Error(`Upload to ${s.name} failed. Pick another server`); await sleep(300); continue }
+      clearTimeout(tmo);
       S.add(size);
       const rate=size/Math.max((performance.now()-t)/1000,0.001), left=Math.max(0.2,(until-performance.now())/1000);
       size=Math.floor(Math.max(128e3,Math.min(32e6,rate*0.6,rate*left)));
     }};
   await Promise.all(Array.from({length:streams},worker));
-  return S.stop();
+  if(stopped()){ S.stop(); throw new Error(STOPPED) }
+  const v=S.stop(); return fin(v)&&v>0?v:NaN; // NaN = no upload request completed in time
 }
 
 /* =================== M-Lab ndt7 (WebSocket) =================== */
@@ -816,6 +834,7 @@ function mlabDown(url,tick){
   return new Promise((res,rej)=>{
     const S=sampler(tick,"down"), rtt=[], rttvar=[], minrtt=[]; let opened=false, settled=false;
     const ws=new WebSocket(url,NDT_PROTO); ws.binaryType="arraybuffer";
+    if(testCtl) testCtl.signal.addEventListener("abort",()=>{ if(!settled){ settled=true; clearTimeout(kill); ws.close(); rej(new Error(STOPPED)) } },{once:true});
     const kill=setTimeout(()=>ws.close(),15000);
     ws.onopen=()=>{opened=true};
     ws.onmessage=e=>{
@@ -833,6 +852,8 @@ function mlabUp(url,tick){
   return new Promise((res,rej)=>{
     const S=sampler(tick,"up"), pool=randomBytes(1<<24); let size=8192, sent=0, acked=0, t0=0, opened=false, settled=false;
     const ws=new WebSocket(url,NDT_PROTO); ws.binaryType="arraybuffer";
+    const openT=setTimeout(()=>{ if(!opened&&!settled){ settled=true; ws.close(); rej(new Error("M-Lab upload connection timed out. Pick another server")) } },8000);
+    if(testCtl) testCtl.signal.addEventListener("abort",()=>{ if(!settled){ settled=true; clearTimeout(openT); ws.close(); rej(new Error(STOPPED)) } },{once:true});
     const finish=()=>{ if(settled) return; settled=true; S.add(Math.max(0,(sent-ws.bufferedAmount)-acked)); res(S.stop()) };
     const pump=()=>{
       if(settled||ws.readyState!==1) return;
@@ -840,8 +861,8 @@ function mlabUp(url,tick){
       while(ws.bufferedAmount<7*size){ ws.send(pool.subarray(0,size)); sent+=size; if(size<(1<<24)&&size<=sent/16) size*=2 }
       const a=sent-ws.bufferedAmount; S.add(a-acked); acked=a; setTimeout(pump,10);
     };
-    ws.onopen=()=>{opened=true; t0=performance.now(); pump()};
-    ws.onclose=()=>{ if(!opened&&!settled){ settled=true; return rej(new Error("M-Lab upload connection was refused. Pick another server")) } finish() };
+    ws.onopen=()=>{opened=true; clearTimeout(openT); t0=performance.now(); pump()};
+    ws.onclose=()=>{ if(!opened&&!settled){ settled=true; clearTimeout(openT); return rej(new Error("M-Lab upload connection was refused. Pick another server")) } finish() };
     ws.onerror=()=>{ if(!opened&&!settled){ settled=true; rej(new Error("M-Lab upload connection failed. Pick another server")) } };
   });
 }
@@ -855,7 +876,9 @@ async function probeBaseline(){
 
 /* =================== Run =================== */
 let last=null;
-function setRunning(on){ running=on; document.body.classList.toggle("testing",on); $("go").hidden=on; if(on) $("instrument").style.transform="" }
+function setRunning(on){ running=on; document.body.classList.toggle("testing",on); $("go").hidden=on; $("stopTest").hidden=!on; $("rtOpen").hidden=on;
+  if(on) $("instrument").style.transform="";
+  else { $("go").textContent="RETEST"; $("go").classList.add("again"); $("go").setAttribute("aria-label","Run the speed test again") } }
 async function run(){
   if(running) return;
   if(selected==="mlab"&&!$("mlabOk").checked){ $("srvPanel").hidden=false; $("mlabConsent").hidden=false;
@@ -863,6 +886,7 @@ async function run(){
   if(!netPick){ $("netPick").classList.add("need"); $("err").textContent="Choose Wi-Fi, Mobile or Ethernet above, then tap GO. You only do this once.";
     setTimeout(()=>$("netPick").classList.remove("need"),3200); return }
   if(pm.on){ pmStop(); $("phase").textContent="Ping monitor paused for the speed test" }
+  testCtl=new AbortController();
   setRunning(true); $("err").textContent=""; $("copyRes").disabled=true; $("copied").textContent="";
   ["dl","ul","ping","jit","lping"].forEach(i=>$(i).textContent="—"); series={down:[],up:[]}; drawSpark(); setStep(null);
   const streams=Math.min(16,Math.max(1,+$("streams").value||6)), secs=Math.min(30,Math.max(4,+$("dur").value||10));
@@ -903,17 +927,20 @@ async function run(){
       let probingUp=true;
       (async()=>{ while(probingUp){ try{const v=await pingURL(probe(),3000); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
       try{ res.up=await httpUp(s,streams,secs,upTick) } finally{ probingUp=false }
+      if(!fin(res.up)) $("err").textContent=`Upload couldn't be measured: ${s.name} didn't confirm any upload in time. Download and ping were saved. Try another server under Change server.`;
     }
     setGauge(0); setStep("done"); telEnd(true,res);
     showResult(res);
-    $("phase").textContent="Complete · tap GO to test again";
+    $("phase").textContent="Complete · tap RETEST to test again";
     const h=store.get("history",[]); h.unshift(res); store.set("history",h.slice(0,300));
     last=res; $("copyRes").disabled=false;
     if(res.net==="Mobile data") $("cmpType").value="mobile"; else if(res.net==="Wi-Fi"||res.net==="Ethernet") $("cmpType").value="fixed";
     renderHist(); fillWhich(); $("cmpWhich").value="0"; renderAll();
   }catch(e){
-    setGauge(0); setStep(null); telEnd(false); $("phase").textContent="Stopped · tap GO to retry"; $("err").textContent=e.message||String(e);
-  }finally{ setRunning(false); phaseColor=["--orb1","--orb2"]; syncServerName() }
+    setGauge(0); setStep(null); telEnd(false);
+    if(e&&e.message===STOPPED||stopped()){ $("phase").textContent="Stopped · tap RETEST to run again"; $("err").textContent="" }
+    else { $("phase").textContent="Stopped · tap RETEST to try again"; $("err").textContent=e.message||String(e) }
+  }finally{ testCtl=null; setRunning(false); phaseColor=["--orb1","--orb2"]; syncServerName() }
 }
 function showResult(r){
   $("dl").textContent=fmt(r.down); $("ul").textContent=fmt(r.up);
@@ -1767,7 +1794,8 @@ $("rows").onchange=e=>{ const el=e.target; if(!el.classList.contains("netfix")) 
 $("cmpType").onchange=renderAll; $("cmpWhich").onchange=renderAll;
 $("cmpCountry").onchange=()=>{store.set("cmpCountry",$("cmpCountry").value);renderAll()};
 $("histFilter").onchange=renderHist;
-$("go").onclick=run; $("exp").onclick=exportCSV; $("copyRes").onclick=copyResult;
+$("go").onclick=run;
+$("stopTest").onclick=()=>{ if(testCtl&&!testCtl.signal.aborted){ testCtl.abort(); $("phase").textContent="Stopping…" } }; $("exp").onclick=exportCSV; $("copyRes").onclick=copyResult;
 $("clr").onclick=()=>{$("clrConfirm").hidden=false};
 $("clrNo").onclick=()=>{$("clrConfirm").hidden=true};
 $("clrYes").onclick=()=>{store.set("history",[]);last=null;$("clrConfirm").hidden=true;$("csv").hidden=true;fillWhich();renderHist();renderAll()};
