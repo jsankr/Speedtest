@@ -294,6 +294,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <div class="row">
         <select id="histFilter" aria-label="Filter by network"><option value="">All networks</option><option>Wi-Fi</option><option>Mobile data</option><option>Ethernet</option><option>Unknown</option></select>
         <button class="ghost" id="exp">Export CSV</button><button class="ghost" id="clr">Clear</button></div></div>
+    <p class="note" id="expMsg" role="status" aria-live="polite"></p>
     <div class="lbl"><span class="dot" style="color:var(--down);background:var(--down)"></span>Download <span class="dot" style="color:var(--up);background:var(--up);margin-left:10px"></span>Upload · last 20 tests</div>
     <canvas id="trend" width="1000" height="340" aria-label="Speed trend across tests"></canvas>
     <div class="tablewrap"><table>
@@ -789,12 +790,35 @@ function drawTrend(h){
     h.forEach((r,i)=>{const v=conv(r[k]); if(!fin(v)) return; x.fillStyle=cc; x.beginPath(); x.arc(px(i),py(v),i===h.length-1?8:5,0,Math.PI*2); x.fill()});
   }
 }
-function exportCSV(){
-  const n=v=>fin(v)?v.toFixed(2):"";
-  const lines=["timestamp,network,download_Bps,upload_Bps,download_Mbps,upload_Mbps,ping_ms,jitter_ms,loaded_ping_ms,server",
-    ...store.get("history",[]).map(r=>[new Date(r.t).toISOString(),r.net,n(r.down),n(r.up),n(bpsToMbps(r.down)),n(bpsToMbps(r.up)),n(r.ping),n(r.jitter),n(r.lping),`"${String(r.server||"").replace(/"/g,'""')}"`].join(","))];
-  const ta=$("csv"); ta.value=lines.join("\n"); ta.hidden=false; ta.select();
-  navigator.clipboard&&navigator.clipboard.writeText(ta.value).catch(()=>{});
+function csvText(){
+  const n=v=>fin(v)?v.toFixed(2):"", q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=store.get("history",[]);
+  return ["timestamp,network,download_Bps,upload_Bps,download_Mbps,upload_Mbps,ping_ms,jitter_ms,loaded_ping_ms,server",
+    ...rows.map(r=>[new Date(r.t).toISOString(),q(r.net),n(r.down),n(r.up),n(bpsToMbps(r.down)),n(bpsToMbps(r.up)),n(r.ping),n(r.jitter),n(r.lping),q(r.server)].join(","))].join("\r\n");
+}
+// Export: share sheet on phones (Save to Files, Mail, WhatsApp...), file download elsewhere, copy as last resort.
+async function exportCSV(){
+  const msg=$("expMsg"), rows=store.get("history",[]);
+  if(!rows.length){ msg.textContent="No tests to export yet."; return }
+  const text=csvText(), name=`cleanspeed-history-${new Date().toISOString().slice(0,10)}.csv`;
+  const blob=new Blob(["\ufeff"+text],{type:"text/csv"}); // BOM so Excel reads UTF-8 correctly
+  const touch=matchMedia("(pointer:coarse)").matches;
+  try{
+    const file=new File([blob],name,{type:"text/csv"});
+    if(touch&&navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"CleanSpeed history"});
+      msg.textContent=`Shared ${rows.length} test${rows.length>1?"s":""}.`; return;
+    }
+  }catch(e){ if(e&&e.name==="AbortError"){ msg.textContent="Export cancelled."; return } }
+  try{
+    const url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=name; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    msg.textContent=`Saved ${name} (${rows.length} test${rows.length>1?"s":""}). Check your Downloads.`; return;
+  }catch{}
+  const ta=$("csv"); ta.value=text; ta.hidden=false; ta.focus(); ta.select();
+  try{ await navigator.clipboard.writeText(text); msg.textContent="Your browser blocked the file, so the CSV was copied. Paste it into Notes or a spreadsheet." }
+  catch{ msg.textContent="Your browser blocked the file. Select the text below and copy it." }
 }
 function copyResult(){
   if(!last) return;
