@@ -228,6 +228,11 @@ canvas.tchart{width:100%;height:150px;display:block}
 .meter i{display:block;height:100%;border-radius:999px;transition:width .2s}
 .pwout{font:600 18px var(--mono);letter-spacing:.02em;overflow-wrap:anywhere;padding:12px 14px;border-radius:14px;background:var(--glass-strong);border:1px solid var(--glass-line);user-select:all}
 textarea.tin{min-height:110px;font:13px var(--mono)}
+.macrows{display:grid;gap:8px}
+.macrow{display:grid;gap:3px;padding:12px 14px;border-radius:14px;background:var(--soft);border:1px solid var(--glass-line);min-width:0}
+.macrow .m{font:500 13px var(--mono);color:var(--muted);overflow-wrap:anywhere}
+.macrow .v{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.macrow .n{font-size:13px;color:var(--muted)}
 .cant{font-size:12px;color:var(--muted);margin:0}
 /* ---------- Server picker ---------- */
 .srvhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -415,8 +420,8 @@ footer{font-size:12px;color:var(--muted);text-align:center}
         <p class="note">Paste MAC addresses from your router's connected-devices list to see who made each device. Unknown makers are worth blocking.</p>
         <textarea class="tin" id="macIn" placeholder="One per line, e.g. 3C:84:6A:12:34:56" spellcheck="false"></textarea>
         <div class="tctl"><button class="go2" id="macRun">Identify devices</button><span class="note" id="macMsg" role="status"></span></div>
-        <div class="tablewrap"><table><thead><tr><th>MAC address</th><th>Maker</th><th>Note</th></tr></thead><tbody id="macRows"></tbody></table></div>
-        <p class="cant">Only the first half of each address (the maker code) is sent to macvendors.com. Private (randomised) addresses are recognised on this device and not sent.</p>
+        <div id="macRows" class="macrows"></div>
+        <p class="cant" id="macSrc">Looked up on this device from the IEEE maker registry built into CleanSpeed; addresses are never sent anywhere. Registry data: oui-data by silverwind (BSD-2-Clause), from IEEE.</p>
       </div>
 
       <div class="tool" data-tool="subnet" hidden>
@@ -1724,25 +1729,53 @@ function pwCheck(){
 }
 
 /* ---- Device maker lookup ---- */
+// The IEEE registry ships beside the page as oui.txt (loaded only when this tool runs) so lookups work offline
+// and MAC addresses never leave the device. Longest block wins: 36-bit (MA-S), 28-bit (MA-M), then 24-bit (MA-L).
+let ouiMap=null, ouiTried=false;
+async function loadOUI(){
+  if(ouiMap||ouiTried) return ouiMap; ouiTried=true;
+  try{ const r=await fetch("oui.txt",{cache:"force-cache"}); if(!r.ok) return null;
+    const m=new Map(); for(const line of (await r.text()).split("\n")){ const i=line.indexOf("\t"); if(i>0&&line[0]!=="#") m.set(line.slice(0,i),line.slice(i+1)) }
+    ouiMap=m.size?m:null }catch{}
+  return ouiMap;
+}
+// What a chip or platform maker usually means in a home network (shown as a hint, not a verdict).
+const MAKER_HINT=[
+ [/espressif/i,"ESP32/ESP8266 Wi-Fi chip: smart plugs, bulbs, switches, sensors. Likely a smart-home device; keep it on the guest network."],
+ [/tuya/i,"Tuya smart-home platform: plugs, bulbs, cameras, sensors. Likely a smart-home device; keep it on the guest network."],
+ [/fn-link/i,"Wi-Fi module maker: often inside smart TVs, set-top boxes and IoT gadgets."],
+ [/azurewave|bilian|lb-link|realtek|mediatek|murata|silicon lab|universal global scientific|hon hai|foxconn|liteon|quectel/i,"Component maker: the chip is inside another brand's product (TV, camera, laptop, appliance)."],
+ [/apple/i,"Apple device (iPhone, iPad, Mac, Apple TV, HomePod)."],[/samsung/i,"Samsung device (phone, TV, appliance)."],
+ [/google/i,"Google device (Pixel, Nest, Chromecast)."],[/amazon/i,"Amazon device (Echo, Fire TV, Ring, Kindle)."],
+ [/xiaomi|redmi/i,"Xiaomi device (phone, TV box, smart-home)."],[/hikvision|dahua|ezviz|imou/i,"Security camera or recorder. Keep firmware updated and off the main network."]
+];
+const hintFor=v=>(MAKER_HINT.find(([re])=>re.test(v))||[0,""])[1];
 async function macRun(){
   const lines=$("macIn").value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean); if(!lines.length){ $("macMsg").textContent="Paste at least one MAC address."; return }
-  $("macRun").disabled=true; const rows=[], cache={};
-  for(const raw of lines.slice(0,40)){
+  $("macRun").disabled=true; $("macMsg").textContent="Loading the maker registry…";
+  const db=await loadOUI(); const rows=[], online={};
+  for(const raw of lines.slice(0,60)){
     const hex=raw.replace(/[^0-9a-f]/gi,"").toUpperCase();
-    if(hex.length!==12){ rows.push([raw,"—","Not a valid MAC address"]); continue }
+    if(hex.length!==12){ rows.push([raw,"Not a valid MAC address","A MAC has 12 hex digits, e.g. 3C:84:6A:12:34:56."]); continue }
     const mac=hex.match(/../g).join(":"), b0=parseInt(hex.slice(0,2),16);
-    if(b0&1){ rows.push([mac,"—","Group (multicast) address, not a device"]); continue }
-    if(b0&2){ rows.push([mac,"Private address","Randomised by the device (iPhone, Android, Windows privacy feature). Usually your own phone or laptop; check its Wi-Fi settings."]); continue }
-    const oui=hex.slice(0,6);
-    if(!(oui in cache)){ $("macMsg").textContent=`Looking up ${mac.slice(0,8)}…`;
-      try{ const c=new AbortController(), tm=setTimeout(()=>c.abort(),6000);
-        const r=await fetch(`https://api.macvendors.com/${oui.match(/../g).join(":")}`,{signal:c.signal}); clearTimeout(tm);
-        cache[oui]=r.ok?await r.text():r.status===404?"Unknown maker":null }catch{ cache[oui]=null }
-      await sleep(1100) } // service allows about one lookup per second
-    rows.push([mac,cache[oui]??"Lookup unavailable",cache[oui]==="Unknown maker"?"Not in the public maker list. Worth investigating if you don't recognise it.":cache[oui]==null?"Try again later or search the first 6 characters at macvendors.com":""]);
+    if(b0&1){ rows.push([mac,"Group (multicast) address","Not a single device."]); continue }
+    if(b0&2){ rows.push([mac,"Private (randomised) address","Set by the device itself for privacy (iPhone, Android, Windows). Usually a phone or laptop; check its Wi-Fi settings to match."]); continue }
+    let v=db?(db.get(hex.slice(0,9))||db.get(hex.slice(0,7))||db.get(hex.slice(0,6))):undefined;
+    if(!db){ // registry file not available (e.g. page saved on its own): browser-friendly online fallback
+      const oui=hex.slice(0,6);
+      if(!(oui in online)){ $("macMsg").textContent=`Looking up ${mac.slice(0,8)} online…`;
+        const j=await fetchJSON(`https://api.maclookup.app/v2/macs/${oui}`,6000); online[oui]=j&&j.success?(j.found?j.company:""):null; await sleep(600) }
+      v=online[oui]===null?null:online[oui]||"";
+    }
+    if(v===null) rows.push([mac,"Lookup unavailable","The maker registry couldn't be loaded. Check your connection and try again."]);
+    else if(!v) rows.push([mac,"Not in the IEEE registry","Unregistered maker code. If you don't recognise this device, block it in your router and change the Wi-Fi password."]);
+    else rows.push([mac,v,hintFor(v)]);
   }
-  $("macRows").innerHTML=rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td style="white-space:normal">${esc(r[2])}</td></tr>`).join("");
-  $("macMsg").textContent=lines.length>40?"Showing the first 40.":"Done."; $("macRun").disabled=false;
+  $("macRows").innerHTML=rows.map(([m,v,n])=>`<div class="macrow"><div class="m">${esc(m)}</div><div class="v">${esc(v)}</div>${n?`<div class="n">${esc(n)}</div>`:""}</div>`).join("");
+  $("macMsg").textContent=(lines.length>60?"Showing the first 60. ":"")+(db?"Done (on this device).":"Done.");
+  $("macSrc").textContent=db?"Looked up on this device from the IEEE maker registry; addresses are never sent anywhere. Registry data: oui-data by silverwind (BSD-2-Clause), from IEEE."
+    :"The built-in registry wasn't available, so only the 6-character maker code was sent to maclookup.app.";
+  $("macRun").disabled=false;
 }
 
 /* ---- Subnet calculator ---- */
