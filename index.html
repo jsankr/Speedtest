@@ -1247,7 +1247,7 @@ function modelRegex(model){
   const t=model.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
   return t.length?new RegExp("(?<![a-z0-9])"+t.join("[\\s_\\-]*")+"(?![a-z0-9])","i"):null;
 }
-// Makers often run parallel firmware lines (e.g. ASUS 3.0.0.4.x and 9.0.0.4.x). A version range only
+// Makers often run parallel firmware lines (e.g. 2.x and 9.x for one model). A version range only
 // applies to the line it was written for, so ranges from another line are skipped, never compared.
 function sameLine(user,bound){
   if(/^\d{6,8}$/.test(bound)) return true;            // build-date bounds have no line number
@@ -1282,7 +1282,8 @@ function assessCve(c,re,fw,hw,brand){
   }
   const desc=((c.descriptions||[]).find(d=>d.lang==="en")||{}).value||"";
   if(!prods.length&&(hwExcluded||!re.test(desc))) return null; // other hardware version, or not this model (e.g. C60 vs C6)
-  const st=statuses.includes("aff")?"aff":statuses.includes("not")&&!statuses.includes("unk")?"not":"unk"; // "skip" = other firmware line
+  // "skip" = range written for another firmware line. If every range is on another line, the record doesn't cover your line.
+  const real=statuses.filter(x=>x!=="skip"), st=real.includes("aff")?"aff":(real.includes("not")&&!real.includes("unk"))||(statuses.length&&!real.length)?"not":"unk";
   const mt=c.metrics||{}, pick=(mt.cvssMetricV40||mt.cvssMetricV31||mt.cvssMetricV30||[])[0], v2=(mt.cvssMetricV2||[])[0];
   const score=pick?pick.cvssData.baseScore:v2?v2.cvssData.baseScore:null;
   const sevRaw=(pick?pick.cvssData.baseSeverity:v2?v2.baseSeverity:"")||"";
@@ -1520,8 +1521,13 @@ function drawMap(ts){
   if(!mapBase||mapBaseTheme!==key){ VIEW=fitView(W,H,pts); mapBase=drawMapBase(W,H,u); mapBaseTheme=key }
   x.clearRect(0,0,W,H); x.drawImage(mapBase,0,0);
   const cYou=css("--you"), cSrv=css("--accent"), anim=$("lvAnim").checked, t=ts/1000;
-  const label=(txt,X,Yp,dy)=>{ x.font=`600 ${12*u}px ${css("--body")}`; const w=x.measureText(txt).width, right=X+14*u+w>W-6*u;
-    const lx=right?X-14*u-w:X+14*u, ly=Math.min(H-8*u,Math.max(14*u,Yp+dy));
+  // Labels: try a few positions so "You" and the server never sit on top of each other when the two are close (e.g. London–Frankfurt).
+  const placed=[], hit=(a,b)=>a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3];
+  const label=(txt,X,Yp,dy)=>{ x.font=`600 ${12*u}px ${css("--body")}`; const w=x.measureText(txt).width;
+    let lx,ly; for(const [side,d] of [[0,dy],[0,-dy+4*u],[1,dy],[1,-dy+4*u],[0,dy+(dy<0?-18:18)*u],[1,dy+(dy<0?-18:18)*u]]){
+      const right=(X+14*u+w>W-6*u)!==!!side; lx=Math.max(6*u,Math.min(W-w-6*u,right?X-14*u-w:X+14*u)); ly=Math.min(H-8*u,Math.max(14*u,Yp+d));
+      if(!placed.some(r=>hit(r,[lx-4*u,ly-10*u,w+8*u,16*u]))) break }
+    placed.push([lx-4*u,ly-10*u,w+8*u,16*u]);
     x.fillStyle=css("--glass-strong"); x.globalAlpha=.85; x.fillRect(lx-4*u,ly-10*u,w+8*u,16*u); x.globalAlpha=1;
     x.fillStyle=css("--ink"); x.textAlign="left"; x.textBaseline="middle"; x.fillText(txt,lx,ly-2*u) };
   if(!y){ x.fillStyle=css("--muted"); x.font=`500 ${12*u}px ${css("--mono")}`; x.textAlign="center"; x.fillText("Tap \"Use precise location\" to place yourself",W/2,H/2); return }
