@@ -411,9 +411,7 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | All sample data made fictional (router, CVEs, speeds, history, MACs); records covering only another firmware line now count as "fixed in your version" instead of "can't confirm" |
-| `97bd8b6` | Device-lookup screenshot uses randomly generated MAC addresses |
-| `314ce04` | Detailed README with screenshots; self-host test server; map labels no longer overlap when you and the server are close |
+| `e427d4e` | Detailed README with fictional sample screenshots (router, CVEs, speeds, history, MACs, IPs); self-host test server; map labels no longer overlap when you and the server are close; records covering only another firmware line count as "fixed in your version" |
 | `f7f4ce8` | Device lookup: on-device IEEE maker registry (no third-party lookup) |
 | `c4a10ea` | Router check: manufacturer-only fixes, firmware-line-aware matching |
 | `6cb9e46` | Fix tests stuck at upload; add Stop and RETEST |
