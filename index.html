@@ -1123,20 +1123,25 @@ const RT_Q=[
  {id:"ssid",q:"Wi-Fi name doesn't reveal the router brand or your name",sev:"low",fix:"Rename the Wi-Fi network. Default names tell attackers which model to target."}
 ];
 const RT_W={critical:[25,12],high:[15,7],medium:[8,4],low:[4,2]};
-// Menu names differ by brand; the common ones are listed so people can find the setting on any router.
+// Steps are generic; a menu path is added only for the person's own brand (see BRAND_PATH), never another maker's.
+const BRAND_PATH={
+ "tp-link":{pw:"Advanced → System → Administration",remote:"Advanced → System → Administration → Remote Management",wps:"Advanced → Wireless → WPS",fw:"Advanced → System → Firmware Update",upnp:"Advanced → NAT Forwarding → UPnP",pf:"Advanced → NAT Forwarding → Virtual Servers",guest:"Advanced → Guest Network",enc:"Advanced → Wireless → Wireless Settings"},
+ "asus":{pw:"Administration → System",remote:"Administration → System → Enable Web Access from WAN",wps:"Wireless → WPS",fw:"Administration → Firmware Upgrade",upnp:"WAN → Internet Connection → Enable UPnP",pf:"WAN → Virtual Server / Port Forwarding",guest:"Guest Network",enc:"Wireless → General"},
+ "netgear":{pw:"Advanced → Administration → Set Password",remote:"Advanced → Advanced Setup → Remote Management",wps:"Advanced → Advanced Setup → Wireless Settings",fw:"Advanced → Administration → Firmware Update",upnp:"Advanced → Advanced Setup → UPnP",pf:"Advanced → Advanced Setup → Port Forwarding / Port Triggering",guest:"Guest Network",enc:"Wireless"}
+};
 const LOGIN="Open the router's admin page (address and default login are on the label, often 192.168.0.1 or 192.168.1.1) and sign in.";
 const RT_STEPS={
- pw:{steps:[LOGIN,"Go to System Tools, Administration or Management, then Password (ASUS: Administration → System; Netgear: Advanced → Administration → Set Password).","Set a new password of at least 16 characters that you don't use anywhere else, and save it in a password manager.","If the admin username can be changed, change it from \"admin\" too.","Save, sign out, and sign back in with the new password."],
+ pw:{steps:[LOGIN,"Go to the administration or system section of the admin page, then the password setting.","Set a new password of at least 16 characters that you don't use anywhere else, and save it in a password manager.","If the admin username can be changed, change it from \"admin\" too.","Save, sign out, and sign back in with the new password."],
      verify:"The default password on the label no longer works."},
- remote:{steps:[LOGIN,"Find Remote Management, Web Access from WAN, Cloud Management or Remote Access (TP-Link: Advanced → System → Administration; ASUS: Administration → System; Netgear: Advanced → Remote Management).","Turn it off. If Telnet or SSH access from WAN is listed, turn those off as well.","Save and reboot the router."],
+ remote:{steps:[LOGIN,"Find the remote management setting (it may be called Remote Access, Web Access from WAN or Cloud Management).","Turn it off. If Telnet or SSH access from WAN is listed, turn those off as well.","Save and reboot the router."],
      verify:"From mobile data (Wi-Fi off), your router's admin page should not load using your public IP address."},
  wps:{steps:[LOGIN,"Open Wireless (or Wi-Fi) settings, then WPS.","Turn WPS off for every band (2.4 GHz and 5 GHz). On some models it's called \"Wi-Fi Protected Setup\" or \"PIN\".","Save. Re-check after any reset or firmware update, as some routers switch it back on."],
      verify:"The WPS light on the router stays off, and the WPS menu shows Disabled."},
- fw:{steps:["Note your current firmware version (Status or System page).","Open Firmware Upgrade (System Tools, Administration or Advanced → System) and tap Check for updates, or download the file for your exact model and hardware version from the maker's official support site.","Install only stable releases from the maker. Skip anything marked beta, preview or test, and never use third-party firmware.","Do the update over a cable if you can, and don't switch the router off until it restarts by itself.","Turn on automatic updates if the router offers it.","Run this security check again with the new version."],
+ fw:{steps:["Note your current firmware version (Status or System page).","Open the router's Firmware Upgrade page and tap Check for updates, or download the file for your exact model and hardware version from the maker's official support site.","Install only stable releases from the maker. Skip anything marked beta, preview or test, and never use third-party firmware.","Do the update over a cable if you can, and don't switch the router off until it restarts by itself.","Turn on automatic updates if the router offers it.","Run this security check again with the new version."],
      verify:"The Status page shows the new firmware version."},
  eol:{steps:["Find your exact model and hardware version on the maker's support site and look at the date of the newest firmware.","If the model is listed as end-of-life, or no update has appeared for about two years, plan to replace it with a model that supports WPA3 and automatic updates.","Until then: keep remote management, UPnP and WPS off, and use a strong admin password."],
      verify:"The maker's site shows a firmware release within the last year, or you have a replacement planned."},
- upnp:{steps:[LOGIN,"Find UPnP under Advanced → NAT Forwarding, WAN, Network or Game settings.","Turn UPnP off and save.","If a games console then reports strict NAT, add a single port-forwarding rule for that console instead of turning UPnP back on."],
+ upnp:{steps:[LOGIN,"Find the UPnP setting (usually in the advanced, NAT or WAN section).","Turn UPnP off and save.","If a games console then reports strict NAT, add a single port-forwarding rule for that console instead of turning UPnP back on."],
      verify:"The UPnP page shows Disabled and its list of open ports is empty."},
  pf:{steps:[LOGIN,"Open Port Forwarding, Virtual Servers, NAT Forwarding or Port Triggering.","Delete every rule you don't recognise or no longer need.","Check the DMZ setting: turn it off unless one device truly needs it.","Save."],
      verify:"Only rules you can name a purpose for remain."},
@@ -1198,24 +1203,21 @@ function isOfficial(url,brand){
 function fmtVer(v){ const m=String(v).match(/^(?:20)?(\d{2})(\d{2})(\d{2})$/);
   if(!m) return v; const d=new Date(Date.UTC(2000+ +m[1],+m[2]-1,+m[3]));
   return isNaN(d)?v:`a build dated ${d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"})} (Build 20${m[1]}${m[2]}${m[3]})` }
+function oemSupport(brand){ const v=VENDORS[vendorKey(brand)]; if(!v) return null;
+  return {url:v.dl||`https://www.${v.dom[0]}/`,label:`${brand} official ${v.dl?"support & downloads":"website"}`} }
 function cveFix(c,r){
-  const steps=[], links=[], maker=r.brand||"the maker";
-  const where=`from ${maker}'s official download page or the router's Firmware Upgrade page`;
-  const fix=c.fixedIn||c.fixedAfter;
-  if(fix&&BETA.test(fix)) steps.push(`The only fix listed is a beta release (${fix}). Don't install beta firmware. Use the router settings below to reduce exposure, check ${maker}'s site for the stable release, or replace the router if none arrives.`);
-  else if(c.fixedIn) steps.push(`Install the latest stable firmware ${where}. It must be ${fmtVer(c.fixedIn)} or later${r.fw?` (you have ${r.fw})`:""}. Skip any release marked beta or preview.`);
-  else if(c.fixedAfter) steps.push(`Install the latest stable firmware ${where}. It must be newer than ${fmtVer(c.fixedAfter)}${r.fw?` (you have ${r.fw})`:""}. Skip any release marked beta or preview.`);
-  else if(c.st==="aff") steps.push(`No stable fix is listed for this flaw. Check ${maker}'s official advisory below; if there is no stable firmware fix, replace the router.`);
-  else steps.push(`The record doesn't say which versions are fixed. Install the latest stable firmware ${where}, and check ${maker}'s official advisory${r.fw?` to confirm whether ${r.fw} is affected`:""}.`);
-  if(c.kev&&c.kevAction) steps.push(`Being exploited in real attacks. CISA's required action: ${c.kevAction}`);
-  const seen=new Set(); let what=null;
-  for(const g of CWE_FIX) if(c.cwes.some(w=>g.ids.includes(w))){ what=what||g.what; for(const st of g.steps) if(!seen.has(st)){seen.add(st);steps.push(st)} }
-  if(c.av==="ADJACENT_NETWORK"||c.av==="ADJACENT") steps.push("The attacker must be on your Wi-Fi or local network. Router admin page → Wireless Security: WPA3 or WPA2 (AES) with a strong password; turn WPS off; put visitors and smart devices on the Guest Network with isolation on.");
-  else if(c.av==="NETWORK"&&!seen.size) steps.push("Attackable over the network. Router admin page: turn off Remote Management and UPnP until the stable update is installed.");
-  else if(c.av==="PHYSICAL"||c.av==="LOCAL") steps.push("Needs physical or local access to the router, so the risk is lower. The stable firmware update above is the fix.");
-  for(const ref of c.refs) links.push(ref);
-  const v=vendorLink(r.brand); if(v) links.push({url:v,label:`${r.brand} official downloads`});
-  return {what,steps:steps.slice(0,6),links:links.slice(0,4)};
+  const maker=r.brand||"your router's maker", dev=[r.model,r.hw].filter(Boolean).join(" "), steps=[], links=[];
+  if(c.refs.length) steps.push(`${maker} has published an official advisory for this issue (linked below). Install the stable firmware release that advisory names for your exact model and hardware version${r.hw?` (${r.hw})`:""}.`);
+  else steps.push(`No official ${maker} advisory is linked to this issue. Open ${maker}'s official support page for ${dev||"your model"}: if a newer stable firmware is listed, install it; if none is listed, ask ${maker} support whether a fix is planned.`);
+  steps.push(`Get firmware only from ${maker}'s official website or the router's own Firmware Upgrade page, and skip anything marked beta, preview or test.`);
+  if(c.st==="aff") steps.push(`If ${maker} no longer releases updates for this model, replacing the router is the only complete fix.`);
+  for(const ref of c.refs) links.push({url:ref.url,label:"Official advisory · "+ref.label.split(" · ").pop()});
+  const o=oemSupport(r.brand); if(o) links.push(o);
+  const notes=[];
+  if(c.kev) notes.push(`Listed by CISA (U.S. government) as exploited in real attacks: install ${maker}'s fix first.`);
+  if((c.fixedIn||c.fixedAfter)&&BETA.test(c.fixedIn||c.fixedAfter)) notes.push(`The only fixed build on record is a pre-release. Don't install it; wait for ${maker}'s stable release.`);
+  const what=(CWE_FIX.find(g=>c.cwes.some(w=>g.ids.includes(w)))||{}).what||null; // flaw type shown as information only
+  return {what,steps,links:links.slice(0,4),notes};
 }
 const ENC={"":{w:7,fix:"Check the Wi-Fi security type in the router's Wireless Security settings; choose WPA3, or WPA2 (AES) if older devices need it."},
   wpa3:{w:0},mixed:{w:0},wpa2:{w:3,fix:"Switch Wi-Fi security to WPA3 (or WPA2/WPA3 mixed) if all your devices support it."},
@@ -1240,10 +1242,19 @@ function modelRegex(model){
   const t=model.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
   return t.length?new RegExp("(?<![a-z0-9])"+t.join("[\\s_\\-]*")+"(?![a-z0-9])","i"):null;
 }
+// Makers often run parallel firmware lines (e.g. ASUS 3.0.0.4.x and 9.0.0.4.x). A version range only
+// applies to the line it was written for, so ranges from another line are skipped, never compared.
+function sameLine(user,bound){
+  if(/^\d{6,8}$/.test(bound)) return true;            // build-date bounds have no line number
+  const u=numTokens(String(user).replace(/build.*$/i,"")), b=numTokens(bound);
+  return u.length>0&&b.length>0&&u[0]===b[0];
+}
 function matchStatus(m,fw){
   if(!fw) return "unk";
   const ver=(m.criteria.split(":")[5]||"*").replace(/\\/g,"");
   const lo=m.versionStartIncluding||m.versionStartExcluding, hi=m.versionEndIncluding||m.versionEndExcluding;
+  const ref=hi||lo||(ver!=="*"&&ver!=="-"?ver:null);
+  if(ref&&!sameLine(fw,ref)) return "skip";
   if(lo||hi){
     let ok=true;
     if(lo){ const c=cmpV(fw,lo); if(c==null) return "unk"; ok=ok&&(m.versionStartIncluding?c>=0:c>0) }
@@ -1266,7 +1277,7 @@ function assessCve(c,re,fw,hw,brand){
   }
   const desc=((c.descriptions||[]).find(d=>d.lang==="en")||{}).value||"";
   if(!prods.length&&(hwExcluded||!re.test(desc))) return null; // other hardware version, or not this model (e.g. C60 vs C6)
-  const st=statuses.includes("aff")?"aff":statuses.length&&statuses.every(x=>x==="not")?"not":"unk";
+  const st=statuses.includes("aff")?"aff":statuses.includes("not")&&!statuses.includes("unk")?"not":"unk"; // "skip" = other firmware line
   const mt=c.metrics||{}, pick=(mt.cvssMetricV40||mt.cvssMetricV31||mt.cvssMetricV30||[])[0], v2=(mt.cvssMetricV2||[])[0];
   const score=pick?pick.cvssData.baseScore:v2?v2.cvssData.baseScore:null;
   const sevRaw=(pick?pick.cvssData.baseSeverity:v2?v2.baseSeverity:"")||"";
@@ -1299,15 +1310,15 @@ async function runRouterCheck(){
   }catch(e){ lookupFailed=true }
   // --- score ---
   let score=100; const fixes=[];
-  const enc=ENC[$("rtEnc").value]; if(enc.w){ score-=enc.w; fixes.push({w:enc.w,sev:enc.w>=30?"critical":enc.w>=15?"high":"low",text:enc.fix,how:ENC_STEPS}) }
+  const enc=ENC[$("rtEnc").value]; if(enc.w){ score-=enc.w; fixes.push({w:enc.w,sev:enc.w>=30?"critical":enc.w>=15?"high":"low",text:enc.fix,how:{...ENC_STEPS,id:"enc"}}) }
   for(const q of RT_Q){ const a=rtAnswers[q.id]||"unsure"; if(a==="yes") continue; const w=RT_W[q.sev][a==="no"?0:1]; score-=w;
-    fixes.push({w,sev:q.sev,text:(a==="unsure"?"Check: ":"")+q.fix,how:RT_STEPS[q.id]}) }
+    fixes.push({w,sev:q.sev,text:(a==="unsure"?"Check: ":"")+q.fix,how:{...RT_STEPS[q.id],id:q.id}}) }
   const aff=cves.filter(c=>c.st==="aff"), unk=cves.filter(c=>c.st==="unk"), fixed=cves.filter(c=>c.st==="not");
   const cw=c=>c.kev?25:{critical:15,high:10,medium:4,low:1}[c.sev]||4;
   const dA=Math.min(50,aff.reduce((a,c)=>a+cw(c),0)), dU=Math.min(20,unk.reduce((a,c)=>a+cw(c)/2,0));
   score-=dA+dU;
-  if(aff.length){ const fixTo=aff.map(c=>c.fixedIn).filter(Boolean).sort((a,b)=>cmpV(b,a)??0)[0];
-    fixes.push({w:100+dA,sev:aff.some(c=>c.kev)?"kev":"critical",how:RT_STEPS.fw,text:`Install the latest stable firmware: ${aff.length} known vulnerabilit${aff.length>1?"ies affect":"y affects"} version ${fw}${fixTo?`. Stable fixes start at ${fmtVer(fixTo)} or later`:""}. If no stable update exists, replace the router.`}) }
+  if(aff.length){ const mk=brand||"the maker";
+    fixes.push({w:100+dA,sev:aff.some(c=>c.kev)?"kev":"critical",how:{...RT_STEPS.fw,id:"fw"},text:`Install the latest stable firmware from ${mk}'s official support page: NVD records ${aff.length} known vulnerabilit${aff.length>1?"ies":"y"} for version ${fw}. Each issue below links ${mk}'s official advisory where one exists. If ${mk} offers no stable update, replace the router.`}) }
   if(!fw&&cves.length) fixes.push({w:60,sev:"high",text:"Add your firmware version so each vulnerability can be checked against it."});
   if(unk.length&&fw) fixes.push({w:20+dU,sev:"medium",how:{steps:[
       "Open your router maker's security advisories page (search for the brand name plus \"security advisory\").",
@@ -1334,27 +1345,32 @@ function renderRouterReport(){
     :`<b>${esc(name)}</b>${r.fw?` on firmware <b>${esc(r.fw)}</b>`:""}: ${r.aff.length?`<strong style="color:var(--bad)">${r.aff.length} known vulnerabilit${r.aff.length>1?"ies affect":"y affects"} your version</strong>${kev?`, ${kev} actively exploited`:""}.`:r.fw?"no known vulnerability matches your exact firmware version.":"add the firmware version to see which issues apply to you."}`;
   $("rtCounts").innerHTML=r.lookupFailed?"":`<span class="sev aff">${r.aff.length} affect you</span><span class="sev unk">${r.unk.length} can't confirm</span><span class="sev not">${r.fixed.length} fixed in your version</span>`;
   const top=[...r.fixes].sort(fixOrder);
-  const howHtml=h=>h?`<details class="fixbox"><summary>How to fix</summary><ol class="fixsteps">${h.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${h.verify?`<p class="verify"><b>Check it worked:</b> ${esc(h.verify)}</p>`:""}</details>`:"";
+  const bp=BRAND_PATH[vendorKey(r.brand)]||{};
+  const withPath=h=>{ const path=h&&h.id&&bp[h.id]; if(!path) return h.steps;
+    return [...h.steps.slice(0,2),`On ${r.brand} routers this is usually ${path}. Menu names vary by model and firmware; your model's user guide on ${r.brand}'s website has the exact location.`,...h.steps.slice(2)] };
+  const howHtml=h=>h?`<details class="fixbox"><summary>How to fix</summary><ol class="fixsteps">${withPath(h).map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${h.verify?`<p class="verify"><b>Check it worked:</b> ${esc(h.verify)}</p>`:""}</details>`:"";
   $("rtFixes").innerHTML=top.length?top.map(f=>`<li><span class="sev ${f.sev}">${f.sev==="kev"?"exploited":f.sev}</span><div><div>${esc(f.text)}</div>${howHtml(f.how)}</div></li>`).join(""):`<li><span class="sev not">ok</span><span>Nothing urgent. Keep firmware updated and re-run this check after each update.</span></li>`;
   const nvdLink=`https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&search_type=all&query=${encodeURIComponent(r.model)}`;
   const rank=c=>(c.kev?1000:0)+({aff:300,unk:200,not:0}[c.st])+(c.score||0);
   const list=[...r.aff,...r.unk].sort((a,b)=>rank(b)-rank(a));
-  const card=c=>`<div class="cve"><div class="top"><a href="https://nvd.nist.gov/vuln/detail/${esc(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a>${c.kev?'<span class="sev kev">Actively exploited</span>':""}<span class="sev ${c.sev}">${c.sev}${c.score!=null?" "+c.score:""}</span><span class="sev ${c.st}">${{aff:"Affects your version",unk:"Can't confirm",not:"Fixed in your version"}[c.st]}</span><span class="note">${esc(c.published)}</span></div><p>${esc(c.desc.length>260?c.desc.slice(0,257)+"…":c.desc)}</p>${c.st==="not"?"":(()=>{const f=cveFix(c,r);
-    return `<details class="fixbox"${c.st==="aff"?" open":""}><summary>How to fix${f.what?` · ${esc(f.what)}`:""}</summary><ol class="fixsteps">${f.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${f.links.length?`<div class="fixlinks">${f.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>`:""}</details>`})()}</div>`;
+  const card=c=>`<div class="cve"><div class="top"><a href="https://nvd.nist.gov/vuln/detail/${esc(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a>${c.kev?'<span class="sev kev">Actively exploited</span>':""}<span class="sev ${c.sev}">${c.sev}${c.score!=null?" "+c.score:""}</span><span class="sev ${c.st}" title="Based on NVD's version analysis, not ${esc(r.brand||"the manufacturer")}'s">${{aff:"Affects your version",unk:"Can't confirm",not:"Fixed in your version"}[c.st]} · NVD</span><span class="note">${esc(c.published)}</span></div><p>${esc(c.desc.length>260?c.desc.slice(0,257)+"…":c.desc)}</p>${c.st==="not"?"":(()=>{const f=cveFix(c,r);
+    return `<details class="fixbox"${c.st==="aff"?" open":""}><summary>How to fix${f.what?` · ${esc(f.what)}`:""}</summary><ol class="fixsteps">${f.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${f.notes.map(n=>`<p class="verify">${esc(n)}</p>`).join("")}${f.links.length?`<div class="fixlinks">${f.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>`:""}</details>`})()}</div>`;
   $("rtCves").innerHTML=r.lookupFailed?`<p class="note">Open <a href="${nvdLink}" target="_blank" rel="noopener">NVD search for “${esc(r.model)}”</a> to review known issues manually.</p>`
     :(list.length?list.slice(0,40).map(card).join(""):`<p class="note">No open issues found for “${esc(r.model)}”.</p>`)
      +(r.fixed.length?`<details class="how"><summary>${r.fixed.length} older issue${r.fixed.length>1?"s":""} already fixed in your firmware</summary><div class="cves" style="margin-top:8px">${r.fixed.slice(0,40).map(card).join("")}</div></details>`:"")
      +(list.length>40?`<p class="note">Showing 40 of ${list.length}. <a href="${nvdLink}" target="_blank" rel="noopener">See all on NVD</a>.</p>`:"");
-  $("rtSrc").textContent=`Source: NIST National Vulnerability Database (${r.total} records matched the search; filtered to your exact model). "Actively exploited" comes from CISA's Known Exploited Vulnerabilities list, as published in NVD. Checked ${r.when.toLocaleString()}. A clean result means no publicly recorded flaw matches; it is not a guarantee.`;
+  $("rtSrc").textContent=`Sources: vulnerabilities and the "affects / fixed in your version" status come from the NIST National Vulnerability Database (${r.total} records matched; filtered to your exact model), not from ${r.brand||"the manufacturer"}. Fixes point only to ${r.brand||"the manufacturer"}'s official advisories and support pages, so confirm fixed versions there. "Exploited" comes from CISA's Known Exploited Vulnerabilities list. Checked ${r.when.toLocaleString()}. A clean result means no publicly recorded flaw matches; it is not a guarantee.`;
 }
 function copyRouterReport(){
   const r=rtLast; if(!r) return;
   const t=[`CleanSpeed router check · ${r.when.toLocaleString()}`,`${[r.brand,r.model,r.hw].filter(Boolean).join(" ")} · firmware ${r.fw||"not given"}`,`Score ${r.score}/100 (grade ${r.grade})`,
     r.lookupFailed?"Vulnerability lookup unavailable.":`${r.aff.length} affect this version · ${r.unk.length} can't confirm · ${r.fixed.length} fixed`,"","Fix first:",
-    ...[...r.fixes].sort(fixOrder).flatMap((f,i)=>[`${i+1}. ${f.text}`,...(f.how?f.how.steps.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`):[])]),
+    ...[...r.fixes].sort(fixOrder).flatMap((f,i)=>{ const bp=BRAND_PATH[vendorKey(r.brand)]||{}, path=f.how&&f.how.id&&bp[f.how.id];
+      const st=f.how?(path?[...f.how.steps.slice(0,2),`On ${r.brand} routers: ${path} (varies by model)`,...f.how.steps.slice(2)]:f.how.steps):[];
+      return [`${i+1}. ${f.text}`,...st.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`)] }),
     "","Vulnerabilities and how to fix them:",
     ...[...r.aff,...r.unk].flatMap(c=>{const f=cveFix(c,r); return [`${c.id}${c.kev?" [ACTIVELY EXPLOITED]":""} · ${c.sev} ${c.score??""} · ${c.st==="aff"?"affects your version":"can't confirm"}`,
-      ...f.steps.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`),...f.links.map(l=>`   ${l.url}`)]})].join("\n");
+      ...f.steps.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`),...f.notes.map(n=>`   Note: ${n}`),...f.links.map(l=>`   ${l.url}`)]})].join("\n");
   const fb=()=>{$("csv").value=t;$("csv").hidden=false;$("csv").select();$("rtMsg").textContent="Copy blocked; the report is in the text box under History."};
   navigator.clipboard?navigator.clipboard.writeText(t).then(()=>$("rtMsg").textContent="Report copied.",fb):fb();
 }
