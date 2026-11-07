@@ -97,6 +97,11 @@ canvas#gauge{width:100%;aspect-ratio:1/0.8;height:auto;display:block}
 @keyframes ring{from{transform:scale(.86);opacity:.6}to{transform:scale(1.15);opacity:0}}
 .orb:hover{transform:translate(-50%,-50%) scale(1.04)} .orb:active{transform:translate(-50%,-50%) scale(.97)}
 .phase{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-height:18px;text-align:center}
+.netpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font:13px var(--mono);color:var(--muted)}
+.netpick .seg button{padding:7px 12px}
+.netpick.need .seg{box-shadow:0 0 0 2px var(--bad);animation:pulse 1s ease-in-out 3}
+.netpick .auto{font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+td select{font:12px var(--mono);padding:4px 6px;border-radius:8px}
 .serverchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font:13px var(--mono);color:var(--muted);text-align:center}
 .serverchip b{color:var(--ink);font-weight:500}
 .err{color:var(--bad);font:13px var(--mono);text-align:center;max-width:46ch}
@@ -146,6 +151,82 @@ button:focus-visible,select:focus-visible,input:focus-visible,label.srv:focus-wi
 .ends{display:flex;justify-content:space-between;font:11px var(--mono);color:var(--muted)}
 .bignum{font:700 34px/1 var(--num);font-variant-numeric:tabular-nums}
 
+/* ---------- Router security ---------- */
+.shieldbtn{display:inline-flex;align-items:center;gap:8px;font:600 13px var(--body);padding:9px 16px}
+.shieldbtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rtgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}
+@media (max-width:820px){.rtgrid{grid-template-columns:minmax(0,1fr)}}
+.fields{display:grid;gap:10px;align-content:start}
+.fields input{width:100%}
+details.how{font-size:13px;color:var(--muted)} details.how summary{cursor:pointer;color:var(--ink)}
+details.how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
+.qs{display:grid;gap:8px}
+.q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--glass-line)}
+.q span{font-size:13px;line-height:1.35}
+.q .seg button{padding:6px 10px;font-size:12px}
+@media (max-width:480px){.q{grid-template-columns:minmax(0,1fr)}}
+.go2{font:700 14px var(--display);letter-spacing:.04em;color:#fff;border:0;border-radius:999px;padding:12px 22px;cursor:pointer;
+  background:linear-gradient(135deg,var(--orb1),var(--orb2));box-shadow:0 12px 28px -12px var(--orb2), inset 0 1px 0 rgba(255,255,255,.5)}
+.go2:disabled{opacity:.55;cursor:default}
+.rtsum{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:560px){.rtsum{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}}
+.rtsum svg{width:132px;height:132px}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.sev{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.sev.critical{color:var(--bad)} .sev.high{color:var(--you)} .sev.medium{color:var(--ok)} .sev.low{color:var(--muted)} .sev.kev{color:#fff;background:var(--bad);border-color:var(--bad)}
+.sev.aff{color:var(--bad)} .sev.not{color:var(--good)} .sev.unk{color:var(--ok)}
+.fixes{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.fixes li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--glass-line);font-size:14px}
+.cves{display:grid;gap:8px}
+.cve{padding:12px;border-radius:14px;background:var(--soft);border:1px solid var(--glass-line);display:grid;gap:6px}
+.cve .top{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cve a{color:var(--accent);font:600 13px var(--mono);text-decoration:none}
+.cve p{margin:0;font-size:13px;color:var(--muted)}
+
+.fixsteps{margin:6px 0 0;padding-left:20px;display:grid;gap:5px;font-size:13px;color:var(--ink)}
+.fixsteps li{display:list-item;padding:0;background:none;border:0;grid-template-columns:none}
+details.fixbox{font-size:13px} details.fixbox summary{cursor:pointer;font-weight:600;color:var(--accent);list-style-position:inside}
+.fixlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.fixlinks a{font:12px var(--mono);color:var(--accent);text-decoration:none;border:1px solid var(--glass-line);border-radius:999px;padding:3px 9px;background:var(--glass-strong)}
+.verify{font-size:12px;color:var(--muted);margin:6px 0 0}
+/* ---------- Live network map ---------- */
+.mapwrap{position:relative;border-radius:18px;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,var(--glass-strong),var(--soft));border:1px solid var(--glass-line)}
+canvas#map{width:100%;aspect-ratio:16/9;height:auto;display:block}
+@media (max-width:640px){canvas#map{aspect-ratio:4/3}}
+.lvbadge{position:absolute;left:12px;bottom:12px;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--glass-line);display:flex;gap:6px;align-items:center}
+.lvbadge i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.lvbadge.live i{background:var(--bad);box-shadow:0 0 8px var(--bad);animation:pulse 1s infinite}
+canvas#tele{width:100%;height:180px;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:12px var(--mono);color:var(--muted)}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+/* ---------- Toolkit ---------- */
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile2{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;text-align:left;padding:12px;border-radius:16px;cursor:pointer;
+  background:var(--soft);border:1px solid var(--glass-line);color:var(--ink);font:inherit;transition:border-color .15s,background .15s,transform .15s}
+.tile2:hover{border-color:var(--accent);background:var(--glass-strong);transform:translateY(-1px)}
+.tile2[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tile2 svg{width:36px;height:36px;padding:8px;border-radius:11px;background:linear-gradient(135deg,var(--orb1),var(--orb2));stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tile2>span{min-width:0} .tile2 b{display:block;font-size:13px;line-height:1.2} .tile2 small{display:block;font:11px var(--mono);color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.tool{display:grid;gap:14px}
+.tool h3{font:700 14px var(--display);margin:0}
+.tctl{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.stat{padding:10px 12px;border-radius:14px;background:var(--soft);border:1px solid var(--glass-line);min-width:0}
+.stat b{display:block;font:700 26px/1.1 var(--num);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat small{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+canvas.tchart{width:100%;height:150px;display:block}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;font-size:14px}
+.kv dt{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding-top:3px} .kv dd{margin:0;overflow-wrap:anywhere;font-weight:500}
+.callout{padding:12px 14px;border-radius:14px;border:1px solid var(--glass-line);background:var(--soft);font-size:13px}
+.callout.warn{border-color:var(--ok)} .callout.bad{border-color:var(--bad)} .callout.good{border-color:var(--good)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{font:12px var(--mono);border-radius:999px;border:1px solid var(--glass-line);background:var(--soft);color:var(--ink);padding:5px 10px;cursor:pointer}
+.meter{height:10px;border-radius:999px;background:var(--track);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:999px;transition:width .2s}
+.pwout{font:600 18px var(--mono);letter-spacing:.02em;overflow-wrap:anywhere;padding:12px 14px;border-radius:14px;background:var(--glass-strong);border:1px solid var(--glass-line);user-select:all}
+textarea.tin{min-height:110px;font:13px var(--mono)}
+.cant{font-size:12px;color:var(--muted);margin:0}
 /* ---------- Server picker ---------- */
 .srvhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .srvlist{display:grid;max-height:440px;overflow:auto;border-radius:16px;border:1px solid var(--glass-line);background:var(--soft)}
@@ -216,7 +297,9 @@ footer{font-size:12px;color:var(--muted);text-align:center}
         <canvas id="gauge" width="860" height="688" aria-label="Speed gauge"></canvas>
         <button class="orb" id="go" aria-label="Start speed test">GO</button>
       </div>
+      <button class="ghost shieldbtn" id="rtOpen" aria-controls="rtPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Router security check</button>
       <div class="phase" id="phase">Tap GO to start</div>
+      <div class="netpick" id="netPick"><span>Network:</span><div class="seg" id="netSeg" role="radiogroup" aria-label="Network type"><button data-n="Wi-Fi" role="radio">Wi-Fi</button><button data-n="Mobile data" role="radio">Mobile</button><button data-n="Ethernet" role="radio">Ethernet</button></div><span class="auto" id="netAuto"></span></div>
       <div class="serverchip"><span>Server: <b id="srvName">Automatic</b></span><button class="ghost" id="srvOpen">Change server</button></div>
       <div class="err" id="err" role="alert"></div>
     </div>
@@ -238,6 +321,113 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     </div>
   </section>
 
+  <!-- ============ Live network map ============ -->
+  <section class="glass pad" id="livePanel" aria-label="Live network map">
+    <div class="srvhead"><h2>Live network map</h2>
+      <div class="row"><button class="ghost" id="lvLocate">Use precise location</button>
+        <label class="consent" style="align-items:center"><input type="checkbox" id="lvAnim" checked> Animate</label></div></div>
+    <div class="mapwrap"><canvas id="map" width="1200" height="560" aria-label="Map of the route between you and the test server"></canvas>
+      <div class="lvbadge" id="lvBadge"><i></i><span id="lvState">Idle</span></div></div>
+    <div class="stats">
+      <div class="stat"><small>Download now</small><b id="lvDown">—</b></div>
+      <div class="stat"><small>Upload now</small><b id="lvUp">—</b></div>
+      <div class="stat"><small>Ping now</small><b id="lvPing">—</b></div>
+      <div class="stat"><small>Data down</small><b id="lvBD">0 MB</b></div>
+      <div class="stat"><small>Data up</small><b id="lvBU">0 MB</b></div>
+      <div class="stat"><small>Elapsed</small><b id="lvTime">0 s</b></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--down)"></i>Download</span><span><i style="background:var(--up)"></i>Upload</span><span><i style="background:var(--ok)"></i>Ping (right axis)</span></div>
+    <canvas id="tele" width="1000" height="360" aria-label="Live timeline of download, upload and ping"></canvas>
+    <p class="note" id="lvRoute">Run a test to trace the route to the server.</p>
+    <p class="cant" id="lvWhere">Stylised map. Your position comes from your time zone unless you allow precise location or run My IP &amp; ISP; it stays on this device. Server cities are known for LibreSpeed and M-Lab; Cloudflare doesn't tell web pages which of its cities answered.</p>
+  </section>
+
+  <!-- ============ Toolkit ============ -->
+  <section class="glass pad" id="toolkit" aria-label="Network toolkit">
+    <div class="srvhead"><h2>Network toolkit</h2><span class="tag">10 tools · no sign-up</span></div>
+    <div class="toolgrid" id="toolGrid"></div>
+    <div id="toolBody" hidden>
+
+      <div class="tool" data-tool="ping" hidden>
+        <h3>Ping &amp; outage monitor</h3>
+        <p class="note">Checks your connection once a second and logs every drop. Leave it running while you game, work or stream to catch dropouts. Keep this page open and in front: phones pause background pages.</p>
+        <div class="tctl"><div class="ctl"><label for="pmTarget">Target</label><select id="pmTarget"><option value="cf">Cloudflare (1.1.1.1)</option><option value="google">Google</option><option value="server">Selected test server</option></select></div>
+          <button class="go2" id="pmStart">Start monitoring</button><button class="ghost" id="pmReset">Reset</button></div>
+        <div class="stats">
+          <div class="stat"><small>Now</small><b id="pmNow">—</b></div><div class="stat"><small>Average</small><b id="pmAvg">—</b></div>
+          <div class="stat"><small>Min / max</small><b id="pmMinMax">—</b></div><div class="stat"><small>Jitter</small><b id="pmJit">—</b></div>
+          <div class="stat"><small>Packet loss</small><b id="pmLoss">—</b></div><div class="stat"><small>Outages</small><b id="pmOut">0</b></div>
+        </div>
+        <canvas class="tchart" id="pmChart" width="1000" height="300" aria-label="Latency over time"></canvas>
+        <div id="pmLog" class="note"></div>
+        <p class="cant">Times a small web request, so values run a little higher than a command-line ping. A drop is logged after 3 missed checks in a row.</p>
+      </div>
+
+      <div class="tool" data-tool="dns" hidden>
+        <h3>DNS speed benchmark</h3>
+        <p class="note">DNS turns names like google.com into addresses before every page loads. This compares five public DNS services from your connection, then tells you exactly what to enter in your router.</p>
+        <div class="tctl"><button class="go2" id="dnsRun">Run DNS benchmark</button><span class="note" id="dnsMsg" role="status"></span></div>
+        <div class="tablewrap"><table><thead><tr><th>Service</th><th>Cached</th><th>Fresh lookup</th><th>Router settings</th></tr></thead><tbody id="dnsRows"></tbody></table></div>
+        <div id="dnsRec"></div>
+        <p class="cant">Contacts each DNS service directly over encrypted DNS (DNS-over-HTTPS). "Cached" is a popular name the service already knows; "fresh" is a random name it must look up from scratch.</p>
+      </div>
+
+      <div class="tool" data-tool="ip" hidden>
+        <h3>My IP &amp; ISP</h3>
+        <p class="note">Shows your public address, provider and whether IPv6 works. Also checks for iCloud Private Relay or a VPN, which change speed-test results.</p>
+        <div class="tctl"><button class="go2" id="ipRun">Look up my connection</button><span class="note" id="ipMsg" role="status"></span></div>
+        <dl class="kv" id="ipOut"></dl>
+        <div id="ipNotes" style="display:grid;gap:8px"></div>
+        <p class="cant">Asks ipinfo.io and ipify.org, which see your IP address as any website does. Nothing else is sent.</p>
+      </div>
+
+      <div class="tool" data-tool="calc" hidden>
+        <h3>Download time &amp; data calculator</h3>
+        <div class="tctl">
+          <div class="ctl"><label for="clSpeed">Your speed</label><div class="row"><input type="number" id="clSpeed" min="0" step="any" style="width:120px"><span class="unit" data-unit></span></div></div>
+          <div class="ctl"><label for="clSize">File size</label><div class="row"><input type="number" id="clSize" min="0" step="any" value="15" style="width:100px"><select id="clSizeU" aria-label="File size unit"><option value="1e6">MB</option><option value="1e9" selected>GB</option></select></div></div>
+        </div>
+        <div class="chips" id="clPresets"><button data-sz="5e6">Photo · 5 MB</button><button data-sz="8e6">Song · 8 MB</button><button data-sz="4e9">HD movie · 4 GB</button><button data-sz="7e9">Phone update · 7 GB</button><button data-sz="15e9">4K movie · 15 GB</button><button data-sz="80e9">Game · 80 GB</button></div>
+        <div class="callout" id="clOut"></div>
+        <div class="tctl"><div class="ctl"><label for="clPlan">Data allowance</label><div class="row"><input type="number" id="clPlan" min="0" step="any" value="1.5" style="width:100px"><span class="unit">GB</span></div></div></div>
+        <div class="tablewrap"><table><thead><tr><th>Activity</th><th>Typical bitrate</th><th>Data per hour</th><th>Hours on your allowance</th></tr></thead><tbody id="clRows"></tbody></table></div>
+        <p class="cant">Uses decimal units (1 GB = 1,000 MB), like phone plans. Real usage varies by service and quality setting.</p>
+      </div>
+
+      <div class="tool" data-tool="pw" hidden>
+        <h3>Wi-Fi password generator &amp; strength check</h3>
+        <p class="note">Everything here runs on this device. Passwords are never sent anywhere or saved.</p>
+        <div class="tctl"><div class="ctl"><label for="pwLen">Length</label><input type="number" id="pwLen" min="12" max="63" value="20" style="width:90px"></div>
+          <label class="consent" style="align-items:center"><input type="checkbox" id="pwSym" checked> Include symbols</label>
+          <button class="go2" id="pwGen">Generate</button><button class="ghost" id="pwCopy">Copy</button></div>
+        <div class="pwout" id="pwOut" aria-live="polite"></div>
+        <div class="ctl"><label for="pwTest">Check a password</label><input type="text" id="pwTest" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type or paste your current Wi-Fi password"></div>
+        <div class="meter"><i id="pwBar" style="width:0"></i></div>
+        <div class="note" id="pwVerdict">Type a password to see how long it would take to crack.</div>
+        <p class="cant">Crack times assume an attacker captured your Wi-Fi handshake and guesses offline: about 1 million guesses per second for one gaming graphics card, 1 billion for a large cracking rig.</p>
+      </div>
+
+      <div class="tool" data-tool="mac" hidden>
+        <h3>Device maker lookup</h3>
+        <p class="note">Paste MAC addresses from your router's connected-devices list to see who made each device. Unknown makers are worth blocking.</p>
+        <textarea class="tin" id="macIn" placeholder="One per line, e.g. 3C:84:6A:12:34:56" spellcheck="false"></textarea>
+        <div class="tctl"><button class="go2" id="macRun">Identify devices</button><span class="note" id="macMsg" role="status"></span></div>
+        <div class="tablewrap"><table><thead><tr><th>MAC address</th><th>Maker</th><th>Note</th></tr></thead><tbody id="macRows"></tbody></table></div>
+        <p class="cant">Only the first half of each address (the maker code) is sent to macvendors.com. Private (randomised) addresses are recognised on this device and not sent.</p>
+      </div>
+
+      <div class="tool" data-tool="subnet" hidden>
+        <h3>Subnet &amp; IP calculator</h3>
+        <div class="tctl"><div class="ctl"><label for="snIn">IP address / prefix or mask</label><input type="text" id="snIn" value="192.168.1.1/24" spellcheck="false" style="min-width:230px"></div></div>
+        <dl class="kv" id="snOut"></dl>
+        <div id="snNote"></div>
+        <p class="cant">Tip: enter your router's WAN or Internet IP from its Status page. An address from 100.64.0.0 to 100.127.255.255 means your provider uses carrier-grade NAT.</p>
+      </div>
+
+    </div>
+    <p class="cant">Not possible in any web page, so not included: traceroute, port scanning, Wi-Fi signal and channel scanning, and finding devices on your network. Browsers block these for security; use your router's own app or a desktop tool such as nmap.</p>
+  </section>
+
   <!-- ============ Server picker ============ -->
   <section class="glass pad" id="srvPanel" hidden aria-label="Choose server">
     <div class="srvhead"><h2>Test server</h2>
@@ -246,6 +436,48 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <div class="srvlist" id="srvList" role="radiogroup" aria-label="Servers"></div>
     <div class="consent" id="mlabConsent" hidden>
       <input type="checkbox" id="mlabOk"><label for="mlabOk">I understand M-Lab publishes every test as open data, <strong>including my IP address</strong>, date and time (<a href="https://www.measurementlab.net/privacy/" target="_blank" rel="noopener">M-Lab privacy policy</a>).</label>
+    </div>
+  </section>
+
+  <!-- ============ Router security ============ -->
+  <section class="glass pad" id="rtPanel" hidden aria-label="Router security check">
+    <div class="srvhead"><h2>Router security check</h2><button class="ghost" id="rtClose">Close</button></div>
+    <p class="note">This checks your router's model and firmware against the U.S. National Vulnerability Database (NVD), flags issues being actively exploited, and grades your settings. Web browsers don't let any website log into your router or scan your home network, so you enter the details once; they stay on this device.</p>
+    <div class="rtgrid">
+      <div class="fields">
+        <div class="lbl">1 · Your router</div>
+        <div class="ctl"><label for="rtBrand">Brand</label><input type="text" id="rtBrand" list="rtBrands" placeholder="e.g. TP-Link" autocomplete="off"></div>
+        <div class="ctl"><label for="rtModel">Model</label><input type="text" id="rtModel" placeholder="e.g. Archer C6" autocomplete="off"></div>
+        <div class="ctl"><label for="rtHw">Hardware version (optional)</label><input type="text" id="rtHw" placeholder="e.g. V3" autocomplete="off"></div>
+        <div class="ctl"><label for="rtFw">Firmware version</label><input type="text" id="rtFw" placeholder="e.g. 1.1.4 Build 20230216" autocomplete="off"></div>
+        <datalist id="rtBrands"><option>TP-Link</option><option>Netgear</option><option>ASUS</option><option>D-Link</option><option>Linksys</option><option>Tenda</option><option>Mercusys</option><option>Xiaomi</option><option>Huawei</option><option>ZTE</option><option>Nokia</option><option>Ubiquiti</option><option>MikroTik</option><option>Zyxel</option><option>DrayTek</option><option>Totolink</option><option>Netis</option><option>Cisco</option><option>Sagemcom</option><option>Technicolor</option><option>Arris</option><option>Syrotech</option><option>Digisol</option><option>iBall</option><option>Synology</option><option>eero</option><option>Google</option></datalist>
+        <details class="how"><summary>Where do I find these?</summary><ul>
+          <li><b>Label under the router:</b> brand, model and hardware version (often "Ver 3.0" or "V3").</li>
+          <li><b>Firmware version:</b> log in to the router's admin page, then look under Status, System or Firmware Upgrade.</li>
+          <li><b>Admin page address:</b> usually printed on the label. Common ones: <a href="http://192.168.0.1" target="_blank" rel="noopener">192.168.0.1</a>, <a href="http://192.168.1.1" target="_blank" rel="noopener">192.168.1.1</a>, <a href="http://192.168.29.1" target="_blank" rel="noopener">192.168.29.1</a> (JioFiber), <a href="http://192.168.1.254" target="_blank" rel="noopener">192.168.1.254</a>.</li>
+        </ul></details>
+      </div>
+      <div class="qs">
+        <div class="lbl">2 · Your settings</div>
+        <div class="q"><span>Wi-Fi security type</span>
+          <select id="rtEnc" aria-label="Wi-Fi security type"><option value="">Not sure</option><option value="wpa3">WPA3</option><option value="mixed">WPA2/WPA3 mixed</option><option value="wpa2">WPA2 (AES)</option><option value="tkip">WPA2-TKIP or WPA</option><option value="open">WEP or no password</option></select></div>
+        <div id="rtQs" class="qs"></div>
+      </div>
+    </div>
+    <div class="row"><button class="go2" id="rtRun">Run security check</button><span class="note" id="rtMsg" role="status" aria-live="polite"></span></div>
+    <div id="rtReport" hidden class="pad" style="padding:0">
+      <div class="rtsum">
+        <svg viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+          <circle id="rtArc" cx="66" cy="66" r="54" fill="none" stroke="var(--muted)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 340" transform="rotate(-90 66 66)"/>
+          <text id="rtGrade" x="66" y="76" text-anchor="middle" class="letter" fill="var(--ink)" style="font:700 36px var(--display)">–</text>
+          <text id="rtScore" x="66" y="98" text-anchor="middle" fill="var(--muted)" style="font:500 12px var(--mono)"></text></svg>
+        <div style="display:grid;gap:10px;min-width:0"><p class="verdict" id="rtVerdict"></p><div class="counts" id="rtCounts"></div></div>
+      </div>
+      <div class="lbl">Fix these first</div>
+      <ol class="fixes" id="rtFixes"></ol>
+      <div class="srvhead"><div class="lbl">Known vulnerabilities</div><button class="ghost" id="rtCopy">Copy report</button></div>
+      <div class="cves" id="rtCves"></div>
+      <p class="src" id="rtSrc"></p>
     </div>
   </section>
 
@@ -316,8 +548,6 @@ footer{font-size:12px;color:var(--muted);text-align:center}
         <div class="seg" id="baseSeg"><button data-b="1000">Decimal (10³)</button><button data-b="1024">Binary (2¹⁰)</button></div></div>
       <div class="ctl"><label for="streams">Parallel streams</label><input type="number" id="streams" min="1" max="16" value="6"></div>
       <div class="ctl"><label for="dur">Seconds per phase</label><input type="number" id="dur" min="4" max="30" value="10"></div>
-      <div class="ctl"><label for="link">Network type</label>
-        <select id="link"><option value="auto">Auto-detect</option><option>Wi-Fi</option><option>Mobile data</option><option>Ethernet</option></select></div>
     </div>
     <p class="note">1 byte = 8 bits, so 1 MB/s = 8 Mbps and 1 GB/s = 8 Gbps. Internet plans are sold in bits (Mbps/Gbps); file downloads show bytes (MB/s). Each test moves roughly your speed × twice the phase length, so lower the seconds per phase on mobile data.</p>
   </section>
@@ -435,17 +665,22 @@ function renderServers(){
 function syncServerName(){ const s=selected==="auto"?null:byId(selected); $("srvName").textContent=s?s.name:"Automatic"; showConn() }
 
 /* =================== Connection =================== */
-function connLabel(){
-  const sel=$("link").value; if(sel!=="auto") return sel;
-  const c=navigator.connection;
-  if(c&&c.type) return {wifi:"Wi-Fi",cellular:"Mobile data",ethernet:"Ethernet"}[c.type]||"Unknown";
-  return "Unknown";
+// Only Chrome on Android exposes the link type. Everywhere else (Safari, iPhone, desktop) the person picks it once;
+// the choice is remembered and sits next to GO so it's visible on every test.
+function detectedNet(){
+  const c=navigator.connection, t=c&&c.type;
+  return {wifi:"Wi-Fi",cellular:"Mobile data",ethernet:"Ethernet"}[t]||null;
+}
+let netPick=detectedNet()||store.get("netPick",null), netAutoOn=!!detectedNet();
+function connLabel(){ return netPick||"Unknown" }
+function syncNet(){
+  document.querySelectorAll("#netSeg button").forEach(b=>{const on=b.dataset.n===netPick; b.setAttribute("aria-pressed",on); b.setAttribute("aria-checked",on)});
+  $("netAuto").textContent=netAutoOn?"detected":netPick?"":"pick one";
+  showConn();
 }
 function showConn(){
-  const c=navigator.connection; let t=`Network: ${connLabel()}`;
-  if(c&&c.effectiveType) t+=` · ${c.effectiveType}`;
-  if(connLabel()==="Unknown") t+=" · this browser hides the network type; set it in Settings";
-  $("conn").textContent=t;
+  // effectiveType is a speed class ("4g" even on Wi-Fi), not the network type, so it's deliberately not shown.
+  $("conn").textContent=`Network: ${connLabel()}`+(netAutoOn?" (detected by browser)":netPick?" (your choice, remembered)":"");
 }
 
 /* =================== Gauge (glass ring with glowing arc) =================== */
@@ -522,11 +757,11 @@ function setStep(active){ // active: "ping"|"down"|"up"|"done"|null
 })();
 
 /* =================== Measurement: shared sampler =================== */
-function sampler(onTick){
+function sampler(onTick,dir){
   let bytes=0; const t0=performance.now(), pts=[];
   const iv=setInterval(()=>{ const t=performance.now()-t0; pts.push([t,bytes]);
     const w=pts.find(p=>p[0]>=t-2000); const rate=t>w[0]?(bytes-w[1])/((t-w[0])/1000):0; onTick(rate) },200);
-  return {add:n=>{bytes+=n},
+  return {add:n=>{bytes+=n; if(dir) tel.bytes[dir]+=n},
     stop(){ clearInterval(iv); const end=performance.now()-t0, p0=pts.find(p=>p[0]>=end*0.25)||[0,0];
       return end>p0[0]?(bytes-p0[1])/((end-p0[0])/1000):NaN }};
 }
@@ -534,12 +769,12 @@ function randomBytes(n){ const b=new Uint8Array(n); for(let i=0;i<n;i+=65536) cr
 
 /* =================== HTTP servers (Cloudflare, LibreSpeed, custom) =================== */
 async function httpPing(s,n){
-  const out=[]; for(let i=0;i<n;i++){ try{out.push(await pingURL(s.ping()))}catch{throw new Error(`${s.name} isn't answering. Pick another server`)} }
+  const out=[]; for(let i=0;i<n;i++){ try{const v=await pingURL(s.ping()); out.push(v); if(i) telPing(v)}catch{throw new Error(`${s.name} isn't answering. Pick another server`)} }
   out.shift(); const jit=out.slice(1).reduce((a,v,i)=>a+Math.abs(v-out[i]),0)/Math.max(out.length-1,1);
   return {ping:median(out),jitter:jit};
 }
 async function httpDown(s,streams,secs,tick){
-  const S=sampler(tick), ctl=new AbortController(), until=performance.now()+secs*1000;
+  const S=sampler(tick,"down"), ctl=new AbortController(), until=performance.now()+secs*1000;
   const worker=async()=>{ while(performance.now()<until){
     let r; try{ r=await fetch(s.down(25e6),{cache:"no-store",signal:ctl.signal}) }
     catch(e){ if(e.name==="AbortError") return; throw new Error(`${s.name} doesn't allow browser downloads. Pick another server`) }
@@ -553,7 +788,7 @@ async function httpDown(s,streams,secs,tick){
 }
 // Upload: plain POSTs that need no permission from the server, timed to completion; size adapts to ~0.6 s each.
 async function httpUp(s,streams,secs,tick){
-  const S=sampler(tick), until=performance.now()+secs*1000, pool=new Blob([randomBytes(32e6)]);
+  const S=sampler(tick,"up"), until=performance.now()+secs*1000, pool=new Blob([randomBytes(32e6)]);
   const worker=async()=>{ let size=256e3;
     while(performance.now()<until){
       const off=Math.floor(Math.random()*(pool.size-size)), body=pool.slice(off,off+size,"text/plain"), t=performance.now();
@@ -574,18 +809,18 @@ async function mlabLocate(){
   catch{ throw new Error("Couldn't reach M-Lab's server finder. Pick another server") }
   const r=(j.results||[])[0]; if(!r) throw new Error("M-Lab has no server available right now. Pick another server");
   const add=u=>u+(u.includes("?")?"&":"?")+"client_name=cleanspeed-web&client_version=3.0";
-  return {site:[r.location&&r.location.city,r.location&&r.location.country].filter(Boolean).join(", ")||r.machine,
+  return {machine:r.machine||"",site:[r.location&&r.location.city,r.location&&r.location.country].filter(Boolean).join(", ")||r.machine,
     down:add(r.urls["wss:///ndt/v7/download"]), up:add(r.urls["wss:///ndt/v7/upload"])};
 }
 function mlabDown(url,tick){
   return new Promise((res,rej)=>{
-    const S=sampler(tick), rtt=[], rttvar=[], minrtt=[]; let opened=false, settled=false;
+    const S=sampler(tick,"down"), rtt=[], rttvar=[], minrtt=[]; let opened=false, settled=false;
     const ws=new WebSocket(url,NDT_PROTO); ws.binaryType="arraybuffer";
     const kill=setTimeout(()=>ws.close(),15000);
     ws.onopen=()=>{opened=true};
     ws.onmessage=e=>{
       if(typeof e.data==="string"){ S.add(e.data.length);
-        try{ const ti=JSON.parse(e.data).TCPInfo; if(ti){ if(ti.RTT) rtt.push(ti.RTT/1000); if(ti.RTTVar) rttvar.push(ti.RTTVar/1000); if(ti.MinRTT) minrtt.push(ti.MinRTT/1000) } }catch{}
+        try{ const ti=JSON.parse(e.data).TCPInfo; if(ti){ if(ti.RTT){ rtt.push(ti.RTT/1000); telPing(ti.RTT/1000) } if(ti.RTTVar) rttvar.push(ti.RTTVar/1000); if(ti.MinRTT) minrtt.push(ti.MinRTT/1000) } }catch{}
       } else S.add(e.data.byteLength);
     };
     const done=()=>{ if(settled) return; settled=true; clearTimeout(kill);
@@ -596,7 +831,7 @@ function mlabDown(url,tick){
 }
 function mlabUp(url,tick){
   return new Promise((res,rej)=>{
-    const S=sampler(tick), pool=randomBytes(1<<24); let size=8192, sent=0, acked=0, t0=0, opened=false, settled=false;
+    const S=sampler(tick,"up"), pool=randomBytes(1<<24); let size=8192, sent=0, acked=0, t0=0, opened=false, settled=false;
     const ws=new WebSocket(url,NDT_PROTO); ws.binaryType="arraybuffer";
     const finish=()=>{ if(settled) return; settled=true; S.add(Math.max(0,(sent-ws.bufferedAmount)-acked)); res(S.stop()) };
     const pump=()=>{
@@ -611,6 +846,13 @@ function mlabUp(url,tick){
   });
 }
 
+/* =================== Loaded-latency probe =================== */
+const PROBE="https://1.1.1.1/cdn-cgi/trace";
+async function probeBaseline(){
+  const out=[]; for(let i=0;i<6;i++){ try{out.push(await pingURL(PROBE+"?r="+nonce(),2500))}catch{} }
+  out.shift(); return median(out);
+}
+
 /* =================== Run =================== */
 let last=null;
 function setRunning(on){ running=on; document.body.classList.toggle("testing",on); $("go").hidden=on; if(on) $("instrument").style.transform="" }
@@ -618,38 +860,51 @@ async function run(){
   if(running) return;
   if(selected==="mlab"&&!$("mlabOk").checked){ $("srvPanel").hidden=false; $("mlabConsent").hidden=false;
     $("err").textContent="M-Lab publishes your IP address. Tick the consent box under Test server, or pick another server."; return }
+  if(!netPick){ $("netPick").classList.add("need"); $("err").textContent="Choose Wi-Fi, Mobile or Ethernet above, then tap GO. You only do this once.";
+    setTimeout(()=>$("netPick").classList.remove("need"),3200); return }
+  if(pm.on){ pmStop(); $("phase").textContent="Ping monitor paused for the speed test" }
   setRunning(true); $("err").textContent=""; $("copyRes").disabled=true; $("copied").textContent="";
   ["dl","ul","ping","jit","lping"].forEach(i=>$(i).textContent="—"); series={down:[],up:[]}; drawSpark(); setStep(null);
   const streams=Math.min(16,Math.max(1,+$("streams").value||6)), secs=Math.min(30,Math.max(4,+$("dur").value||10));
   const res={t:Date.now(),net:connLabel()};
-  const downTick=r=>{setGauge(r);series.down.push(r);drawSpark();$("dl").textContent=fmt(r)};
-  const upTick=r=>{setGauge(r);series.up.push(r);drawSpark();$("ul").textContent=fmt(r)};
+  const downTick=r=>{setGauge(r);series.down.push(r);drawSpark();$("dl").textContent=fmt(r);telRate("down",r)};
+  const upTick=r=>{setGauge(r);series.up.push(r);drawSpark();$("ul").textContent=fmt(r);telRate("up",r)};
+  telStart();
   try{
     let s=selected==="auto"?await pickAuto():byId(selected);
     if(!s){ selected="auto"; s=await pickAuto() }
-    res.server=s.name;
+    res.server=s.name; telServer(s);
     if(s.kind==="ndt7"){
       setStep("ping"); $("phase").textContent="Locating nearest M-Lab server";
-      const loc=await mlabLocate(); res.server=`M-Lab ${loc.site}`; $("srvName").textContent=res.server;
-      setStep("down"); $("phase").textContent="Testing download"; phaseColor=["--orb1","--down"];
+      const loc=await mlabLocate(); res.server=`M-Lab ${loc.site}`; $("srvName").textContent=res.server; telServer(s,loc);
+      setStep("down"); telPhase("down"); $("phase").textContent="Testing download"; phaseColor=["--orb1","--down"];
       const d=await mlabDown(loc.down,downTick); Object.assign(res,{down:d.bps,ping:d.ping,jitter:d.jitter,lping:d.loaded});
       setGauge(0); await sleep(400);
-      setStep("up"); $("phase").textContent="Testing upload"; phaseColor=["--orb2","--up"];
+      setStep("up"); telPhase("up"); $("phase").textContent="Testing upload"; phaseColor=["--orb2","--up"];
       res.up=await mlabUp(loc.up,upTick);
     } else {
       $("srvName").textContent=s.name+(selected==="auto"?" (auto)":"");
-      setStep("ping"); $("phase").textContent="Measuring latency";
+      setStep("ping"); telPhase("ping"); $("phase").textContent="Measuring latency";
       const p=await httpPing(s,12); res.ping=p.ping; res.jitter=p.jitter;
       $("ping").textContent=p.ping.toFixed(1); $("jit").textContent=p.jitter.toFixed(1);
-      setStep("down"); $("phase").textContent="Testing download"; phaseColor=["--orb1","--down"];
+      // Loaded latency is probed on a different host, so the probe never queues behind this test's own
+      // download on the same browser connection. Rise over that host's idle baseline = queueing on your line.
+      const base=await probeBaseline(), probe=fin(base)?()=>PROBE+"?r="+nonce():s.ping;
       const lp=[]; let probing=true;
-      (async()=>{ while(probing){ try{lp.push(await pingURL(s.ping()))}catch{} await sleep(400) } })();
-      res.down=await httpDown(s,streams,secs,downTick); probing=false; res.lping=median(lp);
+      setStep("down"); telPhase("down"); $("phase").textContent="Testing download"; phaseColor=["--orb1","--down"];
+      // live ping during load = idle ping + queueing rise measured on the separate probe connection
+      const shift=fin(base)?res.ping-base:0;
+      (async()=>{ while(probing){ try{const v=await pingURL(probe(),3000); lp.push(v); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
+      res.down=await httpDown(s,streams,secs,downTick); probing=false;
+      const rise=median(lp)-(fin(base)?base:res.ping);
+      res.lping=fin(rise)?res.ping+Math.max(0,rise):NaN;
       setGauge(0); await sleep(400);
-      setStep("up"); $("phase").textContent="Testing upload"; phaseColor=["--orb2","--up"];
-      res.up=await httpUp(s,streams,secs,upTick);
+      setStep("up"); telPhase("up"); $("phase").textContent="Testing upload"; phaseColor=["--orb2","--up"];
+      let probingUp=true;
+      (async()=>{ while(probingUp){ try{const v=await pingURL(probe(),3000); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
+      try{ res.up=await httpUp(s,streams,secs,upTick) } finally{ probingUp=false }
     }
-    setGauge(0); setStep("done");
+    setGauge(0); setStep("done"); telEnd(true,res);
     showResult(res);
     $("phase").textContent="Complete · tap GO to test again";
     const h=store.get("history",[]); h.unshift(res); store.set("history",h.slice(0,300));
@@ -657,7 +912,7 @@ async function run(){
     if(res.net==="Mobile data") $("cmpType").value="mobile"; else if(res.net==="Wi-Fi"||res.net==="Ethernet") $("cmpType").value="fixed";
     renderHist(); fillWhich(); $("cmpWhich").value="0"; renderAll();
   }catch(e){
-    setGauge(0); setStep(null); $("phase").textContent="Stopped · tap GO to retry"; $("err").textContent=e.message||String(e);
+    setGauge(0); setStep(null); telEnd(false); $("phase").textContent="Stopped · tap GO to retry"; $("err").textContent=e.message||String(e);
   }finally{ setRunning(false); phaseColor=["--orb1","--orb2"]; syncServerName() }
 }
 function showResult(r){
@@ -770,7 +1025,7 @@ function renderInsights(){
 /* =================== History =================== */
 function renderHist(){
   const f=$("histFilter").value, h=store.get("history",[]).filter(r=>!f||r.net===f);
-  $("rows").innerHTML=h.length?h.map(r=>`<tr><td>${new Date(r.t).toLocaleString()}</td><td>${esc(r.net)}</td><td>${fmt(r.down)} ${unitLabel()}</td><td>${fmt(r.up)} ${unitLabel()}</td>
+  $("rows").innerHTML=h.length?h.map(r=>`<tr><td>${new Date(r.t).toLocaleString()}</td><td><select class="netfix" data-t="${r.t}" aria-label="Network for this test">${["Wi-Fi","Mobile data","Ethernet","Unknown"].map(o=>`<option${o===r.net?" selected":""}>${o}</option>`).join("")}</select></td><td>${fmt(r.down)} ${unitLabel()}</td><td>${fmt(r.up)} ${unitLabel()}</td>
     <td>${fin(r.ping)?r.ping.toFixed(1)+" ms":"—"}</td><td>${fin(r.jitter)?r.jitter.toFixed(1)+" ms":"—"}</td><td>${fin(r.lping)?r.lping.toFixed(1)+" ms":"—"}</td><td>${esc(r.server||"")}</td></tr>`).join("")
     :`<tr><td colspan="8" style="color:var(--muted)">No tests yet. Results are kept only in this browser.</td></tr>`;
   drawTrend(h.slice(0,20).reverse());
@@ -827,6 +1082,646 @@ function copyResult(){
   if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>$("copied").textContent="Copied",fallback); else fallback();
 }
 
+/* =================== Router security check =================== */
+const RT_Q=[
+ {id:"pw",q:"Admin password changed from the default",sev:"critical",fix:"Log in to the router's admin page and set a long, unique admin password, not the one printed on the label."},
+ {id:"remote",q:"Remote management (admin from the internet) is off",sev:"critical",fix:"Turn off Remote Management, WAN access or cloud admin unless you truly need it."},
+ {id:"wps",q:"WPS (push-button or PIN pairing) is off",sev:"high",fix:"Turn off WPS. Its PIN can be guessed in hours."},
+ {id:"fw",q:"Firmware updated in the last 6 months, or auto-update is on",sev:"high",fix:"Install the latest firmware from the router's Firmware Upgrade menu or the maker's support page, and turn on auto-update if offered."},
+ {id:"eol",q:"The maker still releases updates for this model",sev:"high",fix:"If the model no longer gets updates, plan to replace it. Unpatched routers are a top target for botnets."},
+ {id:"upnp",q:"UPnP is off (or needed for a specific console)",sev:"medium",fix:"Turn off UPnP so devices and malware can't open ports on their own."},
+ {id:"pf",q:"Every port-forwarding rule is one you recognise",sev:"medium",fix:"Delete port-forwarding, virtual-server and DMZ entries you don't recognise."},
+ {id:"guest",q:"Visitors and smart-home devices use a guest network",sev:"medium",fix:"Create a guest network and move cameras, TVs and smart plugs onto it."},
+ {id:"devices",q:"You know every device in the connected-devices list",sev:"low",fix:"Open the connected-devices (DHCP) list, block anything unknown, then change the Wi-Fi password."},
+ {id:"ssid",q:"Wi-Fi name doesn't reveal the router brand or your name",sev:"low",fix:"Rename the Wi-Fi network. Default names tell attackers which model to target."}
+];
+const RT_W={critical:[25,12],high:[15,7],medium:[8,4],low:[4,2]};
+// Menu names differ by brand; the common ones are listed so people can find the setting on any router.
+const LOGIN="Open the router's admin page (address and default login are on the label, often 192.168.0.1 or 192.168.1.1) and sign in.";
+const RT_STEPS={
+ pw:{steps:[LOGIN,"Go to System Tools, Administration or Management, then Password (ASUS: Administration → System; Netgear: Advanced → Administration → Set Password).","Set a new password of at least 16 characters that you don't use anywhere else, and save it in a password manager.","If the admin username can be changed, change it from \"admin\" too.","Save, sign out, and sign back in with the new password."],
+     verify:"The default password on the label no longer works."},
+ remote:{steps:[LOGIN,"Find Remote Management, Web Access from WAN, Cloud Management or Remote Access (TP-Link: Advanced → System → Administration; ASUS: Administration → System; Netgear: Advanced → Remote Management).","Turn it off. If Telnet or SSH access from WAN is listed, turn those off as well.","Save and reboot the router."],
+     verify:"From mobile data (Wi-Fi off), your router's admin page should not load using your public IP address."},
+ wps:{steps:[LOGIN,"Open Wireless (or Wi-Fi) settings, then WPS.","Turn WPS off for every band (2.4 GHz and 5 GHz). On some models it's called \"Wi-Fi Protected Setup\" or \"PIN\".","Save. Re-check after any reset or firmware update, as some routers switch it back on."],
+     verify:"The WPS light on the router stays off, and the WPS menu shows Disabled."},
+ fw:{steps:["Note your current firmware version (Status or System page).","Open Firmware Upgrade (System Tools, Administration or Advanced → System) and tap Check for updates, or download the file for your exact model and hardware version from the maker's official support site.","Install only stable releases from the maker. Skip anything marked beta, preview or test, and never use third-party firmware.","Do the update over a cable if you can, and don't switch the router off until it restarts by itself.","Turn on automatic updates if the router offers it.","Run this security check again with the new version."],
+     verify:"The Status page shows the new firmware version."},
+ eol:{steps:["Find your exact model and hardware version on the maker's support site and look at the date of the newest firmware.","If the model is listed as end-of-life, or no update has appeared for about two years, plan to replace it with a model that supports WPA3 and automatic updates.","Until then: keep remote management, UPnP and WPS off, and use a strong admin password."],
+     verify:"The maker's site shows a firmware release within the last year, or you have a replacement planned."},
+ upnp:{steps:[LOGIN,"Find UPnP under Advanced → NAT Forwarding, WAN, Network or Game settings.","Turn UPnP off and save.","If a games console then reports strict NAT, add a single port-forwarding rule for that console instead of turning UPnP back on."],
+     verify:"The UPnP page shows Disabled and its list of open ports is empty."},
+ pf:{steps:[LOGIN,"Open Port Forwarding, Virtual Servers, NAT Forwarding or Port Triggering.","Delete every rule you don't recognise or no longer need.","Check the DMZ setting: turn it off unless one device truly needs it.","Save."],
+     verify:"Only rules you can name a purpose for remain."},
+ guest:{steps:[LOGIN,"Open Guest Network (often under Wireless).","Turn it on, give it its own WPA2 or WPA3 password, and turn on the option that blocks access to your local network (isolation).","Reconnect smart TVs, cameras, smart plugs and visitors' devices to the guest network."],
+     verify:"A device on the guest network can reach the internet but can't see your laptop or phone."},
+ devices:{steps:[LOGIN,"Open the connected-devices list (Attached Devices, DHCP Clients or Client List).","Match each entry to a device you own; names can be odd, so compare the MAC address in each device's settings.","Copy the MAC addresses of anything you don't recognise into this app's Device lookup tool (Network toolkit) to see who made it.","Block anything unknown under Access Control or Block List.","Change the Wi-Fi password, then reconnect your own devices."],
+     verify:"Every device in the list is one you can identify."},
+ ssid:{steps:[LOGIN,"Open Wireless Settings and change the Network Name (SSID) on each band.","Choose a neutral name with no brand, model, house number or family name.","Save and reconnect your devices with the new name."],
+     verify:"Nearby Wi-Fi lists no longer show the router's brand or model."}
+};
+const ENC_STEPS={steps:[LOGIN,"Open Wireless → Wireless Security (or Wi-Fi Security).","Choose WPA3-Personal, or WPA2/WPA3 mixed if older devices can't connect. Set encryption to AES (never TKIP).","Use a Wi-Fi password of at least 12 characters, save, and reconnect your devices."],
+  verify:"Your phone's Wi-Fi details for this network show WPA3 or WPA2."};
+
+// Stop-gap measures by flaw type (CWE), used alongside the permanent fix.
+// Stop-gap measures by flaw type (CWE). Rule: only settings found in the router's own admin page, from the
+// maker's official firmware. No beta builds, third-party firmware, scripts or workarounds outside the router.
+const CWE_FIX=[
+ {ids:["CWE-78","CWE-77","CWE-94","CWE-120","CWE-121","CWE-122","CWE-787","CWE-119","CWE-125","CWE-134","CWE-190"],what:"memory or command-injection flaw, usually reached through the admin page",
+  steps:["Router admin page → Remote Management (or Web Access from WAN): turn it off.","Router admin page → Local Management or Access Control: allow admin access only from your own devices, if this option exists.","Router admin page → UPnP: turn it off."]},
+ {ids:["CWE-79","CWE-352","CWE-601"],what:"admin-page flaw that tricks a signed-in administrator",
+  steps:["Router admin page → Remote Management: turn it off.","Router admin page → Administration: set the shortest login timeout (session timeout) offered, if available."]},
+ {ids:["CWE-287","CWE-306","CWE-288","CWE-290","CWE-862","CWE-863","CWE-284","CWE-639"],what:"authentication bypass: someone can get in without the password",
+  steps:["Router admin page → Remote Management: turn it off, along with Cloud or app remote access if listed.","Router admin page → Local Management or Access Control: allow admin access only from your own devices, if this option exists."]},
+ {ids:["CWE-798","CWE-259","CWE-521","CWE-1392","CWE-1393"],what:"built-in or weak password in the firmware",
+  steps:["Router admin page → Administration or Services: turn off Telnet and SSH, if the router offers these switches.","Router admin page → Remote Management: turn it off. Changing your own password may not remove a built-in one, so the stable firmware update (or replacement) is the real fix."]},
+ {ids:["CWE-22","CWE-23","CWE-200","CWE-532","CWE-215"],what:"information leak or file-access flaw",
+  steps:["Router admin page → Remote Management: turn it off.","Router admin page → USB Settings: turn off file sharing, FTP and media server if you don't use them."]},
+ {ids:["CWE-319","CWE-311","CWE-327"],what:"data sent without proper encryption",
+  steps:["Router admin page → Administration: turn on HTTPS for local management, if offered.","Router admin page → Remote Management: turn it off."]},
+ {ids:["CWE-400","CWE-770","CWE-404","CWE-835"],what:"denial-of-service flaw that can freeze or restart the router",
+  steps:["Router admin page → Remote Management: turn it off.","Router admin page → Security or Firewall: turn off \"Respond to ping from WAN\" and turn on DoS protection, if offered."]}
+];
+// Official sites per brand: support downloads (shown as a link) and the domains whose advisories count as official.
+const VENDORS={
+ "tp-link":{dl:"https://www.tp-link.com/support/download/",dom:["tp-link.com"]},
+ "netgear":{dl:"https://www.netgear.com/support/",dom:["netgear.com"]},
+ "asus":{dl:"https://www.asus.com/support/",dom:["asus.com"]},
+ "d-link":{dl:"https://support.dlink.com/",dom:["dlink.com","d-link.com","dlink.com.tw"]},
+ "linksys":{dl:"https://support.linksys.com/",dom:["linksys.com"]},
+ "ubiquiti":{dl:"https://www.ui.com/download",dom:["ui.com","ubnt.com"]},
+ "mikrotik":{dl:"https://mikrotik.com/download",dom:["mikrotik.com"]},
+ "zyxel":{dl:"https://www.zyxel.com/global/en/support",dom:["zyxel.com"]},
+ "tenda":{dom:["tendacn.com","tenda.com.cn"]},"mercusys":{dom:["mercusys.com"]},"huawei":{dom:["huawei.com"]},"zte":{dom:["zte.com.cn","zte.com"]},
+ "xiaomi":{dom:["mi.com","xiaomi.com"]},"draytek":{dom:["draytek.com"]},"totolink":{dom:["totolink.net"]},"netis":{dom:["netis-systems.com"]},
+ "cisco":{dom:["cisco.com"]},"sagemcom":{dom:["sagemcom.com"]},"technicolor":{dom:["technicolor.com","vantiva.com"]},"arris":{dom:["arris.com","commscope.com"]},
+ "synology":{dom:["synology.com"]},"eero":{dom:["eero.com"]},"google":{dom:["google.com"]},"nokia":{dom:["nokia.com"]},"digisol":{dom:["digisol.com"]}
+};
+const vendorKey=b=>(b||"").trim().toLowerCase().replace(/\s+/g,"-");
+const vendorLink=b=>(VENDORS[vendorKey(b)]||{}).dl||null;
+const BETA=/(?<![a-z])(beta|alpha|rc\d*|preview|pre-?release|test|dev)(?![a-z])|(?:\d|[._-])b\d+$/i;
+function isOfficial(url,brand){
+  let h; try{ h=new URL(url).hostname.toLowerCase() }catch{ return false }
+  if(BETA.test(url)) return false;
+  const v=VENDORS[vendorKey(brand)];
+  if(v) return v.dom.some(d=>h===d||h.endsWith("."+d));
+  const slug=vendorKey(brand).replace(/[^a-z0-9]/g,""); return slug.length>2&&h.replace(/[^a-z0-9.]/g,"").includes(slug);
+}
+// Show build-date versions (e.g. 230216) as a date people can match against the router's Build number.
+function fmtVer(v){ const m=String(v).match(/^(?:20)?(\d{2})(\d{2})(\d{2})$/);
+  if(!m) return v; const d=new Date(Date.UTC(2000+ +m[1],+m[2]-1,+m[3]));
+  return isNaN(d)?v:`a build dated ${d.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"})} (Build 20${m[1]}${m[2]}${m[3]})` }
+function cveFix(c,r){
+  const steps=[], links=[], maker=r.brand||"the maker";
+  const where=`from ${maker}'s official download page or the router's Firmware Upgrade page`;
+  const fix=c.fixedIn||c.fixedAfter;
+  if(fix&&BETA.test(fix)) steps.push(`The only fix listed is a beta release (${fix}). Don't install beta firmware. Use the router settings below to reduce exposure, check ${maker}'s site for the stable release, or replace the router if none arrives.`);
+  else if(c.fixedIn) steps.push(`Install the latest stable firmware ${where}. It must be ${fmtVer(c.fixedIn)} or later${r.fw?` (you have ${r.fw})`:""}. Skip any release marked beta or preview.`);
+  else if(c.fixedAfter) steps.push(`Install the latest stable firmware ${where}. It must be newer than ${fmtVer(c.fixedAfter)}${r.fw?` (you have ${r.fw})`:""}. Skip any release marked beta or preview.`);
+  else if(c.st==="aff") steps.push(`No stable fix is listed for this flaw. Check ${maker}'s official advisory below; if there is no stable firmware fix, replace the router.`);
+  else steps.push(`The record doesn't say which versions are fixed. Install the latest stable firmware ${where}, and check ${maker}'s official advisory${r.fw?` to confirm whether ${r.fw} is affected`:""}.`);
+  if(c.kev&&c.kevAction) steps.push(`Being exploited in real attacks. CISA's required action: ${c.kevAction}`);
+  const seen=new Set(); let what=null;
+  for(const g of CWE_FIX) if(c.cwes.some(w=>g.ids.includes(w))){ what=what||g.what; for(const st of g.steps) if(!seen.has(st)){seen.add(st);steps.push(st)} }
+  if(c.av==="ADJACENT_NETWORK"||c.av==="ADJACENT") steps.push("The attacker must be on your Wi-Fi or local network. Router admin page → Wireless Security: WPA3 or WPA2 (AES) with a strong password; turn WPS off; put visitors and smart devices on the Guest Network with isolation on.");
+  else if(c.av==="NETWORK"&&!seen.size) steps.push("Attackable over the network. Router admin page: turn off Remote Management and UPnP until the stable update is installed.");
+  else if(c.av==="PHYSICAL"||c.av==="LOCAL") steps.push("Needs physical or local access to the router, so the risk is lower. The stable firmware update above is the fix.");
+  for(const ref of c.refs) links.push(ref);
+  const v=vendorLink(r.brand); if(v) links.push({url:v,label:`${r.brand} official downloads`});
+  return {what,steps:steps.slice(0,6),links:links.slice(0,4)};
+}
+const ENC={"":{w:7,fix:"Check the Wi-Fi security type in the router's Wireless Security settings; choose WPA3, or WPA2 (AES) if older devices need it."},
+  wpa3:{w:0},mixed:{w:0},wpa2:{w:3,fix:"Switch Wi-Fi security to WPA3 (or WPA2/WPA3 mixed) if all your devices support it."},
+  tkip:{w:15,fix:"Change Wi-Fi security from WPA/TKIP to WPA2 (AES) or WPA3. TKIP is broken."},
+  open:{w:30,fix:"Your Wi-Fi is open or uses WEP, which anyone nearby can break in minutes. Switch to WPA2 (AES) or WPA3 now and set a strong password."}};
+let rtAnswers={};
+function rtLoad(){
+  const r=store.get("router",{}); ["Brand","Model","Hw","Fw"].forEach(k=>$("rt"+k).value=r[k]||""); $("rtEnc").value=r.enc||""; rtAnswers=r.answers||{};
+  $("rtQs").innerHTML=RT_Q.map(q=>`<div class="q"><span>${esc(q.q)}</span><div class="seg" data-q="${q.id}" role="radiogroup" aria-label="${esc(q.q)}">${["yes","no","unsure"].map(v=>`<button data-v="${v}" aria-pressed="${rtAnswers[q.id]===v}">${{yes:"Yes",no:"No",unsure:"Not sure"}[v]}</button>`).join("")}</div></div>`).join("");
+}
+function rtSave(){ store.set("router",{Brand:$("rtBrand").value.trim(),Model:$("rtModel").value.trim(),Hw:$("rtHw").value.trim(),Fw:$("rtFw").value.trim(),enc:$("rtEnc").value,answers:rtAnswers}) }
+
+// --- version handling ---
+const numTokens=v=>(String(v).match(/\d+/g)||[]).map(Number);
+function buildNo(v){ const m=String(v).match(/(?:^|\D)(20\d{6}|\d{6})(?=\D|$)/); return m?+(m[1].length===8?m[1].slice(2):m[1]):null }
+function cmpV(user,bound){ // <0 user older, 0 same, >0 user newer, null = can't compare
+  if(/^\d{6,8}$/.test(bound)){ const u=buildNo(user); if(u==null) return null; const b=+(bound.length===8?bound.slice(2):bound); return u-b }
+  const b=numTokens(bound), u=numTokens(String(user).replace(/build.*$/i,"")); if(!b.length||!u.length) return null;
+  for(let i=0;i<b.length;i++){ const d=(u[i]??0)-b[i]; if(d) return d } return 0;
+}
+function modelRegex(model){
+  const t=model.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
+  return t.length?new RegExp("(?<![a-z0-9])"+t.join("[\\s_\\-]*")+"(?![a-z0-9])","i"):null;
+}
+function matchStatus(m,fw){
+  if(!fw) return "unk";
+  const ver=(m.criteria.split(":")[5]||"*").replace(/\\/g,"");
+  const lo=m.versionStartIncluding||m.versionStartExcluding, hi=m.versionEndIncluding||m.versionEndExcluding;
+  if(lo||hi){
+    let ok=true;
+    if(lo){ const c=cmpV(fw,lo); if(c==null) return "unk"; ok=ok&&(m.versionStartIncluding?c>=0:c>0) }
+    if(hi){ const c=cmpV(fw,hi); if(c==null) return "unk"; ok=ok&&(m.versionEndIncluding?c<=0:c<0) }
+    return ok?"aff":"not";
+  }
+  if(ver!=="*"&&ver!=="-"){ const c=cmpV(fw,ver); return c==null?"unk":c===0?"aff":"not" }
+  return "unk"; // listed as "all versions": can't rule it in or out from the version alone
+}
+function assessCve(c,re,fw,hw,brand){
+  const prods=[], statuses=[]; let fixedIn=null, fixedAfter=null, hwExcluded=false;
+  for(const cfg of c.configurations||[]){
+    const nodes=cfg.nodes||[], all=nodes.flatMap(n=>n.cpeMatch||[]);
+    const hwm=all.filter(m=>!m.vulnerable&&m.criteria.split(":")[2]==="h"&&re.test(m.criteria.split(":")[4].replace(/_/g," ")));
+    if(hw&&hwm.length){ const hv=numTokens(hw)[0]; const vers=hwm.map(m=>m.criteria.split(":")[5]);
+      if(hv!=null&&!vers.includes("*")&&!vers.some(v=>numTokens(v)[0]===hv)){ hwExcluded=true; continue } }
+    for(const m of all){ if(!m.vulnerable) continue; const prod=(m.criteria.split(":")[4]||"").replace(/_/g," ");
+      if(!re.test(prod)) continue; prods.push(prod); statuses.push(matchStatus(m,fw));
+      if(m.versionEndExcluding) fixedIn=m.versionEndExcluding; else if(m.versionEndIncluding) fixedAfter=m.versionEndIncluding }
+  }
+  const desc=((c.descriptions||[]).find(d=>d.lang==="en")||{}).value||"";
+  if(!prods.length&&(hwExcluded||!re.test(desc))) return null; // other hardware version, or not this model (e.g. C60 vs C6)
+  const st=statuses.includes("aff")?"aff":statuses.length&&statuses.every(x=>x==="not")?"not":"unk";
+  const mt=c.metrics||{}, pick=(mt.cvssMetricV40||mt.cvssMetricV31||mt.cvssMetricV30||[])[0], v2=(mt.cvssMetricV2||[])[0];
+  const score=pick?pick.cvssData.baseScore:v2?v2.cvssData.baseScore:null;
+  const sevRaw=(pick?pick.cvssData.baseSeverity:v2?v2.baseSeverity:"")||"";
+  const sev=sevRaw.toLowerCase()||(score>=9?"critical":score>=7?"high":score>=4?"medium":score?"low":"medium");
+  const cwes=(c.weaknesses||[]).flatMap(w=>(w.description||[]).map(d=>d.value)).filter(v=>/^CWE-\d+$/.test(v));
+  const av=pick?pick.cvssData.attackVector:v2?v2.cvssData.accessVector:null;
+  const good=["Vendor Advisory","Patch","Release Notes","Mitigation"];
+  // Only the router maker's own advisories/patch notes, never third-party write-ups or beta downloads.
+  const refs=(c.references||[]).filter(x=>(x.tags||[]).some(t=>good.includes(t))&&isOfficial(x.url,brand)).slice(0,3)
+    .map(x=>({url:x.url,label:(x.tags||[]).find(t=>good.includes(t))+" · "+(()=>{try{return new URL(x.url).hostname.replace(/^www\./,"")}catch{return "link"}})()}));
+  return {id:c.id,desc,score,sev:sev==="none"?"low":sev,kev:!!c.cisaExploitAdd,kevAction:c.cisaRequiredAction,st,fixedIn,fixedAfter,cwes,av,refs,published:(c.published||"").slice(0,10)};
+}
+async function nvdSearch(brand,model){
+  const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),25000);
+  try{ const r=await fetch(`https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=${encodeURIComponent(model)}&resultsPerPage=500`,{signal:ctl.signal,cache:"no-store"});
+    if(r.status===403||r.status===429) throw new Error("rate");
+    if(!r.ok) throw new Error("http "+r.status); return await r.json() }
+  finally{ clearTimeout(tm) }
+}
+let rtLast=null;
+async function runRouterCheck(){
+  rtSave();
+  const brand=$("rtBrand").value.trim(), model=$("rtModel").value.trim(), fw=$("rtFw").value.trim(), hw=$("rtHw").value.trim(), msg=$("rtMsg");
+  if(!model){ msg.textContent="Enter your router's model (it's on the label underneath)."; $("rtModel").focus(); return }
+  $("rtRun").disabled=true; msg.textContent="Checking the National Vulnerability Database…";
+  let cves=[], lookupFailed=false, total=0;
+  try{
+    const j=await nvdSearch(brand,model), re=modelRegex(model); total=j.totalResults||0;
+    cves=(j.vulnerabilities||[]).map(v=>assessCve(v.cve,re,fw,hw,brand)).filter(Boolean);
+  }catch(e){ lookupFailed=true }
+  // --- score ---
+  let score=100; const fixes=[];
+  const enc=ENC[$("rtEnc").value]; if(enc.w){ score-=enc.w; fixes.push({w:enc.w,sev:enc.w>=30?"critical":enc.w>=15?"high":"low",text:enc.fix,how:ENC_STEPS}) }
+  for(const q of RT_Q){ const a=rtAnswers[q.id]||"unsure"; if(a==="yes") continue; const w=RT_W[q.sev][a==="no"?0:1]; score-=w;
+    fixes.push({w,sev:q.sev,text:(a==="unsure"?"Check: ":"")+q.fix,how:RT_STEPS[q.id]}) }
+  const aff=cves.filter(c=>c.st==="aff"), unk=cves.filter(c=>c.st==="unk"), fixed=cves.filter(c=>c.st==="not");
+  const cw=c=>c.kev?25:{critical:15,high:10,medium:4,low:1}[c.sev]||4;
+  const dA=Math.min(50,aff.reduce((a,c)=>a+cw(c),0)), dU=Math.min(20,unk.reduce((a,c)=>a+cw(c)/2,0));
+  score-=dA+dU;
+  if(aff.length){ const fixTo=aff.map(c=>c.fixedIn).filter(Boolean).sort((a,b)=>cmpV(b,a)??0)[0];
+    fixes.push({w:100+dA,sev:aff.some(c=>c.kev)?"kev":"critical",how:RT_STEPS.fw,text:`Install the latest stable firmware: ${aff.length} known vulnerabilit${aff.length>1?"ies affect":"y affects"} version ${fw}${fixTo?`. Stable fixes start at ${fmtVer(fixTo)} or later`:""}. If no stable update exists, replace the router.`}) }
+  if(!fw&&cves.length) fixes.push({w:60,sev:"high",text:"Add your firmware version so each vulnerability can be checked against it."});
+  if(unk.length&&fw) fixes.push({w:20+dU,sev:"medium",how:{steps:[
+      "Open your router maker's security advisories page (search for the brand name plus \"security advisory\").",
+      "Search for your model and hardware version, and read each advisory's list of affected and fixed firmware.",
+      "Compare those versions with your firmware on the router's Status page.",
+      "If any advisory covers your version, or you can't tell, install the newest firmware for your hardware version."],
+      verify:"Each issue marked \"Can't confirm\" below is either covered by an update you've installed or listed as not affecting your version."},text:`${unk.length} issue${unk.length>1?"s":""} can't be confirmed from the version alone. Check the maker's security advisories for your model.`});
+  score=Math.max(0,Math.round(score));
+  const grade=score>=90?"A":score>=75?"B":score>=60?"C":score>=40?"D":"F";
+  rtLast={brand,model,hw,fw,score,grade,aff,unk,fixed,fixes,lookupFailed,total,when:new Date()};
+  renderRouterReport(); $("rtRun").disabled=false;
+  msg.textContent=lookupFailed?"Settings graded. The vulnerability lookup couldn't be reached; use the NVD link below.":"Done.";
+}
+const SEV_RANK={kev:5,critical:4,high:3,medium:2,low:1};
+const fixOrder=(a,b)=>(SEV_RANK[b.sev]-SEV_RANK[a.sev])||(b.w-a.w);
+function renderRouterReport(){
+  const r=rtLast; if(!r) return; $("rtReport").hidden=false;
+  const C=2*Math.PI*54, col=r.score>=75?"--good":r.score>=50?"--ok":"--bad";
+  $("rtArc").setAttribute("stroke-dasharray",`${(C*r.score/100).toFixed(1)} ${C.toFixed(1)}`); $("rtArc").setAttribute("stroke",css(col));
+  $("rtGrade").textContent=r.grade; $("rtScore").textContent=`${r.score}/100`;
+  const kev=r.aff.filter(c=>c.kev).length, name=[r.brand,r.model,r.hw].filter(Boolean).join(" ");
+  $("rtVerdict").innerHTML=r.lookupFailed
+    ?`Settings graded for <b>${esc(name)}</b>. The vulnerability database didn't respond from this browser, so known flaws are not included in the score.`
+    :`<b>${esc(name)}</b>${r.fw?` on firmware <b>${esc(r.fw)}</b>`:""}: ${r.aff.length?`<strong style="color:var(--bad)">${r.aff.length} known vulnerabilit${r.aff.length>1?"ies affect":"y affects"} your version</strong>${kev?`, ${kev} actively exploited`:""}.`:r.fw?"no known vulnerability matches your exact firmware version.":"add the firmware version to see which issues apply to you."}`;
+  $("rtCounts").innerHTML=r.lookupFailed?"":`<span class="sev aff">${r.aff.length} affect you</span><span class="sev unk">${r.unk.length} can't confirm</span><span class="sev not">${r.fixed.length} fixed in your version</span>`;
+  const top=[...r.fixes].sort(fixOrder);
+  const howHtml=h=>h?`<details class="fixbox"><summary>How to fix</summary><ol class="fixsteps">${h.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${h.verify?`<p class="verify"><b>Check it worked:</b> ${esc(h.verify)}</p>`:""}</details>`:"";
+  $("rtFixes").innerHTML=top.length?top.map(f=>`<li><span class="sev ${f.sev}">${f.sev==="kev"?"exploited":f.sev}</span><div><div>${esc(f.text)}</div>${howHtml(f.how)}</div></li>`).join(""):`<li><span class="sev not">ok</span><span>Nothing urgent. Keep firmware updated and re-run this check after each update.</span></li>`;
+  const nvdLink=`https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&search_type=all&query=${encodeURIComponent(r.model)}`;
+  const rank=c=>(c.kev?1000:0)+({aff:300,unk:200,not:0}[c.st])+(c.score||0);
+  const list=[...r.aff,...r.unk].sort((a,b)=>rank(b)-rank(a));
+  const card=c=>`<div class="cve"><div class="top"><a href="https://nvd.nist.gov/vuln/detail/${esc(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a>${c.kev?'<span class="sev kev">Actively exploited</span>':""}<span class="sev ${c.sev}">${c.sev}${c.score!=null?" "+c.score:""}</span><span class="sev ${c.st}">${{aff:"Affects your version",unk:"Can't confirm",not:"Fixed in your version"}[c.st]}</span><span class="note">${esc(c.published)}</span></div><p>${esc(c.desc.length>260?c.desc.slice(0,257)+"…":c.desc)}</p>${c.st==="not"?"":(()=>{const f=cveFix(c,r);
+    return `<details class="fixbox"${c.st==="aff"?" open":""}><summary>How to fix${f.what?` · ${esc(f.what)}`:""}</summary><ol class="fixsteps">${f.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${f.links.length?`<div class="fixlinks">${f.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>`:""}</details>`})()}</div>`;
+  $("rtCves").innerHTML=r.lookupFailed?`<p class="note">Open <a href="${nvdLink}" target="_blank" rel="noopener">NVD search for “${esc(r.model)}”</a> to review known issues manually.</p>`
+    :(list.length?list.slice(0,40).map(card).join(""):`<p class="note">No open issues found for “${esc(r.model)}”.</p>`)
+     +(r.fixed.length?`<details class="how"><summary>${r.fixed.length} older issue${r.fixed.length>1?"s":""} already fixed in your firmware</summary><div class="cves" style="margin-top:8px">${r.fixed.slice(0,40).map(card).join("")}</div></details>`:"")
+     +(list.length>40?`<p class="note">Showing 40 of ${list.length}. <a href="${nvdLink}" target="_blank" rel="noopener">See all on NVD</a>.</p>`:"");
+  $("rtSrc").textContent=`Source: NIST National Vulnerability Database (${r.total} records matched the search; filtered to your exact model). "Actively exploited" comes from CISA's Known Exploited Vulnerabilities list, as published in NVD. Checked ${r.when.toLocaleString()}. A clean result means no publicly recorded flaw matches; it is not a guarantee.`;
+}
+function copyRouterReport(){
+  const r=rtLast; if(!r) return;
+  const t=[`CleanSpeed router check · ${r.when.toLocaleString()}`,`${[r.brand,r.model,r.hw].filter(Boolean).join(" ")} · firmware ${r.fw||"not given"}`,`Score ${r.score}/100 (grade ${r.grade})`,
+    r.lookupFailed?"Vulnerability lookup unavailable.":`${r.aff.length} affect this version · ${r.unk.length} can't confirm · ${r.fixed.length} fixed`,"","Fix first:",
+    ...[...r.fixes].sort(fixOrder).flatMap((f,i)=>[`${i+1}. ${f.text}`,...(f.how?f.how.steps.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`):[])]),
+    "","Vulnerabilities and how to fix them:",
+    ...[...r.aff,...r.unk].flatMap(c=>{const f=cveFix(c,r); return [`${c.id}${c.kev?" [ACTIVELY EXPLOITED]":""} · ${c.sev} ${c.score??""} · ${c.st==="aff"?"affects your version":"can't confirm"}`,
+      ...f.steps.map((x,j)=>`   ${String.fromCharCode(97+j)}) ${x}`),...f.links.map(l=>`   ${l.url}`)]})].join("\n");
+  const fb=()=>{$("csv").value=t;$("csv").hidden=false;$("csv").select();$("rtMsg").textContent="Copy blocked; the report is in the text box under History."};
+  navigator.clipboard?navigator.clipboard.writeText(t).then(()=>$("rtMsg").textContent="Report copied.",fb):fb();
+}
+
+/* =================== Live network map & telemetry =================== */
+// Stylised continents (lon,lat), hand-simplified. Used only as a dotted backdrop; positions on it are exact.
+const LAND=[
+ [[-168,66],[-162,70],[-140,70],[-125,72],[-95,74],[-80,73],[-62,60],[-56,52],[-66,45],[-70,42],[-76,35],[-81,31],[-80,25],[-84,30],[-90,29],[-97,26],[-97,21],[-87,21],[-87,15],[-83,9],[-78,8],[-80,8],[-85,11],[-92,14],[-105,20],[-110,23],[-112,31],[-117,32],[-124,40],[-124,48],[-130,55],[-140,60],[-150,60],[-158,57],[-165,60]],
+ [[-73,78],[-60,82],[-30,83],[-20,76],[-22,70],[-40,64],[-50,61],[-55,68]],
+ [[-78,8],[-72,12],[-62,11],[-52,5],[-35,-6],[-39,-15],[-41,-22],[-48,-26],[-53,-34],[-58,-38],[-65,-41],[-66,-48],[-69,-52],[-74,-53],[-75,-47],[-73,-38],[-71,-30],[-70,-18],[-76,-14],[-81,-5],[-80,1]],
+ [[-9,37],[-9,43],[-1,46],[-5,48],[2,51],[9,54],[9,57],[5,61],[14,68],[26,71],[40,67],[60,70],[80,73],[105,78],[140,73],[160,70],[180,68],[180,65],[170,60],[160,58],[156,51],[142,53],[140,46],[132,43],[129,35],[122,31],[120,24],[110,20],[108,16],[109,11],[105,9],[103,1],[100,6],[98,9],[98,16],[94,17],[91,22],[87,21],[80,15],[77,8],[73,16],[72,21],[67,25],[62,25],[57,25],[59,23],[55,17],[52,16],[45,13],[43,13],[39,21],[35,28],[34,31],[36,35],[30,36],[27,37],[26,40],[23,37],[20,40],[15,45],[16,38],[12,42],[9,44],[3,43],[0,39],[-2,37],[-6,36]],
+ [[-17,21],[-13,27],[-10,30],[-6,36],[10,37],[11,33],[20,31],[32,31],[34,28],[38,18],[43,12],[51,12],[51,10],[42,-1],[40,-10],[40,-15],[35,-24],[32,-29],[27,-34],[20,-35],[18,-32],[15,-27],[12,-17],[13,-6],[9,-1],[9,4],[5,6],[-4,5],[-8,4],[-13,8],[-17,14]],
+ [[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+ [[114,-22],[114,-34],[118,-35],[124,-34],[132,-32],[138,-35],[141,-38],[150,-37],[153,-29],[153,-25],[146,-19],[142,-11],[141,-17],[136,-12],[130,-12],[126,-14],[122,-18]],
+ [[-5,50],[1,51],[2,53],[-2,56],[-2,58],[-5,58],[-6,56],[-5,54],[-3,53],[-5,51]],[[-10,52],[-6,52],[-6,55],[-9,55]],
+ [[130,31],[132,34],[136,35],[140,36],[142,40],[141,42],[145,44],[141,45],[140,42],[139,38],[136,37],[133,36],[130,34]],
+ [[95,5],[98,4],[104,-2],[106,-6],[102,-4],[97,1]],[[105,-6],[114,-8],[106,-7]],[[109,1],[110,-3],[116,-4],[119,1],[117,7],[113,4]],
+ [[131,-1],[141,-3],[150,-10],[141,-9],[137,-5]],[[120,18],[122,18],[126,7],[125,6],[122,8],[120,13]],[[80,10],[82,7],[81,6],[80,6]],
+ [[172,-35],[178,-38],[174,-42],[167,-46],[170,-45],[173,-41]],[[-24,65],[-14,66],[-14,64],[-22,63]]
+];
+const LAT_TOP=80, LAT_BOT=-58;
+let VIEW=null; // fitted window: {lon0,lat1,ppd}; set per frame size and route
+const proj=(lon,lat)=>[(lon-VIEW.lon0)*VIEW.ppd,(VIEW.lat1-lat)*VIEW.ppd];
+function fitView(W,H,pts){
+  let lo0=-180,lo1=180,la0=LAT_BOT,la1=LAT_TOP;
+  if(pts.length){ lo0=Math.min(...pts.map(p=>p.lon))-28; lo1=Math.max(...pts.map(p=>p.lon))+28; la0=Math.min(...pts.map(p=>p.lat))-16; la1=Math.max(...pts.map(p=>p.lat))+18;
+    if(lo1-lo0<80){ const c=(lo0+lo1)/2; lo0=c-40; lo1=c+40 } }
+  let ppd=Math.min(W/(lo1-lo0),H/(la1-la0)); // same scale both ways, then grow the short side to fill the frame
+  const cl=(lo0+lo1)/2, ca=(la0+la1)/2, spanLo=W/ppd, spanLa=H/ppd;
+  let lon0=Math.max(-180,Math.min(180-spanLo,cl-spanLo/2)); if(spanLo>=360) lon0=-180-(spanLo-360)/2;
+  let lat1=Math.min(LAT_TOP+10,Math.max(LAT_BOT-10+spanLa,ca+spanLa/2));
+  return {lon0,lat1,ppd};
+}
+function inPoly(x,y,poly){ let c=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const [xi,yi]=poly[i],[xj,yj]=poly[j];
+  if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi)) c=!c } return c }
+function landDots(W,H,u){ // dot spacing ≈ 8 css px at any zoom
+  const step=Math.max(0.6,8*u/VIEW.ppd), d=[], lonEnd=VIEW.lon0+W/VIEW.ppd, latEnd=VIEW.lat1-H/VIEW.ppd;
+  for(let lat=VIEW.lat1;lat>latEnd;lat-=step) for(let lon=VIEW.lon0;lon<lonEnd;lon+=step) if(LAND.some(p=>inPoly(lon,lat,p))) d.push([lon,lat]);
+  return d;
+}
+
+// Where things are. Time-zone guesses use a country-level point when the zone spans a big country.
+const TZ_LOC={"Asia/Kolkata":[20.6,78.9,"India"],"Asia/Calcutta":[20.6,78.9,"India"],"Asia/Dubai":[25.2,55.3,"Dubai"],"Asia/Singapore":[1.35,103.8,"Singapore"],"Asia/Tokyo":[35.7,139.7,"Tokyo"],
+ "Asia/Shanghai":[31.2,121.5,"China"],"Asia/Hong_Kong":[22.3,114.2,"Hong Kong"],"Asia/Seoul":[37.6,127,"Seoul"],"Asia/Jakarta":[-6.2,106.8,"Jakarta"],"Asia/Karachi":[24.9,67,"Pakistan"],
+ "Asia/Dhaka":[23.8,90.4,"Dhaka"],"Asia/Colombo":[6.9,79.9,"Sri Lanka"],"Asia/Kathmandu":[27.7,85.3,"Kathmandu"],"Asia/Bangkok":[13.75,100.5,"Bangkok"],"Asia/Manila":[14.6,121,"Manila"],
+ "Asia/Riyadh":[24.7,46.7,"Riyadh"],"Asia/Tehran":[35.7,51.4,"Tehran"],"Asia/Kuala_Lumpur":[3.14,101.7,"Kuala Lumpur"],"Asia/Qatar":[25.3,51.5,"Doha"],
+ "Europe/London":[51.5,-0.1,"London"],"Europe/Paris":[48.86,2.35,"Paris"],"Europe/Berlin":[52.5,13.4,"Berlin"],"Europe/Madrid":[40.4,-3.7,"Madrid"],"Europe/Rome":[41.9,12.5,"Rome"],
+ "Europe/Amsterdam":[52.37,4.9,"Amsterdam"],"Europe/Moscow":[55.75,37.6,"Moscow"],"Europe/Istanbul":[41,29,"Istanbul"],"Africa/Cairo":[30,31.2,"Cairo"],"Africa/Lagos":[6.5,3.4,"Lagos"],
+ "Africa/Nairobi":[-1.3,36.8,"Nairobi"],"Africa/Johannesburg":[-26.2,28,"Johannesburg"],"America/New_York":[40.7,-74,"New York"],"America/Chicago":[41.9,-87.6,"Chicago"],
+ "America/Denver":[39.7,-105,"Denver"],"America/Los_Angeles":[34,-118.2,"Los Angeles"],"America/Toronto":[43.65,-79.4,"Toronto"],"America/Mexico_City":[19.4,-99.1,"Mexico City"],
+ "America/Sao_Paulo":[-23.5,-46.6,"São Paulo"],"America/Argentina/Buenos_Aires":[-34.6,-58.4,"Buenos Aires"],"Australia/Sydney":[-33.9,151.2,"Sydney"],
+ "Australia/Melbourne":[-37.8,145,"Melbourne"],"Australia/Perth":[-31.95,115.9,"Perth"],"Pacific/Auckland":[-36.85,174.8,"Auckland"]};
+// Airport codes in M-Lab machine names (e.g. mlab1-maa02 → Chennai) and city names in LibreSpeed server names.
+const IATA=Object.fromEntries(`maa 13.08 80.27 Chennai|bom 19.08 72.88 Mumbai|del 28.61 77.21 Delhi|blr 12.97 77.59 Bengaluru|hyd 17.39 78.49 Hyderabad|ccu 22.57 88.36 Kolkata|sin 1.35 103.82 Singapore|hkg 22.32 114.17 Hong Kong|tpe 25.03 121.56 Taipei|nrt 35.68 139.69 Tokyo|hnd 35.68 139.69 Tokyo|tyo 35.68 139.69 Tokyo|kix 34.69 135.5 Osaka|icn 37.57 126.98 Seoul|syd -33.87 151.21 Sydney|mel -37.81 144.96 Melbourne|akl -36.85 174.76 Auckland|bkk 13.75 100.5 Bangkok|kul 3.14 101.69 Kuala Lumpur|cgk -6.2 106.85 Jakarta|mnl 14.6 120.98 Manila|dxb 25.2 55.27 Dubai|doh 25.29 51.53 Doha|bah 26.23 50.58 Bahrain|tlv 32.08 34.78 Tel Aviv|ist 41.01 28.98 Istanbul|jnb -26.2 28.05 Johannesburg|cpt -33.92 18.42 Cape Town|nbo -1.29 36.82 Nairobi|los 6.52 3.38 Lagos|cai 30.04 31.24 Cairo|tun 36.8 10.18 Tunis|lhr 51.51 -0.13 London|lon 51.51 -0.13 London|ams 52.37 4.9 Amsterdam|fra 50.11 8.68 Frankfurt|cdg 48.86 2.35 Paris|par 48.86 2.35 Paris|mad 40.42 -3.7 Madrid|lis 38.72 -9.14 Lisbon|mil 45.46 9.19 Milan|mxp 45.46 9.19 Milan|fco 41.9 12.5 Rome|vie 48.21 16.37 Vienna|prg 50.08 14.44 Prague|waw 52.23 21.01 Warsaw|arn 59.33 18.07 Stockholm|cph 55.68 12.57 Copenhagen|osl 59.91 10.75 Oslo|hel 60.17 24.94 Helsinki|dub 53.35 -6.26 Dublin|ath 37.98 23.73 Athens|svo 55.76 37.62 Moscow|lga 40.71 -74.01 New York|jfk 40.71 -74.01 New York|ewr 40.71 -74.01 New York|nyc 40.71 -74.01 New York|iad 38.9 -77.04 Washington|was 38.9 -77.04 Washington|atl 33.75 -84.39 Atlanta|mia 25.76 -80.19 Miami|ord 41.88 -87.63 Chicago|chi 41.88 -87.63 Chicago|dfw 32.78 -96.8 Dallas|iah 29.76 -95.37 Houston|den 39.74 -104.99 Denver|lax 34.05 -118.24 Los Angeles|sjc 37.34 -121.89 San Jose|sfo 37.77 -122.42 San Francisco|sea 47.61 -122.33 Seattle|pdx 45.52 -122.68 Portland|phx 33.45 -112.07 Phoenix|slc 40.76 -111.89 Salt Lake City|msp 44.98 -93.27 Minneapolis|bos 42.36 -71.06 Boston|yyz 43.65 -79.38 Toronto|yul 45.5 -73.57 Montreal|yvr 49.28 -123.12 Vancouver|gru -23.55 -46.63 São Paulo|scl -33.45 -70.67 Santiago|bog 4.71 -74.07 Bogotá|eze -34.6 -58.38 Buenos Aires|mex 19.43 -99.13 Mexico City|lim -12.05 -77.04 Lima`
+ .split("|").map(r=>{const p=r.split(" "); return [p[0],[+p[1],+p[2],p.slice(3).join(" ")]]}));
+const CITY=Object.fromEntries(`Roma 41.9 12.5|Rome 41.9 12.5|London 51.51 -0.13|Frankfurt 50.11 8.68|Amsterdam 52.37 4.9|New York 40.71 -74.01|Atlanta 33.75 -84.39|Los Angeles 34.05 -118.24|Poznan 52.41 16.93|Prague 50.08 14.44|Tokyo 35.68 139.69|Las Vegas 36.17 -115.14|Denver 39.74 -104.99|Chicago 41.88 -87.63|Grand Rapids 42.96 -85.67|Helsinki 60.17 24.94|Novi Sad 45.27 19.83|Argalasti 39.23 23.22|Belgrade 44.8 20.46|Paris 48.86 2.35|Madrid 40.42 -3.7|Milan 45.46 9.19|Vienna 48.21 16.37|Warsaw 52.23 21.01|Stockholm 59.33 18.07|Oslo 59.91 10.75|Zurich 47.38 8.54|Singapore 1.35 103.82|Mumbai 19.08 72.88|Chennai 13.08 80.27|Delhi 28.61 77.21|Dallas 32.78 -96.8|Miami 25.76 -80.19|Seattle 47.61 -122.33|Toronto 43.65 -79.38|Sydney -33.87 151.21|Hong Kong 22.32 114.17`
+ .split("|").map(r=>{const p=r.split(" "); return [p.slice(0,-2).join(" "),[+p[p.length-2],+p[p.length-1]]]}));
+function youLoc(){
+  const g=store.get("geo",null); if(g&&g.src) return {lat:g.lat,lon:g.lon,label:g.src==="device"?"You (device location)":"You (from IP lookup)",exact:g.src==="device"};
+  const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||"", z=TZ_LOC[tz];
+  return z?{lat:z[0],lon:z[1],label:`You (approx. · ${z[2]} time zone)`,exact:false}:null;
+}
+function serverLoc(s,loc){
+  if(!s) return null;
+  if(s.kind==="ndt7"&&loc){ const m=(loc.machine||"").match(/mlab\d-([a-z]{3})\d/i), c=m&&IATA[m[1].toLowerCase()]; if(c) return {lat:c[0],lon:c[1],label:`M-Lab · ${c[2]}`} ; return null }
+  if(s.id==="cf") return {near:true,label:"Cloudflare · nearest city"};
+  const k=Object.keys(CITY).find(n=>s.name.includes(n)); if(k) return {lat:CITY[k][0],lon:CITY[k][1],label:s.name.replace(/\s*\(.*\)/,"")};
+  return null;
+}
+const hav=(a,b)=>{ const R=6371, r=Math.PI/180, dLa=(b.lat-a.lat)*r, dLo=(b.lon-a.lon)*r;
+  return 2*R*Math.asin(Math.sqrt(Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2)) };
+
+let tel={on:false,t0:0,phase:"idle",rates:[],pings:[],bytes:{down:0,up:0},cur:{down:0,up:0,ping:NaN},you:null,srv:null,phases:[]};
+function telStart(){ tel={on:true,t0:performance.now(),phase:"ping",rates:[],pings:[],bytes:{down:0,up:0},cur:{down:0,up:0,ping:NaN},you:youLoc(),srv:null,phases:[{p:"ping",t:0}]};
+  $("lvBadge").classList.add("live"); $("lvState").textContent="Live · ping"; mapKick(); telDraw() }
+function telServer(s,loc){ tel.srv=serverLoc(s,loc); tel.srvName=s.name; mapBase=null; routeText(null) }
+function telPhase(p){ if(!tel.on) return; tel.phase=p; tel.phases.push({p,t:(performance.now()-tel.t0)/1000}); $("lvState").textContent="Live · "+({ping:"ping",down:"download",up:"upload"}[p]||p); if(p!=="down") tel.cur.down=0 }
+function telRate(dir,r){ if(!tel.on) return; tel.cur[dir]=r; tel.rates.push({t:(performance.now()-tel.t0)/1000,dir,r}); telDraw() }
+function telPing(ms){ if(!tel.on||!fin(ms)) return; tel.cur.ping=ms; tel.pings.push({t:(performance.now()-tel.t0)/1000,ms}); }
+function telEnd(ok,res){
+  tel.on=false; tel.phase="done"; tel.cur.down=tel.cur.up=0; if(res&&fin(res.ping)) tel.cur.ping=res.ping; $("lvBadge").classList.remove("live");
+  $("lvState").textContent=ok?`Last test · ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`:"Stopped";
+  telDraw(); routeText(res);
+}
+function mb(b){ return b>=1e9?(b/1e9).toFixed(2)+" GB":(b/1e6).toFixed(b>=1e8?0:1)+" MB" }
+function telDraw(){
+  $("lvDown").textContent=tel.cur.down?fmt(tel.cur.down)+" "+unitLabel():"—"; $("lvUp").textContent=tel.cur.up?fmt(tel.cur.up)+" "+unitLabel():"—";
+  $("lvPing").textContent=fin(tel.cur.ping)?tel.cur.ping.toFixed(0)+" ms":"—";
+  document.querySelector("#lvPing").previousElementSibling.textContent=tel.on?"Ping now":"Ping (idle)";
+  $("lvBD").textContent=mb(tel.bytes.down); $("lvBU").textContent=mb(tel.bytes.up);
+  $("lvTime").textContent=tel.t0?((tel.on?(performance.now()-tel.t0):(tel.rates.length?tel.rates[tel.rates.length-1].t*1000:0))/1000).toFixed(0)+" s":"0 s";
+  const c=$("tele"), x=c.getContext("2d"), W=c.width, H=c.height, L=80, R=70, T=26, B=36; x.clearRect(0,0,W,H);
+  x.font=`500 19px ${css("--mono")}`; x.fillStyle=css("--muted"); x.textBaseline="middle";
+  const tmax=Math.max(10,...tel.rates.map(p=>p.t),...tel.pings.map(p=>p.t));
+  if(!tel.rates.length&&!tel.pings.length){ x.textAlign="center"; x.fillText("Live data appears here during a test",W/2,H/2); return }
+  const vmax=Math.max(1e-9,...tel.rates.map(p=>conv(p.r)))*1.12, pmax=Math.max(20,...tel.pings.map(p=>p.ms))*1.2;
+  const px=t=>L+(W-L-R)*t/tmax, py=v=>T+(H-T-B)*(1-v/vmax), pp=v=>T+(H-T-B)*(1-v/pmax);
+  // phase bands
+  tel.phases.forEach((ph,i)=>{ const x0=px(ph.t), x1=px(i+1<tel.phases.length?tel.phases[i+1].t:tmax);
+    x.fillStyle=i%2?"rgba(127,127,127,.06)":"rgba(127,127,127,.0)"; x.fillRect(x0,T,x1-x0,H-T-B);
+    x.fillStyle=css("--muted"); x.textAlign="left"; x.fillText({ping:"Ping",down:"Download",up:"Upload"}[ph.p]||"",x0+6,T-12) });
+  x.strokeStyle=css("--track"); x.lineWidth=1;
+  for(let i=0;i<=3;i++){ const y=T+(H-T-B)*i/3; x.beginPath(); x.moveTo(L,y); x.lineTo(W-R,y); x.stroke();
+    x.textAlign="right"; x.fillText(fmtNum(vmax*(1-i/3)),L-10,y); x.textAlign="left"; x.fillStyle=css("--ok"); x.fillText((pmax*(1-i/3)).toFixed(0),W-R+8,y); x.fillStyle=css("--muted") }
+  x.textAlign="center"; for(let s=0;s<=tmax;s+=tmax>40?10:5) x.fillText(s+"s",px(s),H-14);
+  for(const [dir,col] of [["down","--down"],["up","--up"]]){ const pts=tel.rates.filter(p=>p.dir===dir); if(pts.length<2) continue; const cc=css(col);
+    x.beginPath(); pts.forEach((p,i)=>i?x.lineTo(px(p.t),py(conv(p.r))):x.moveTo(px(p.t),py(conv(p.r))));
+    x.strokeStyle=cc; x.lineWidth=3.5; x.stroke();
+    x.lineTo(px(pts[pts.length-1].t),py(0)); x.lineTo(px(pts[0].t),py(0)); x.closePath(); x.fillStyle=cc+"30"; x.fill() }
+  if(tel.pings.length){ x.fillStyle=css("--ok"); for(const p of tel.pings){ x.beginPath(); x.arc(px(p.t),pp(p.ms),4,0,Math.PI*2); x.fill() } }
+}
+function routeText(res){
+  const y=tel.you, s=tel.srv, el=$("lvRoute");
+  if(!y){ el.textContent="Your time zone isn't in the built-in list. Tap \"Use precise location\" to place yourself on the map."; return }
+  if(!s){ el.textContent=`Server: ${tel.srvName||"unknown"}. Its location isn't published, so no route is drawn.`; return }
+  if(s.near){ el.textContent="Cloudflare answers from its data centre closest to you, so the route is short. It doesn't tell web pages which city that is."; return }
+  const d=hav(y,s), light=2*d/200; // light in optical fibre ≈ 200 km per millisecond
+  const ping=res&&fin(res.ping)?res.ping:NaN;
+  el.innerHTML=`Route ≈ <b>${Math.round(d).toLocaleString()} km</b> to ${esc(s.label)}${y.exact?"":" (from your approximate position)"}. Light in optical fibre needs at least <b>${light.toFixed(0)} ms</b> for that round trip`+
+    (fin(ping)?`; you measured <b>${ping.toFixed(0)} ms</b>`+(ping>=light?`, so about ${(ping-light).toFixed(0)} ms is routing detours, Wi-Fi and processing.`
+      :`. That's faster than light could cover this distance, so your real position${y.exact?"":" (estimated from your time zone)"} or the server's is closer than shown${y.exact?"":". Tap \"Use precise location\" for an exact route"}.`):".")+
+    (d>3000?" A closer server would give higher speeds and lower ping.":"");
+}
+
+/* ---- map rendering: static dots cached; arc and particles drawn at ≤30 fps ---- */
+let mapBase=null, mapBaseTheme="", parts=[], mapRaf=0, mapLast=0;
+function drawMapBase(W,H,u){
+  const off=document.createElement("canvas"); off.width=W; off.height=H; const x=off.getContext("2d");
+  x.fillStyle=css("--muted"); x.globalAlpha=.34;
+  for(const [lon,lat] of landDots(W,H,u)){ const [X,Y]=proj(lon,lat); x.beginPath(); x.arc(X,Y,1.6*u,0,Math.PI*2); x.fill() }
+  x.globalAlpha=.12; x.strokeStyle=css("--muted"); x.lineWidth=u;
+  for(let lat=60;lat>=-40;lat-=20){ const y=proj(0,lat)[1]; if(y>0&&y<H){ x.beginPath(); x.moveTo(0,y); x.lineTo(W,y); x.stroke() } }
+  return off;
+}
+function glow(x,X,Y,r,col){ const g=x.createRadialGradient(X,Y,0,X,Y,r); g.addColorStop(0,col); g.addColorStop(1,col+"00"); x.fillStyle=g; x.beginPath(); x.arc(X,Y,r,0,Math.PI*2); x.fill() }
+function arcPt(a,b,c,t){ const u=1-t; return [u*u*a[0]+2*u*t*c[0]+t*t*b[0], u*u*a[1]+2*u*t*c[1]+t*t*b[1]] }
+function drawMap(ts){
+  const c=$("map"), u=Math.min(2,window.devicePixelRatio||1), W=Math.max(1,Math.round(c.clientWidth*u)), H=Math.max(1,Math.round(c.clientHeight*u));
+  if(c.width!==W||c.height!==H){ c.width=W; c.height=H; mapBase=null }
+  const x=c.getContext("2d"), y=tel.you||youLoc(), s=tel.srv;
+  const pts=[y,s&&!s.near?s:null].filter(Boolean), key=[W,H,document.documentElement.dataset.theme,matchMedia("(prefers-color-scheme: dark)").matches,JSON.stringify(pts.map(p=>[p.lat,p.lon]))].join("|");
+  if(!mapBase||mapBaseTheme!==key){ VIEW=fitView(W,H,pts); mapBase=drawMapBase(W,H,u); mapBaseTheme=key }
+  x.clearRect(0,0,W,H); x.drawImage(mapBase,0,0);
+  const cYou=css("--you"), cSrv=css("--accent"), anim=$("lvAnim").checked, t=ts/1000;
+  const label=(txt,X,Yp,dy)=>{ x.font=`600 ${12*u}px ${css("--body")}`; const w=x.measureText(txt).width, right=X+14*u+w>W-6*u;
+    const lx=right?X-14*u-w:X+14*u, ly=Math.min(H-8*u,Math.max(14*u,Yp+dy));
+    x.fillStyle=css("--glass-strong"); x.globalAlpha=.85; x.fillRect(lx-4*u,ly-10*u,w+8*u,16*u); x.globalAlpha=1;
+    x.fillStyle=css("--ink"); x.textAlign="left"; x.textBaseline="middle"; x.fillText(txt,lx,ly-2*u) };
+  if(!y){ x.fillStyle=css("--muted"); x.font=`500 ${12*u}px ${css("--mono")}`; x.textAlign="center"; x.fillText("Tap \"Use precise location\" to place yourself",W/2,H/2); return }
+  const Y=proj(y.lon,y.lat); let S=null; if(s&&!s.near) S=proj(s.lon,s.lat);
+  const rate=tel.phase==="up"?tel.cur.up:tel.cur.down, lvl=rate>0?Math.min(1,Math.log10(1+bpsToMbps(rate))/3):0; // 0..1 across 1 Mbps–1 Gbps
+  if(S&&Math.hypot(S[0]-Y[0],S[1]-Y[1])>24*u){
+    const mid=[(S[0]+Y[0])/2,(S[1]+Y[1])/2], dist=Math.hypot(S[0]-Y[0],S[1]-Y[1]), C=[mid[0],Math.max(10*u,mid[1]-dist*0.3)];
+    x.strokeStyle=css("--muted"); x.globalAlpha=.6; x.lineWidth=1.5*u; x.setLineDash([4*u,5*u]); x.beginPath(); x.moveTo(S[0],S[1]); x.quadraticCurveTo(C[0],C[1],Y[0],Y[1]); x.stroke(); x.setLineDash([]); x.globalAlpha=1;
+    if(tel.on&&anim&&(tel.phase==="down"||tel.phase==="up")){
+      if(parts.length<10+lvl*40&&Math.random()<0.25+lvl) parts.push({t:0,v:0.004+0.012*lvl+Math.random()*0.004});
+      const col=tel.phase==="down"?css("--down"):css("--up");
+      parts=parts.filter(p=>(p.t+=p.v)<1);
+      for(const p of parts){ const q=tel.phase==="down"?arcPt(S,Y,C,p.t):arcPt(Y,S,C,p.t); glow(x,q[0],q[1],7*u,col); x.fillStyle="#fff"; x.beginPath(); x.arc(q[0],q[1],1.6*u,0,Math.PI*2); x.fill() }
+    } else if(tel.on&&anim&&tel.phase==="ping"){
+      const k=(t*0.8)%1; for(const q of [arcPt(S,Y,C,k),arcPt(Y,S,C,k)]) glow(x,q[0],q[1],8*u,css("--ok"));
+    } else parts=[];
+    glow(x,S[0],S[1],16*u,cSrv); x.fillStyle=cSrv; x.beginPath(); x.arc(S[0],S[1],4.5*u,0,Math.PI*2); x.fill();
+    label(s.label,S[0],S[1],-12*u);
+  } else if(tel.on&&anim){ // server near you (Cloudflare) or location unknown: pulses around you
+    const col=tel.phase==="up"?css("--up"):tel.phase==="down"?css("--down"):css("--ok");
+    for(let i=0;i<3;i++){ const k=((t*(0.6+lvl))+i/3)%1; x.strokeStyle=col; x.globalAlpha=1-k; x.lineWidth=2*u; x.beginPath(); x.arc(Y[0],Y[1],6*u+k*45*u,0,Math.PI*2); x.stroke() } x.globalAlpha=1;
+  }
+  glow(x,Y[0],Y[1],18*u,cYou); x.fillStyle=cYou; x.beginPath(); x.arc(Y[0],Y[1],5*u,0,Math.PI*2); x.fill(); x.strokeStyle="#fff"; x.lineWidth=1.5*u; x.stroke();
+  label(y.label,Y[0],Y[1],S&&S[1]<Y[1]?16*u:-12*u);
+  if(s&&s.near) label(s.label,Y[0],Y[1],32*u);
+}
+function mapLoop(ts){
+  mapRaf=0; if(ts-mapLast>=33){ drawMap(ts); mapLast=ts }
+  if(tel.on||parts.length) mapRaf=requestAnimationFrame(mapLoop);
+}
+function mapKick(){ if(!mapRaf) mapRaf=requestAnimationFrame(mapLoop) }
+function locate(){
+  if(!navigator.geolocation){ $("lvRoute").textContent="This browser can't share location."; return }
+  $("lvLocate").disabled=true; $("lvRoute").textContent="Waiting for location permission…";
+  navigator.geolocation.getCurrentPosition(p=>{ const g={lat:+p.coords.latitude.toFixed(2),lon:+p.coords.longitude.toFixed(2),src:"device"}; store.set("geo",g);
+      $("lvLocate").disabled=false; $("lvLocate").textContent="Location set"; tel.you=youLoc(); mapBase=null; drawMap(performance.now()); $("lvRoute").textContent="Location saved on this device only (rounded to about 1 km)." },
+    e=>{ $("lvLocate").disabled=false; $("lvRoute").textContent=e.code===1?"Location permission was declined; the map uses your time zone instead.":"Couldn't get your location; the map uses your time zone instead." },
+    {enableHighAccuracy:false,timeout:10000,maximumAge:600000});
+}
+
+/* =================== Toolkit =================== */
+const TICON={
+ speed:'<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-5"/>',
+ router:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+ ping:'<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+ dns:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/>',
+ ip:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+ calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12v5M8 16h2M12 16h2"/>',
+ pw:'<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l2 2M15 8l2 2"/>',
+ mac:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>',
+ subnet:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ compare:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'
+};
+const TOOLS=[["speed","Speed test","Download · upload · ping"],["router","Router security","Flaws & settings"],["ping","Ping monitor","Latency, loss, outages"],
+ ["dns","DNS benchmark","Fastest DNS for you"],["ip","My IP & ISP","IPv6, VPN, relay check"],["calc","Data calculator","Download time, data use"],
+ ["pw","Wi-Fi password","Generate & test strength"],["mac","Device lookup","Who made that device?"],["subnet","Subnet calculator","Ranges, masks, CGNAT"],["compare","Global compare","You vs the world"]];
+function renderToolGrid(){ $("toolGrid").innerHTML=TOOLS.map(([id,n,d])=>`<button class="tile2" data-tool="${id}" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true">${TICON[id]}</svg><span><b>${n}</b><small>${d}</small></span></button>`).join("") }
+function openTool(id){
+  if(id==="speed"){ window.scrollTo({top:0,behavior:"smooth"}); setTimeout(()=>$("go").focus({preventScroll:true}),400); return }
+  if(id==="router"){ $("rtOpen").click(); return }
+  if(id==="compare"){ document.querySelector("section[aria-label='Global comparison']").scrollIntoView({behavior:"smooth",block:"start"}); return }
+  $("toolBody").hidden=false;
+  document.querySelectorAll(".tool").forEach(t=>t.hidden=t.dataset.tool!==id);
+  document.querySelectorAll(".tile2").forEach(t=>t.setAttribute("aria-pressed",t.dataset.tool===id));
+  if(id==="calc") calcInit(); if(id==="subnet") snRender(); if(id==="pw"&&!$("pwOut").textContent) pwGenerate(); if(id==="ping") pmRender();
+  $("toolBody").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function fetchJSON(url,ms=6000){ const c=new AbortController(), t=setTimeout(()=>c.abort(),ms);
+  try{ const r=await fetch(url,{signal:c.signal,cache:"no-store"}); return r.ok?await r.json():null }catch{ return null }finally{ clearTimeout(t) } }
+
+/* ---- Ping & outage monitor ---- */
+const PM_T={cf:()=>"https://1.1.1.1/cdn-cgi/trace?r="+nonce(), google:()=>"https://www.google.com/generate_204?r="+nonce(),
+  server:()=>{ const s=selected==="auto"?CLOUDFLARE:byId(selected); return (s&&s.kind==="http"?s:CLOUDFLARE).ping() }};
+let pm={on:false,timer:null,samples:[],sent:0,lost:0,streak:0,outages:[],outStart:null};
+function pmStop(){ pm.on=false; clearTimeout(pm.timer); $("pmStart").textContent="Start monitoring" }
+async function pmTick(){
+  if(!pm.on) return; const t0=performance.now(); pm.sent++; let ms=null;
+  try{ ms=await pingURL(PM_T[$("pmTarget").value](),2000) }catch{}
+  if(!pm.on) return; const now=Date.now();
+  if(ms==null){ pm.lost++; pm.streak++; if(pm.streak===3) pm.outStart=now-2000 }
+  else { if(pm.outStart){ pm.outages.unshift({start:pm.outStart,end:now}) } pm.outStart=null; pm.streak=0 }
+  pm.samples.push({t:now,ms}); if(pm.samples.length>300) pm.samples.shift();
+  pmRender(); pm.timer=setTimeout(pmTick,Math.max(0,1000-(performance.now()-t0)));
+}
+function pmRender(){
+  const ok=pm.samples.map(x=>x.ms).filter(v=>v!=null), f=v=>fin(v)?v.toFixed(0)+" ms":"—";
+  const last=pm.samples[pm.samples.length-1];
+  $("pmNow").textContent=last?(last.ms==null?"lost":f(last.ms)):"—";
+  $("pmAvg").textContent=ok.length?f(ok.reduce((a,b)=>a+b,0)/ok.length):"—";
+  $("pmMinMax").textContent=ok.length?`${Math.min(...ok).toFixed(0)} / ${Math.max(...ok).toFixed(0)}`:"—";
+  $("pmJit").textContent=ok.length>1?f(ok.slice(1).reduce((a,v,i)=>a+Math.abs(v-ok[i]),0)/(ok.length-1)):"—";
+  $("pmLoss").textContent=pm.sent?(100*pm.lost/pm.sent).toFixed(1)+"%":"—";
+  $("pmOut").textContent=pm.outages.length+(pm.outStart?" + now":"");
+  $("pmLog").innerHTML=(pm.outStart?`<div style="color:var(--bad)">Connection down since ${new Date(pm.outStart).toLocaleTimeString()}</div>`:"")+
+    pm.outages.slice(0,10).map(o=>`<div>Dropped at ${new Date(o.start).toLocaleTimeString()} for ${Math.round((o.end-o.start)/1000)} s</div>`).join("")||(pm.sent?"No dropouts so far.":"");
+  const c=$("pmChart"), x=c.getContext("2d"), W=c.width, H=c.height, L=70, B=20; x.clearRect(0,0,W,H);
+  x.font=`500 20px ${css("--mono")}`; x.fillStyle=css("--muted"); x.textBaseline="middle";
+  if(!pm.samples.length){ x.textAlign="center"; x.fillText("Press Start to begin",W/2,H/2); return }
+  const slots=Math.min(300,Math.max(60,pm.samples.length)), m=Math.max(50,...ok)*1.15, py=v=>10+(H-10-B)*(1-v/m), step=(W-L-10)/(slots-1);
+  x.strokeStyle=css("--track"); x.lineWidth=1; x.textAlign="right";
+  for(let i=0;i<=3;i++){ const v=m*i/3, y=py(v); x.beginPath(); x.moveTo(L,y); x.lineTo(W-10,y); x.stroke(); x.fillText(v.toFixed(0),L-10,y) }
+  const off=slots-pm.samples.length;
+  pm.samples.forEach((sm,i)=>{ const X=L+(off+i)*step; if(sm.ms==null){ x.fillStyle=css("--bad"); x.fillRect(X-1,10,3,H-10-B) } });
+  x.beginPath(); let started=false;
+  pm.samples.forEach((sm,i)=>{ if(sm.ms==null){ started=false; return } const X=L+(off+i)*step, Y=py(sm.ms); started?x.lineTo(X,Y):x.moveTo(X,Y); started=true });
+  x.save(); x.shadowColor=css("--down"); x.shadowBlur=10; x.strokeStyle=css("--down"); x.lineWidth=3; x.stroke(); x.restore();
+}
+
+/* ---- DNS benchmark ---- */
+function dnsWire(name){ // RFC 8484 GET: a minimal A query, base64url without padding
+  const b=[0,0,1,0,0,1,0,0,0,0,0,0]; for(const l of name.split(".")){ b.push(l.length); for(const ch of l) b.push(ch.charCodeAt(0)) } b.push(0,0,1,0,1);
+  return btoa(String.fromCharCode(...b)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+const DNS_PROV=[
+ {name:"Cloudflare",ips:"1.1.1.1 and 1.0.0.1",alt:"Malware-blocking version: 1.1.1.2 and 1.0.0.2",url:n=>`https://cloudflare-dns.com/dns-query?dns=${dnsWire(n)}`},
+ {name:"Google Public DNS",ips:"8.8.8.8 and 8.8.4.4",url:n=>`https://dns.google/dns-query?dns=${dnsWire(n)}`},
+ {name:"Quad9",ips:"9.9.9.9 and 149.112.112.112",alt:"Blocks known malicious domains",url:n=>`https://dns.quad9.net/dns-query?dns=${dnsWire(n)}`},
+ {name:"AdGuard DNS",ips:"94.140.14.14 and 94.140.15.15",alt:"Blocks ads and trackers",url:n=>`https://dns.adguard-dns.com/dns-query?dns=${dnsWire(n)}`},
+ {name:"OpenDNS (Cisco)",ips:"208.67.222.222 and 208.67.220.220",url:n=>`https://doh.opendns.com/dns-query?dns=${dnsWire(n)}`}
+];
+async function dnsRun(){
+  if(running) return; $("dnsRun").disabled=true; const rows=[];
+  for(const [i,p] of DNS_PROV.entries()){
+    $("dnsMsg").textContent=`Testing ${p.name} (${i+1} of ${DNS_PROV.length})…`;
+    const t=async n=>{ try{ return await pingURL(p.url(n),3000) }catch{ return null } };
+    await t("www.google.com"); // opens the connection
+    const cached=[], fresh=[];
+    for(let k=0;k<4;k++) cached.push(await t("www.google.com"));
+    for(let k=0;k<3;k++) fresh.push(await t(`cs${nonce().slice(0,8)}.example.com`));
+    const c=median(cached.filter(v=>v!=null)), f=median(fresh.filter(v=>v!=null));
+    rows.push({...p,c,f,score:fin(c)&&fin(f)?(c+f)/2:Infinity});
+  }
+  rows.sort((a,b)=>a.score-b.score); const best=rows[0];
+  const ms=v=>fin(v)?v.toFixed(0)+" ms":"no reply";
+  $("dnsRows").innerHTML=rows.map((r,i)=>`<tr><td>${esc(r.name)}${i===0&&fin(r.score)?' <span class="sev not">Fastest</span>':""}${r.alt?`<div class="note">${esc(r.alt)}</div>`:""}</td><td>${ms(r.c)}</td><td>${ms(r.f)}</td><td>${esc(r.ips)}</td></tr>`).join("");
+  $("dnsRec").innerHTML=fin(best.score)?`<div class="callout good"><b>Fastest for you: ${esc(best.name)}.</b> To use it everywhere at home: router admin page → Internet (WAN) settings, or LAN/DHCP Server settings → DNS → choose Manual and enter <b>${esc(best.ips)}</b>. Save; devices switch over when they reconnect.<details class="fixbox" style="margin-top:6px"><summary>Only on one device instead?</summary><ol class="fixsteps"><li>iPhone: Settings → Wi-Fi → ⓘ next to your network → Configure DNS → Manual → add ${esc(best.ips)}.</li><li>Android: Settings → Network → Private DNS → enter the provider's DNS hostname.</li><li>Windows/Mac: network adapter settings → DNS servers → add ${esc(best.ips)}.</li></ol></details></div>`
+    :`<div class="callout bad">No DNS service answered from this browser. Your network may block encrypted DNS.</div>`;
+  $("dnsMsg").textContent="Done."; $("dnsRun").disabled=false;
+}
+
+/* ---- My IP & ISP ---- */
+const inCidr=(ip,net,bits)=>{ const a=ipToInt(ip), n=ipToInt(net); return a!=null&&n!=null&&((a>>>(32-bits))===(n>>>(32-bits))) };
+async function ipRun(){
+  $("ipRun").disabled=true; $("ipMsg").textContent="Looking up…"; $("ipOut").innerHTML=""; $("ipNotes").innerHTML="";
+  const [info,v4,v6]=await Promise.all([fetchJSON("https://ipinfo.io/json"),fetchJSON("https://api.ipify.org?format=json",5000),fetchJSON("https://api6.ipify.org?format=json",5000)]);
+  $("ipRun").disabled=false;
+  if(!info&&!v4){ $("ipMsg").textContent="Couldn't reach the lookup services. Check your connection or content blocker."; return }
+  if(info&&info.loc&&!(store.get("geo",{})||{}).src) { const [la,lo]=info.loc.split(",").map(Number); if(fin(la)&&fin(lo)) { store.set("geo",{lat:la,lon:lo,src:"ip"}); mapBase=null; drawMap(performance.now()) } }
+  const ip=(info&&info.ip)||(v4&&v4.ip), org=(info&&info.org)||"", asn=(org.match(/^AS\d+/)||[""])[0], isp=org.replace(/^AS\d+\s*/,"");
+  const loc=info?[info.city,info.region,info.country].filter(Boolean).join(", "):"";
+  const kv=[["Public IPv4",(v4&&v4.ip)||(ip&&ip.includes(".")?ip:"—")],["IPv6",v6&&v6.ip?`Working · ${v6.ip}`:"Not available on this connection"],
+    ["Provider",isp||"—"],["Network (ASN)",asn||"—"],["Approx. location",loc||"—"],["Time zone",(info&&info.timezone)||"—"]];
+  $("ipOut").innerHTML=kv.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
+  const notes=[];
+  if(/cloudflare|akamai|apple|fastly/i.test(org)) notes.push(["warn",`Your traffic appears to go through ${esc(isp)}. That usually means iCloud Private Relay or a VPN is on, so speed tests measure the relay, not just your line. For a true reading, turn it off briefly: iPhone Settings → your name → iCloud → Private Relay.`]);
+  if(!(v6&&v6.ip)) notes.push(["warn","IPv6 isn't working here. Most large providers support it: router admin page → IPv6 or Internet settings → turn IPv6 on (often \"Auto\" or \"SLAAC/DHCPv6\"). It can improve speeds to big services."]);
+  const v4ip=(v4&&v4.ip)||ip;
+  if(v4ip&&inCidr(v4ip,"100.64.0.0",10)) notes.push(["bad","Your public address is in the carrier-grade NAT range, so port forwarding and remote access to home devices won't work."]);
+  notes.push(["",`<b>Behind carrier-grade NAT?</b> Compare this public IPv4 with the WAN or Internet IP on your router's Status page. If they differ, or the router shows 100.64–100.127.x.x, your provider shares one address among many customers. Ask them for a public IP if you need port forwarding.`]);
+  $("ipNotes").innerHTML=notes.map(([c,t])=>`<div class="callout ${c}">${t}</div>`).join("");
+  $("ipMsg").textContent="";
+}
+
+/* ---- Data calculator ---- */
+const ACTS=[["Music streaming",0.32],["Online gaming (data only)",0.15],["SD video",1.5],["HD video call",3.8],["HD streaming",5],["4K streaming",15]];
+function calcInit(){ if(!$("clSpeed").value){ const r=store.get("history",[])[0]; $("clSpeed").value=r&&fin(r.down)?(+conv(r.down).toPrecision(4)):(+conv(mbpsToBps(50)).toPrecision(4)) } calcRender() }
+function fmtDur(sec){ if(!fin(sec)||sec<0) return "—"; if(sec<1) return "under a second";
+  const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=Math.round(sec%60);
+  return [h&&`${h} h`,m&&`${m} min`,!h&&s&&`${s} s`].filter(Boolean).join(" ") }
+function calcRender(){
+  const v=+$("clSpeed").value, p={K:1,M:2,G:3}[unit[0]], bps=v*base**p/(unit[1]==="b"?8:1);
+  const bytes=(+$("clSize").value)*(+$("clSizeU").value);
+  $("clOut").innerHTML=bps>0&&bytes>0?`At ${fmtNum(v)} ${unitLabel()}, ${fmtNum(bytes/1e9)} GB takes about <b>${fmtDur(bytes/bps)}</b>. In practice add 10–20% for overhead and busy servers.`:"Enter a speed and a file size.";
+  const plan=+$("clPlan").value;
+  $("clRows").innerHTML=ACTS.map(([n,mb])=>{ const gbh=mb*0.45; return `<tr><td>${n}</td><td>${mb} Mbps</td><td>${gbh<1?(gbh*1000).toFixed(0)+" MB":gbh.toFixed(2)+" GB"}</td><td>${plan>0?fmtDur(plan/gbh*3600):"—"}</td></tr>` }).join("");
+}
+
+/* ---- Wi-Fi password ---- */
+const COMMON=new Set("password 12345678 123456789 1234567890 qwerty123 qwertyuiop asdfghjkl iloveyou admin123 11111111 00000000 password1 password123 welcome1 abcd1234 letmein1 sunshine princess football baseball dragon12 master12 monkey12 india123 9876543210 87654321 wifi1234 internet airtel123 jio12345 bsnl1234 home1234 family123 changeme".split(" "));
+function pwGenerate(){
+  const len=Math.min(63,Math.max(12,+$("pwLen").value||20)), sym=$("pwSym").checked;
+  const cs="ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"+(sym?"!#%+-=?@_~":""); // no look-alikes (0/O, 1/l/I)
+  const out=[], rnd=new Uint32Array(len*2); crypto.getRandomValues(rnd);
+  for(let i=0;out.length<len;i++){ const r=rnd[i%rnd.length]; const lim=Math.floor(2**32/cs.length)*cs.length; if(r<lim) out.push(cs[r%cs.length]); else crypto.getRandomValues(rnd) }
+  $("pwOut").textContent=out.join(""); $("pwTest").value=out.join(""); pwCheck();
+}
+function pwCheck(){
+  const p=$("pwTest").value, bar=$("pwBar"), out=$("pwVerdict");
+  if(!p){ bar.style.width="0"; out.textContent="Type a password to see how long it would take to crack."; return }
+  let pool=0; if(/[a-z]/.test(p)) pool+=26; if(/[A-Z]/.test(p)) pool+=26; if(/\d/.test(p)) pool+=10; if(/[^a-zA-Z0-9]/.test(p)) pool+=33;
+  let bits=p.length*Math.log2(Math.max(pool,1)); const issues=[];
+  const low=p.toLowerCase();
+  if(COMMON.has(low)||COMMON.has(low.replace(/[!@#.]+$/,""))){ bits=Math.min(bits,10); issues.push("it's on common-password lists") }
+  if(/(.)\1{2,}/.test(p)){ bits-=10; issues.push("it repeats characters") }
+  if(/(0123|1234|2345|3456|4567|5678|6789|abcd|bcde|qwer|wert|asdf|zxcv)/i.test(p)){ bits-=12; issues.push("it contains a keyboard or number sequence") }
+  if(/^\d+$/.test(p)){ bits=Math.min(bits,p.length*3.32); issues.push("it's only digits (phone numbers and dates are guessed first)") }
+  if(/(19|20)\d{2}/.test(p)) { bits-=6; issues.push("it contains a year") }
+  bits=Math.max(0,bits); const guesses=2**bits/2;
+  const pl=(n,w)=>`${n.toLocaleString()} ${w}${n===1?"":"s"}`;
+  const t=g=>{ const s=guesses/g; return s<60?"seconds":s<3600?pl(Math.round(s/60),"minute"):s<86400?pl(Math.round(s/3600),"hour"):s<3.15e7?pl(Math.round(s/86400),"day"):s<3.15e9?pl(Math.round(s/3.15e7),"year"):"millions of years+" };
+  const lvl=bits<40?["Weak","--bad",25]:bits<60?["Fair","--ok",50]:bits<80?["Strong","--good",78]:["Excellent","--good",100];
+  bar.style.width=lvl[2]+"%"; bar.style.background=css(lvl[1]);
+  const lenWarn=p.length<8?" Wi-Fi (WPA2/WPA3) requires at least 8 characters.":p.length>63?" Wi-Fi passwords can't be longer than 63 characters.":"";
+  out.innerHTML=`<b style="color:var(${lvl[1]})">${lvl[0]}</b> · ${bits<10?"under 10":"about "+Math.round(bits)} bits. One graphics card: <b>${t(1e6)}</b>. Large cracking rig: <b>${t(1e9)}</b>.${issues.length?` Weaker because ${issues.join(", ")}.`:""}${lenWarn}`;
+}
+
+/* ---- Device maker lookup ---- */
+async function macRun(){
+  const lines=$("macIn").value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean); if(!lines.length){ $("macMsg").textContent="Paste at least one MAC address."; return }
+  $("macRun").disabled=true; const rows=[], cache={};
+  for(const raw of lines.slice(0,40)){
+    const hex=raw.replace(/[^0-9a-f]/gi,"").toUpperCase();
+    if(hex.length!==12){ rows.push([raw,"—","Not a valid MAC address"]); continue }
+    const mac=hex.match(/../g).join(":"), b0=parseInt(hex.slice(0,2),16);
+    if(b0&1){ rows.push([mac,"—","Group (multicast) address, not a device"]); continue }
+    if(b0&2){ rows.push([mac,"Private address","Randomised by the device (iPhone, Android, Windows privacy feature). Usually your own phone or laptop; check its Wi-Fi settings."]); continue }
+    const oui=hex.slice(0,6);
+    if(!(oui in cache)){ $("macMsg").textContent=`Looking up ${mac.slice(0,8)}…`;
+      try{ const c=new AbortController(), tm=setTimeout(()=>c.abort(),6000);
+        const r=await fetch(`https://api.macvendors.com/${oui.match(/../g).join(":")}`,{signal:c.signal}); clearTimeout(tm);
+        cache[oui]=r.ok?await r.text():r.status===404?"Unknown maker":null }catch{ cache[oui]=null }
+      await sleep(1100) } // service allows about one lookup per second
+    rows.push([mac,cache[oui]??"Lookup unavailable",cache[oui]==="Unknown maker"?"Not in the public maker list. Worth investigating if you don't recognise it.":cache[oui]==null?"Try again later or search the first 6 characters at macvendors.com":""]);
+  }
+  $("macRows").innerHTML=rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td style="white-space:normal">${esc(r[2])}</td></tr>`).join("");
+  $("macMsg").textContent=lines.length>40?"Showing the first 40.":"Done."; $("macRun").disabled=false;
+}
+
+/* ---- Subnet calculator ---- */
+function ipToInt(ip){ const p=String(ip).trim().split("."); if(p.length!==4||p.some(x=>!/^\d{1,3}$/.test(x)||+x>255)) return null; return ((+p[0]<<24)>>>0)+(+p[1]<<16)+(+p[2]<<8)+(+p[3]) }
+const intToIp=n=>[n>>>24,(n>>>16)&255,(n>>>8)&255,n&255].join(".");
+function snRender(){
+  const v=$("snIn").value.trim(); let [ipS,rest]=v.split(/[\/\s]+/), prefix;
+  const ip=ipToInt(ipS);
+  if(rest==null) prefix=32; else if(/^\d{1,2}$/.test(rest)) prefix=+rest; else { const m=ipToInt(rest); if(m!=null){ const b=m.toString(2).padStart(32,"0"); prefix=/^1*0*$/.test(b)?b.indexOf("0")<0?32:b.indexOf("0"):NaN } }
+  if(ip==null||!(prefix>=0&&prefix<=32)){ $("snOut").innerHTML=""; $("snNote").innerHTML=`<div class="callout warn">Enter an address like 192.168.1.1/24 or 10.0.0.5 255.255.255.0.</div>`; return }
+  const mask=prefix?(0xFFFFFFFF<<(32-prefix))>>>0:0, net=(ip&mask)>>>0, bc=(net|(~mask>>>0))>>>0, size=2**(32-prefix);
+  const first=prefix>=31?net:net+1, lastH=prefix>=31?bc:bc-1, hosts=prefix===32?1:prefix===31?2:size-2;
+  const types=[["10.0.0.0",8,"Private (home/office network)"],["172.16.0.0",12,"Private (home/office network)"],["192.168.0.0",16,"Private (home/office network)"],
+    ["100.64.0.0",10,"Carrier-grade NAT (shared by your provider)"],["127.0.0.0",8,"Loopback (this device)"],["169.254.0.0",16,"Link-local (no DHCP address was given)"],["224.0.0.0",4,"Multicast"]];
+  const ty=(types.find(([n,b])=>inCidr(intToIp(ip),n,b))||[0,0,"Public internet address"])[2];
+  const kv=[["Address",`${intToIp(ip)}/${prefix}`],["Type",ty],["Network",intToIp(net)],["Broadcast",prefix>=31?"—":intToIp(bc)],["Usable range",`${intToIp(first)} – ${intToIp(lastH)}`],
+    ["Usable hosts",hosts.toLocaleString()],["Subnet mask",intToIp(mask)],["Wildcard",intToIp(~mask>>>0)]];
+  $("snOut").innerHTML=kv.map(([k,x])=>`<dt>${k}</dt><dd>${esc(x)}</dd>`).join("");
+  $("snNote").innerHTML=ty.startsWith("Carrier")?`<div class="callout bad">If this is your router's WAN address, you're behind carrier-grade NAT: port forwarding and remote access won't work. Ask your provider for a public (static or dynamic) IPv4 address.</div>`
+    :ty.startsWith("Link-local")?`<div class="callout warn">A 169.254 address means the device didn't get an address from the router. Restart the router and reconnect.</div>`:"";
+}
+
 /* =================== Wire up =================== */
 function renderAll(){ renderCompare(); renderInsights() }
 function syncUnits(){
@@ -834,7 +1729,7 @@ function syncUnits(){
   document.querySelectorAll("#baseSeg button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.b===base));
   document.querySelectorAll("[data-unit]").forEach(e=>e.textContent=unitLabel());
   if(last) showResult(last);
-  renderHist(); renderAll();
+  renderHist(); renderAll(); if(!$("toolBody").hidden&&!document.querySelector('.tool[data-tool="calc"]').hidden){ $("clSpeed").value=""; calcInit() }
 }
 const pickUnit=e=>{const u=e.target.dataset.u; if(u){unit=u;store.set("unit",u);syncUnits()}};
 $("unitB").onclick=pickUnit; $("unitb").onclick=pickUnit;
@@ -842,10 +1737,33 @@ $("baseSeg").onclick=e=>{const b=+e.target.dataset.b; if(b){base=b;store.set("ba
 $("srvOpen").onclick=()=>{$("srvPanel").hidden=false; renderServers(); $("srvPanel").scrollIntoView({behavior:"smooth",block:"start"})};
 $("srvClose").onclick=()=>{$("srvPanel").hidden=true};
 $("srvPing").onclick=pingAll;
+$("rtOpen").onclick=()=>{ if(running) return; $("rtPanel").hidden=false; rtLoad(); if(rtLast) renderRouterReport(); $("rtPanel").scrollIntoView({behavior:"smooth",block:"start"}) };
+$("rtClose").onclick=()=>{$("rtPanel").hidden=true};
+$("rtQs").onclick=e=>{ const b=e.target.closest("button"), g=e.target.closest(".seg"); if(!b||!g) return;
+  rtAnswers[g.dataset.q]=b.dataset.v; g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); rtSave() };
+["rtBrand","rtModel","rtHw","rtFw","rtEnc"].forEach(id=>$(id).addEventListener("change",rtSave));
+$("rtRun").onclick=runRouterCheck;
+$("lvLocate").onclick=locate; $("lvAnim").onchange=()=>{ if(!$("lvAnim").checked) parts=[]; drawMap(performance.now()) };
+if((store.get("geo",{})||{}).src==="device") $("lvLocate").textContent="Location set";
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ mapBase=null; drawMap(performance.now()); telDraw() });
+drawMap(performance.now()); telDraw();
+let rzT=0; window.addEventListener("resize",()=>{ clearTimeout(rzT); rzT=setTimeout(()=>{ mapBase=null; drawMap(performance.now()) },150) });
+renderToolGrid(); $("toolGrid").onclick=e=>{ const b=e.target.closest(".tile2"); if(b) openTool(b.dataset.tool) };
+$("pmStart").onclick=()=>{ if(pm.on){ pmStop(); return } if(running) return; pm.on=true; $("pmStart").textContent="Stop"; pmTick() };
+$("pmReset").onclick=()=>{ const on=pm.on; pmStop(); pm={on:false,timer:null,samples:[],sent:0,lost:0,streak:0,outages:[],outStart:null}; pmRender(); if(on) $("pmStart").click() };
+$("dnsRun").onclick=dnsRun; $("ipRun").onclick=ipRun; $("macRun").onclick=macRun;
+["clSpeed","clSize","clSizeU","clPlan"].forEach(id=>$(id).addEventListener("input",calcRender));
+$("clPresets").onclick=e=>{ const sz=+e.target.dataset.sz; if(!sz) return; if(sz>=1e9){$("clSize").value=sz/1e9;$("clSizeU").value="1e9"} else {$("clSize").value=sz/1e6;$("clSizeU").value="1e6"} calcRender() };
+$("pwGen").onclick=pwGenerate; $("pwTest").addEventListener("input",pwCheck);
+$("pwCopy").onclick=()=>{ const t=$("pwOut").textContent; if(!t) return; navigator.clipboard?navigator.clipboard.writeText(t).then(()=>$("pwVerdict").insertAdjacentHTML("afterbegin","Copied. "),()=>{}):0 };
+$("snIn").addEventListener("input",snRender); $("rtCopy").onclick=copyRouterReport;
 $("srvList").onchange=e=>{ if(e.target.name==="srv"){ selected=e.target.value; store.set("server",selected); $("mlabConsent").hidden=selected!=="mlab"; syncServerName() } };
 $("mlabOk").checked=store.get("mlabOk",false); $("mlabOk").onchange=()=>store.set("mlabOk",$("mlabOk").checked);
-$("link").value=store.get("link","auto"); $("link").onchange=()=>{store.set("link",$("link").value);showConn()};
-navigator.connection&&navigator.connection.addEventListener&&navigator.connection.addEventListener("change",showConn);
+$("netSeg").onclick=e=>{const n=e.target.dataset.n; if(!n) return; netPick=n; netAutoOn=false; store.set("netPick",n); $("err").textContent=""; syncNet()};
+navigator.connection&&navigator.connection.addEventListener&&navigator.connection.addEventListener("change",()=>{const d=detectedNet(); if(d){netPick=d;netAutoOn=true} syncNet()});
+$("rows").onchange=e=>{ const el=e.target; if(!el.classList.contains("netfix")) return;
+  const h=store.get("history",[]), r=h.find(x=>String(x.t)===el.dataset.t); if(!r) return;
+  r.net=el.value; store.set("history",h); if(last&&last.t===r.t) last.net=r.net; fillWhich(); renderHist(); renderAll() };
 $("cmpType").onchange=renderAll; $("cmpWhich").onchange=renderAll;
 $("cmpCountry").onchange=()=>{store.set("cmpCountry",$("cmpCountry").value);renderAll()};
 $("histFilter").onchange=renderHist;
@@ -854,7 +1772,7 @@ $("clr").onclick=()=>{$("clrConfirm").hidden=false};
 $("clrNo").onclick=()=>{$("clrConfirm").hidden=true};
 $("clrYes").onclick=()=>{store.set("history",[]);last=null;$("clrConfirm").hidden=true;$("csv").hidden=true;fillWhich();renderHist();renderAll()};
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{renderHist();renderAll();drawSpark()});
-$("cmpType").value=connLabel()==="Mobile data"?"mobile":"fixed";
+$("cmpType").value=connLabel()==="Mobile data"?"mobile":"fixed"; syncNet();
 if(!byId(selected)&&selected!=="auto") selected="auto";
 initCompare(); fillWhich(); renderServers(); syncServerName();
 { const h=store.get("history",[]); if(h[0]){ last=h[0]; showResult(last); $("copyRes").disabled=false } }
