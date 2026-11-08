@@ -32,7 +32,7 @@
   --shadow-lift:0 30px 56px -26px rgba(20,45,65,.55),0 4px 10px -3px rgba(20,45,65,.18);
   --ink:#10181d; --muted:#53606a; --soft:rgba(255,255,255,.55); --track:rgba(16,30,40,.10);
   --down:#067785; --up:#b45f00; --you:#10181d; --good:#13804d; --ok:#8a6a00; --bad:#c42f3b; --high:#b8451a;
-  --accent:#067785; --accent-hi:#0a7d8c; --accent-lo:#045d68; --on-accent:#ffffff;
+  --accent:#067785; --accent-hi:#0a7d8c; --accent-lo:#045d68; --on-accent:#ffffff; --orb-img:url("assets/3d/go-light.webp");
   --panel:var(--glass-solid); --panel2:var(--well); --glass-strong:var(--well); --glass-line:var(--line); --orb1:var(--accent); --orb2:var(--accent);
   --r-panel:20px; --r-ctl:12px; --r-chip:8px; --tap:44px; --ease:cubic-bezier(.2,.7,.2,1); --t-fast:140ms; --t:220ms;
   /* Type: Instrument Serif for titles, Instrument Sans for reading, Geist Mono for every number and label. */
@@ -50,7 +50,7 @@
   --shadow-lift:0 36px 70px -28px rgba(0,0,0,.95),0 6px 14px -4px rgba(0,0,0,.5);
   --ink:#e6ecef; --muted:#93a0a9; --soft:rgba(255,255,255,.04); --track:rgba(210,235,245,.09);
   --down:#3ad3e3; --up:#ffa53d; --you:#f2f5f6; --good:#45cf8f; --ok:#e2c34b; --bad:#ff5c66; --high:#ff7a45;
-  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b;
+  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b; --orb-img:url("assets/3d/go-dark.webp");
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg0:#080b0d; --field1:rgba(58,211,227,.13); --field2:rgba(255,165,61,.08); --field3:rgba(110,150,180,.06);
@@ -60,7 +60,7 @@
   --shadow-lift:0 36px 70px -28px rgba(0,0,0,.95),0 6px 14px -4px rgba(0,0,0,.5);
   --ink:#e6ecef; --muted:#93a0a9; --soft:rgba(255,255,255,.04); --track:rgba(210,235,245,.09);
   --down:#3ad3e3; --up:#ffa53d; --you:#f2f5f6; --good:#45cf8f; --ok:#e2c34b; --bad:#ff5c66; --high:#ff7a45;
-  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b;
+  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b; --orb-img:url("assets/3d/go-dark.webp");
   color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -152,12 +152,13 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:18px;hei
 .step i{width:7px;height:7px;border-radius:50%;background:var(--track)}
 .step.on{color:var(--ink);background:var(--soft);box-shadow:inset 0 1px 0 var(--hi),0 4px 10px -8px rgba(0,0,0,.6)} .step.on i{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
 .step.done{color:var(--ink)} .step.done i{background:var(--good)}
-.gaugewrap{position:relative;width:100%;max-width:440px}
+.gaugewrap{position:relative;width:100%;max-width:440px;background:url("assets/3d/bezel.webp") center/100% 100% no-repeat} /* Blender bezel under the live dial */
 canvas#gauge{width:100%;aspect-ratio:1/0.8;height:auto;display:block}
 /* GO: a lit glass sphere sitting in a recessed ring */
 .orb{position:absolute;left:50%;top:57%;transform:translate(-50%,-50%);width:32%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:0;
   font:600 clamp(20px,5vw,27px)/1 var(--body);letter-spacing:.01em;color:var(--on-accent);text-shadow:0 1px 0 rgba(255,255,255,.35);
   background:
+    var(--orb-img,none) center/130% 130% no-repeat,  /* Blender-rendered sphere; the gradients below are the drawn fallback */
     radial-gradient(circle at 32% 24%,rgba(255,255,255,.95) 0,rgba(255,255,255,.35) 12%,rgba(255,255,255,0) 28%),
     radial-gradient(circle at 50% 115%,color-mix(in srgb,var(--accent-hi) 70%,transparent) 0,transparent 45%),
     radial-gradient(circle at 50% 45%,var(--accent) 0,var(--accent-lo) 78%);
@@ -262,7 +263,8 @@ details.fixbox{font-size:13px} details.fixbox summary{cursor:pointer;font-weight
   background:radial-gradient(120% 90% at 50% 0%,var(--soft),transparent 70%),var(--well);box-shadow:inset 0 2px 8px var(--well-in)}
 canvas#map{width:100%;aspect-ratio:16/9;height:auto;display:block}
 canvas#collider{width:100%;aspect-ratio:16/8;height:auto;display:block}
-@media (max-width:640px){canvas#collider{aspect-ratio:5/4}}
+.colwrap.plate canvas#collider{aspect-ratio:2/1}
+@media (max-width:640px){.colwrap:not(.plate) canvas#collider{aspect-ratio:5/4}}
 @media (max-width:640px){canvas#map{aspect-ratio:4/3}}
 .lvbadge{position:absolute;left:12px;bottom:12px;font:600 12.5px var(--body);padding:5px 11px;border-radius:999px;display:flex;gap:7px;align-items:center;
   background:var(--glass);border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi),0 8px 16px -10px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
@@ -2041,6 +2043,17 @@ const col=(()=>{
   const reduce=matchMedia("(prefers-reduced-motion: reduce)");
   let W=0,H=0,dpr=1, yaw=0.98, sway=0, stat=document.createElement("canvas"), statKey="", parts=[], tracks=[], hits=[], flashes=[], seen={dir:"",b:0,acc:0}, per=0, raf=0, last=0, lastDraw=0, vis=false;
   let explode=0, explodeT0=0, result=null, frameCost=0;
+  /* Blender plates (assets/3d, rendered by blender/render_plates.py). When present, the detector is a Cycles render
+     and the live overlay uses the render camera's exact projection; otherwise the model is drawn here. */
+  let plate=null;
+  function loadPlates(){
+    fetch("assets/3d/scene.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(m=>{
+      if(!m||!m.view||!m.frames) return; const imgs=new Array(m.frames).fill(null);
+      const need=i=>{ if(imgs[i]) return imgs[i]; const im=new Image(); im.decoding="async"; im.src=`assets/3d/collider-${String(i).padStart(2,"0")}.webp`; im.onload=()=>{ statKey=""; kick() }; return imgs[i]=im };
+      plate={m,imgs,need}; need(0); need(m.frames-1); cv.closest(".colwrap").classList.add("plate"); statKey=""; kick();
+    }).catch(()=>{});
+  }
+  function plateAll(){ if(plate) for(let i=0;i<plate.m.frames;i++) plate.need(i) }
   const tok=n=>css(n), dark=()=>getComputedStyle(document.documentElement).colorScheme.includes("dark");
   const ease=k=>1-Math.pow(1-k,3), lerp=(a,b,k)=>a+(b-a)*k;
   // real-detector materials (physical colours, the same in both themes)
@@ -2050,10 +2063,16 @@ const col=(()=>{
   function size(){ dpr=Math.min(2,devicePixelRatio||1); const r=cv.getBoundingClientRect(); W=Math.max(1,Math.round(r.width*dpr)); H=Math.max(1,Math.round(r.height*dpr)); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H } }
   // camera
   const PITCH=0.36, DIST=5.6;
-  function P(x,y,z){ const yy=yaw+sway, cy=Math.cos(yy), sy=Math.sin(yy), X=x*cy+z*sy, Z=-x*sy+z*cy;
+  function P(x,y,z){ if(plate) return PP(x,y,z); const yy=yaw+sway, cy=Math.cos(yy), sy=Math.sin(yy), X=x*cy+z*sy, Z=-x*sy+z*cy;
     const cp=Math.cos(PITCH), sp=Math.sin(PITCH), Y2=y*cp-Z*sp, Z2=y*sp+Z*cp;  // Z2: + is away from the camera
     const e=ease(explode), nar=W/dpr<640, s=Math.min(W,H*1.7)*(nar?0.21:0.19)*(1-0.18*e)/(1+Z2/DIST);
     return [W*0.5+X*s, H*(0.5+0.04*e)-Y2*s, Z2] }
+  function PP(x,y,z){ // app (x across, y up, z beam) -> Blender (x, z, y) -> camera -> plate pixels -> canvas (contain)
+    const v=plate.m.view, bx=x, by=z, bz=y;
+    const cx_=v[0][0]*bx+v[0][1]*by+v[0][2]*bz+v[0][3], cy_=v[1][0]*bx+v[1][1]*by+v[1][2]*bz+v[1][3], cz_=v[2][0]*bx+v[2][1]*by+v[2][2]*bz+v[2][3];
+    const d=Math.max(0.01,-cz_), u=plate.m.width/2+plate.m.f_px*cx_/d, w=plate.m.height/2-plate.m.f_px*cy_/d;
+    const k=Math.min(W/plate.m.width,H/plate.m.height), ox=(W-plate.m.width*k)/2, oy=(H-plate.m.height*k)/2;
+    return [ox+u*k, oy+w*k, d-6] }
   const camDir=()=>{ const yy=yaw+sway; return [Math.sin(yy)*Math.cos(PITCH)*-1, Math.sin(PITCH), Math.cos(yy)*Math.cos(PITCH)] };
   // teardown offsets along the beam axis
   function zShift(z){ const e=ease(explode); if(!e) return 0; const s=Math.sign(z)||0;
@@ -2115,7 +2134,12 @@ const col=(()=>{
   function drawStatic(){
     const key=[W,H,dark(),explode.toFixed(3)].join(); if(key===statKey) return; statKey=key;
     stat.width=W; stat.height=H; const real=cx; cx=stat.getContext("2d"); cx.clearRect(0,0,W,H);
-    drawRing(); beamPipe(false); paint(detector()); beamPipe(true); cx=real }
+    if(plate){ const n=plate.m.frames-1, f=explode*n, i=Math.floor(f), j=Math.min(n,i+1), a=plate.need(i), b=plate.need(j), k=Math.min(W/plate.m.width,H/plate.m.height);
+      const dw=plate.m.width*k, dh=plate.m.height*k, ox=(W-dw)/2, oy=(H-dh)/2, ready=im=>im&&im.complete&&im.naturalWidth;
+      if(ready(a)){ cx.globalAlpha=1; cx.drawImage(a,ox,oy,dw,dh) } if(j!==i&&ready(b)){ cx.globalAlpha=f-i; cx.drawImage(b,ox,oy,dw,dh); cx.globalAlpha=1 }
+      if(!ready(a)) statKey="";   // try again once the frame has loaded
+    } else { drawRing(); beamPipe(false); paint(detector()); beamPipe(true) }
+    cx=real }
   // ---- packets and collisions
   function rateSpeed(){ const r=tel.cur[tel.phase]||0; return 0.5+1.2*Math.min(1,Math.log10(1+bpsToMbps(r))/3) }
   function where(p,now){ // returns a world point, or null
@@ -2191,10 +2215,11 @@ const col=(()=>{
       :result?"Teardown of the last test: the detector opened up, one part per result.":"";
   }
   function kick(){ if(!raf) raf=requestAnimationFrame(frame) }
-  function start(){ parts=[]; tracks=[]; hits=[]; flashes=[]; seen.dir=""; explode=0; explodeT0=0; result=null; kick() }
+  function start(){ parts=[]; tracks=[]; hits=[]; flashes=[]; seen.dir=""; explode=0; explodeT0=0; result=null; plateAll(); kick() }
   function end(res){ if(res&&fin(res.down)){ result=res; explodeT0=($("colAnim").checked&&!reduce.matches)?performance.now():0; if(!explodeT0) explode=1 } kick();
     $("collider").setAttribute("aria-label",res&&fin(res.down)?`Packet collider teardown: ping ${fin(res.ping)?res.ping.toFixed(1):"unknown"} ms, download ${fmt(res.down)} ${unitLabel()}, upload ${fin(res.up)?fmt(res.up):"not measured"} ${unitLabel()}`:"Packet collider") }
   try{ const h=store.get("history",[]); if(h&&h[0]&&fin(h[0].down)){ result=h[0]; explode=1 } }catch{}
+  loadPlates();
   if("IntersectionObserver" in window) new IntersectionObserver(e=>{ vis=e[0].isIntersecting; if(vis) kick() }).observe(cv); else vis=true;
   if("ResizeObserver" in window) new ResizeObserver(()=>kick()).observe(cv);
   $("colAnim").checked=!reduce.matches; $("colAnim").onchange=()=>{ if(!$("colAnim").checked){ parts=[]; tracks=[]; hits=[]; flashes=[] } kick() };

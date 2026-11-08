@@ -62,6 +62,15 @@ class H(BaseHTTPRequestHandler):
                 body = open(f, "rb").read()
                 self.send_response(200); self.send_header("Content-Type", static[u.path])
                 self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if u.path.startswith("/assets/3d/"):  # Blender-rendered plates (collider, GO sphere, bezel)
+            name = os.path.basename(u.path)
+            types = {".webp": "image/webp", ".json": "application/json"}
+            ext = os.path.splitext(name)[1]
+            f = os.path.join(os.path.dirname(WEB), "assets", "3d", name)
+            if ext in types and name == u.path.rsplit("/", 1)[-1] and os.path.exists(f):
+                body = open(f, "rb").read()
+                self.send_response(200); self.send_header("Content-Type", types[ext])
+                self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path in ("/", "/index.html") and os.path.exists(WEB):
             body = open(WEB, "rb").read()
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
