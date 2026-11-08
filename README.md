@@ -27,7 +27,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 6. [Install, use and self-host](#install-use-and-self-host)
 7. [Troubleshooting](#troubleshooting)
 8. [Limitations](#limitations)
-9. [Architecture](#architecture) · [Design system](#design-system)
+9. [Architecture](#architecture) · [Design system](#design-system) · [Accessibility](#accessibility) · [Testing](#testing)
 10. [Data sources and licences](#data-sources-and-licences)
 11. [Changelog](#changelog)
 
@@ -37,7 +37,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 
 | Area | Features |
 |---|---|
-| **Speed test** | Download, upload, idle ping, jitter and **loaded ping** (latency while the line is busy). Live gauge and throughput chart. Stop at any time; **RETEST** after a run. |
+| **Speed test** | Download, upload, idle ping, jitter and **loaded ping** (latency while the line is busy). Live gauge and throughput chart. Stop at any time; **Retest** after a run. |
 | **Units** | Bytes or bits per second: KB/s, MB/s, GB/s, Kbps, Mbps, Gbps. Decimal (1000) or binary (1024, shown as MiB/s, Mibps). |
 | **Servers** | Automatic (lowest ping), Cloudflare (anycast), Measurement Lab (ndt7), 22 LibreSpeed volunteer servers worldwide, or your own server. "Measure ping to all" compares them. |
 | **Live map** | Route from you to the test server with animated data flow, live download/upload/ping tiles and a telemetry timeline. |
@@ -57,7 +57,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | Ready | Testing | Done |
 |:--:|:--:|:--:|
 | <img src="docs/screenshots/01-home.png" width="250"> | <img src="docs/screenshots/02-test-running.png" width="250"> | <img src="docs/screenshots/03-results.png" width="250"> |
-| Tap **GO**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **RETEST** replaces GO. The chart overlays download (cyan) and upload (amber). |
+| Tap **Go**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **Retest** replaces GO. The chart overlays download (cyan) and upload (amber). |
 
 - **Steps** at the top light up in order: Ping → Download → Upload.
 - **Network** — pick Wi-Fi, Mobile or Ethernet. Browsers on iPhone don't reveal the connection type, so CleanSpeed asks once and remembers. Where the browser does report it (some Android/desktop Chrome builds), it's detected automatically.
@@ -324,6 +324,7 @@ python3 server/server.py --port 8080
 | `GET /down?bytes=N` | N bytes of random data (max 100 MB per request) |
 | `POST /up` | Reads and discards the body |
 | `GET /` | Serves `../index.html` (the app) |
+| `GET /oui.txt` | The MAC maker registry, so Device lookup works offline when self-hosted |
 
 Open `http://<server-ip>:8080/` to run CleanSpeed against it directly — good for testing your LAN or Wi-Fi without the internet in the way. To use it from the GitHub Pages copy instead (**Change server → Your own server**), it must be served over **https** (put Caddy or nginx in front), because browsers block http requests from https pages.
 
@@ -387,6 +388,9 @@ flowchart LR
 ├── oui-LICENSE.txt       # licence for oui.txt
 ├── fonts/                # Instrument Sans, Instrument Serif, Geist Mono (Latin subset, WOFF) + OFL licences
 ├── DESIGN.md             # design system: tokens, components, motion, accessibility
+├── tests/run.py          # end-to-end + WCAG 2.2 AA tests (Chromium, Firefox, WebKit)
+├── .github/workflows/    # CI: runs the tests on every push
+├── docs/TEARDOWN.md      # design, usability and accessibility audit
 ├── server/
 │   └── server.py         # optional self-hosted test server
 └── docs/screenshots/     # images used in this README (sample data)
@@ -403,13 +407,46 @@ flowchart LR
 The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
 
 - **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. No violet.
-- **Typography:** Instrument Serif for section titles (with one italic accent word), Instrument Sans for reading text, Geist Mono for every number, label and button. The fonts are bundled, so the page makes no font requests.
+- **Typography:** Instrument Serif for section titles, Instrument Sans for reading text, labels and buttons (sentence case), Geist Mono only for numbers, units and addresses. The fonts are bundled, so the page makes no font requests.
 - **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
 - **One button family:** a cyan glass object for the main action, raised glass for the rest, tinted red glass for Stop.
 - **Motion with a job:** one entrance on load, hover lift and press on controls (140–220 ms), live data. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
 - **Fits every screen:** one column on phones (320 px and up), stacked panels on tablets, two-column speed test and wider spacing on laptops and desktops; the throughput chart stretches to fill the space.
 - **Browsers:** Chrome / Edge 111+, Safari 16.2+ (Mac, iPhone, iPad), Firefox 113+. Browsers without backdrop blur get solid panels.
 - **Accessibility (WCAG 2.2 AA):** text contrast at least 4.5:1 in both themes, visible focus outlines, touch targets at least 44 px, no sideways scrolling at 320 px.
+
+## Accessibility
+
+CleanSpeed targets **WCAG 2.2 level AA** and is checked automatically on every push.
+
+- **Keyboard:** every control is reachable with Tab, focus is always visible, and the first Tab stop is *Skip to the speed test*.
+- **Screen readers:** landmarks (`header`, `main`, `footer`), labelled charts and map, toggle buttons that announce their state, and a live status line that announces "Testing download…", "Done." and errors.
+- **Vision:** text contrast at least 4.5:1 in both themes (including every stop of the button gradients), colour never carries meaning alone, text spacing and 200% text don't break the layout, and Windows high-contrast mode keeps every panel and control outlined.
+- **Touch and motion:** targets at least 24 px everywhere and 44 px on touch screens; *Reduce motion* cuts transitions and starts the map without animation.
+
+The latest audit, with every finding and fix, is in **[docs/TEARDOWN.md](docs/TEARDOWN.md)**. Still worth doing by hand before a release: a full pass with VoiceOver and NVDA, and 400% zoom on desktop.
+
+## Testing
+
+```bash
+pip install playwright
+python -m playwright install chromium firefox webkit
+npm install --no-save axe-core@4.10.2          # optional: adds the axe-core WCAG scan
+AXE_PATH=node_modules/axe-core/axe.min.js python tests/run.py
+python tests/run.py --browser webkit           # one engine (WebKit = Safari's engine)
+```
+
+The suite starts `server/server.py` on localhost (it serves the app and acts as the speed-test server) and answers every other request with fictional fixtures, so it never touches the internet or anyone's real data. It covers:
+
+| Area | Checks |
+|---|---|
+| Speed test | Own server selected, download and upload measured, Stop within 3 s, Retest, history saved, unit switch, CSV export, page and chart height stay sane after a test |
+| Router check | Score shown, exploited record flagged, fix links only on the maker's domain, third-party exploit write-ups never linked, no beta firmware, other firmware lines not marked as affecting |
+| Toolkit | Subnet (carrier-grade NAT), data calculator, password generator, device lookup from the bundled registry (incl. private and invalid addresses), IP lookup, DNS benchmark |
+| Layout | No sideways scroll at 320, 390, 768, 1024 and 1440 px in dark and light themes |
+| WCAG 2.2 AA | Contrast (text and gradient stops), names, roles and states, landmarks, skip link, headings, labelled graphics, live status, target size (24 px; 44 px on touch), keyboard reach, visible focus, no trap, reflow at 320 px / 200% text, text spacing, reduced motion, axe-core rules |
+
+GitHub Actions runs the whole suite in **Chromium, Firefox and WebKit** on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)).
 
 ## Data sources and licences
 
@@ -431,7 +468,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
+| *latest* | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |
+| `3cd2379` | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
 | `c56eb8d` | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |
 | `d284597` | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
 | `200e531` | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |

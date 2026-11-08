@@ -16,20 +16,20 @@ CleanSpeed should feel like a precision instrument made of glass: depth, light a
 ## Style Foundations
 - **Visual style:** frosted-glass panels over two still light fields (cyan top-left, amber bottom-right) and a faint dot grid; engraved "wells" for readouts and inputs; raised 3D objects (GO sphere, tool chips, segmented thumb, dial bead) lit from the top-left. Violet is never used.
 - **Typography:** three faces with one job each, bundled with the app (Latin subset, WOFF, SIL Open Font License) so no font request leaves the device.
-  - **Instrument Serif** (`--display`) — section titles, with one word set in italic accent colour ("Live network *map*"), and the italic half of the wordmark.
-  - **Instrument Sans** (`--body`, variable 400–700) — reading text, tool names and descriptions, notes.
-  - **Geist Mono** (`--mono`, `--num`, variable 100–900) — every number, unit, label, button and table.
+  - **Instrument Serif** (`--display`) — section titles (plain, no accent words) and the italic half of the wordmark.
+  - **Instrument Sans** (`--body`, variable 400–700) — reading text, labels, buttons, badges, table headers, tool names and descriptions.
+  - **Geist Mono** (`--mono`, `--num`, variable 100–900) — numbers, units, MAC and IP addresses only, where fixed widths help.
   - Fallbacks: ui-serif/Georgia, system-ui/-apple-system, ui-monospace/SF Mono. Antialiased, kerning on, `font-display: swap`; canvases redraw when the fonts arrive.
 
   | Token | Use | Face, size / weight |
   |---|---|---|
   | Wordmark | `h1` + glass chip | "Clean" Instrument Sans 600, 23 px · "*Speed*" Instrument Serif italic, 27 px, accent |
-  | Section title | `h2` | Instrument Serif 400, 25 px / 1.1, −0.01em, one italic accent word |
+  | Section title | `h2` | Instrument Serif 400, 25 px / 1.1, −0.01em |
   | Tool title | `.tool h3` | Instrument Serif 400, 22 px |
   | Primary value | `.val` | Geist Mono 500, clamp(30–46 px), tabular, soft halo in its direction colour |
   | Secondary value | `.small .val`, `.stat b`, `.bignum` | Geist Mono 500, 20–34 px |
-  | Label | `.lbl`, `th`, `.tag` | Geist Mono 500, 11 px, 0.09em tracking, uppercase |
-  | Control | buttons, segmented, chips | Geist Mono 500, 12.5–13 px |
+  | Label | `.lbl`, `th`, `.tag`, `.sev` | Instrument Sans 500, 12–13 px, sentence case |
+  | Control | buttons, segmented, chips | Instrument Sans 500–600, 13–14.5 px |
   | Body | `body`, `.conn`, tool descriptions | Instrument Sans 400, 15 px / 1.55 (descriptions 12.5–13 px) |
   | Note | `.note` | Instrument Sans 400, 13 px, `--muted` |
 
@@ -92,6 +92,8 @@ Plain and specific. Say what the number means and what to do next. Labels are no
 - Test new UI at 320, 390 and 1280 px, in both themes and with reduced motion.
 
 ## Rules: Don't
+- Don't accent one word in a heading, set labels in all caps, or join meta text with middle dots; write sentences.
+- Don't use monospace for words; it is for numbers, units and addresses.
 - Don't use violet, or mix light directions: every highlight comes from the top-left.
 - Don't put text directly on the light fields; text sits on glass or in wells.
 - Don't add looping or attention-seeking animation to status elements.
@@ -103,6 +105,11 @@ Plain and specific. Say what the number means and what to do next. Labels are no
 - Chrome / Edge 111+, Safari 16.2+ (macOS and iOS), Firefox 113+ (all use `color-mix`). Backdrop blur uses the standard property plus `-webkit-backdrop-filter` for Safari; browsers without blur get the solid panel colour.
 - The light fields are a fixed `body::before` layer, not `background-attachment: fixed`, which iOS Safari doesn't support.
 - Inputs use 16 px text on touch so iOS Safari doesn't zoom.
+
+## Testing
+`python tests/run.py` runs the end-to-end and WCAG 2.2 AA checks (contrast including every gradient stop, names, roles, landmarks, skip link, keyboard, focus, target sizes, reflow, text spacing, reduced motion, axe-core) in Chromium, Firefox and WebKit; CI runs it on every push. See [docs/TEARDOWN.md](docs/TEARDOWN.md) for the last audit.
+- Windows high contrast (`forced-colors`) outlines panels and controls.
+- The skip link is the first Tab stop and jumps to `<main>`.
 
 ## Quality Gates
 - Every text token must pass 4.5:1 on its surface in both themes.

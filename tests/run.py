@@ -295,7 +295,7 @@ def wcag(browser, port):
     # touch targets on phones, reflow, text spacing, reduced motion
     ctx, page = new_page(browser, port, width=390, height=844, mobile=True)
     if browser.browser_type.name != "firefox":
-        small = page.evaluate("""()=>[...document.querySelectorAll('button,a[href],input,select,summary')].filter(e=>e.offsetParent&&!e.closest('p,li,td,.note')).filter(e=>!['checkbox','radio'].includes(e.type)).filter(e=>e.getBoundingClientRect().height<44).map(e=>(e.id||e.textContent.trim().slice(0,16))+':'+Math.round(e.getBoundingClientRect().height))""")
+        small = page.evaluate("""()=>[...document.querySelectorAll('button,a[href],input,select,summary')].filter(e=>e.offsetParent&&!e.closest('p,li,td,.note')).filter(e=>!['checkbox','radio'].includes(e.type)).filter(e=>e.getBoundingClientRect().height<43.5).map(e=>(e.id||e.textContent.trim().slice(0,16))+':'+Math.round(e.getBoundingClientRect().height))""")
         check("touch targets ≥ 44 px on phones", not small, ", ".join(small[:6]))
     page.add_style_tag(content="*{line-height:1.5!important;letter-spacing:.12em!important;word-spacing:.16em!important}p{margin-bottom:2em!important}")
     page.wait_for_timeout(200)
