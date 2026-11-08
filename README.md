@@ -46,7 +46,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **History** | Every test saved on your device, trend chart, filter by network, editable network label, CSV export. |
 | **Router security** | Scores your router settings, looks up known vulnerabilities for your exact model and firmware in the U.S. National Vulnerability Database (NVD), and gives step-by-step fixes — **manufacturer-approved fixes only**. |
 | **Toolkit** | Ping & outage monitor, DNS benchmark, My IP & ISP, data/time calculator, Wi-Fi password generator & strength check, device (MAC) lookup, subnet calculator, global compare. |
-| **App** | Single HTML file, "instrument panel" design (see [DESIGN.md](DESIGN.md)), dark and light themes, reduced-motion support, installable, no build step, no third-party scripts, no analytics. |
+| **App** | Single HTML file, "glass instrument" design (see [DESIGN.md](DESIGN.md)) that fits phones, tablets and laptops, dark and light themes, reduced-motion support, installable, no build step, no third-party scripts, no analytics. |
 
 ---
 
@@ -401,10 +401,12 @@ flowchart LR
 
 The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
 
-- **Instrument panel:** graphite (or light grey) flat panels with 1 px rules, IBM Plex Sans for text and IBM Plex Mono for every number and label, 6 px / 4 px corners. No glass, blur, glow, shadows or violet.
+- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. IBM Plex Sans for text, IBM Plex Mono for every number and label. No violet.
 - **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
-- **One button family:** filled for the main action, outlined for the rest, red outline for Stop.
-- **Motion with a job:** 120–180 ms on state changes only. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
+- **One button family:** a cyan glass object for the main action, raised glass for the rest, tinted red glass for Stop.
+- **Motion with a job:** one entrance on load, hover lift and press on controls (140–220 ms), live data. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
+- **Fits every screen:** one column on phones (320 px and up), stacked panels on tablets, two-column speed test and wider spacing on laptops and desktops; the throughput chart stretches to fill the space.
+- **Browsers:** Chrome / Edge 111+, Safari 16.2+ (Mac, iPhone, iPad), Firefox 113+. Browsers without backdrop blur get solid panels.
 - **Accessibility (WCAG 2.2 AA):** text contrast at least 4.5:1 in both themes, visible focus outlines, touch targets at least 44 px, no sideways scrolling at 320 px.
 
 ## Data sources and licences
@@ -426,7 +428,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
+| *latest* | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |
+| `d284597` | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
 | `200e531` | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |
 | `e427d4e` | Detailed README with fictional sample screenshots (router, CVEs, speeds, history, MACs, IPs); self-host test server; map labels no longer overlap when you and the server are close; records covering only another firmware line count as "fixed in your version" |
 | `f7f4ce8` | Device lookup: on-device IEEE maker registry (no third-party lookup) |

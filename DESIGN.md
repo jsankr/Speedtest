@@ -1,70 +1,75 @@
 ---
 name: design-system-cleanspeed
-description: CleanSpeed's "instrument panel" design system — tokens, components, motion and accessibility rules. Use when changing how any CleanSpeed screen looks, moves or behaves.
+description: CleanSpeed's "glass instrument" design system — tokens, components, motion and accessibility rules. Use when changing how any CleanSpeed screen looks, moves or behaves.
 ---
 
-# CleanSpeed — Instrument Panel
+# CleanSpeed — Glass Instrument
 
 ## Mission
-CleanSpeed should read like a measuring instrument, not a marketing page: numbers first, one colour per direction of traffic, nothing that glows, floats or competes with the measurement. Every element earns its place by helping someone read, compare or act on a result.
+CleanSpeed should feel like a precision instrument made of glass: depth, light and material that make it a pleasure to use, while the numbers stay the hero. Every object is lit from the same direction, every colour carries one meaning, and nothing moves unless it shows something real.
 
 ## Brand
 - Product: CleanSpeed — ad-free, tracker-free speed test with router security check and network toolkit
-- Audience: people checking their home or mobile connection on a phone; technically curious, not necessarily experts
-- Product surface: single-page web app (installable), phone first, works to 320 px
+- Audience: people checking their home or mobile connection, mostly on a phone; technically curious, not necessarily experts
+- Product surface: single-page web app (installable), fits 320 px phones to 1440 px+ desktops
 
 ## Style Foundations
-- **Visual style:** flat graphite panels, 1 px rules, tabular monospaced numbers, square-ish corners. No glass, blur, aurora, gradients on surfaces, drop shadows, glows or violet.
+- **Visual style:** frosted-glass panels over two still light fields (cyan top-left, amber bottom-right) and a faint dot grid; engraved "wells" for readouts and inputs; raised 3D objects (GO sphere, tool chips, segmented thumb, dial bead) lit from the top-left. Violet is never used.
 - **Typography:** IBM Plex Sans (UI text, headings) and IBM Plex Mono (numbers, labels, buttons, data). Fallbacks: system-ui / ui-monospace.
 
   | Token | Use | Size / weight |
   |---|---|---|
-  | Wordmark | `h1` | Mono 600, 20 px, 0.14em tracking, uppercase |
-  | Section heading | `h2` | Sans 600, 15 px |
-  | Primary value | `.val` | Mono 500, clamp(30–44 px), tabular, slashed zero |
-  | Secondary value | `.small .val`, `.stat b` | Mono 500, 20–26 px |
+  | Wordmark | `h1` + glass chip | Mono 600, 20 px, 0.16em tracking, uppercase |
+  | Section heading | `h2` | Sans 600, 16 px |
+  | Primary value | `.val` | Mono 500, clamp(30–46 px), tabular, slashed zero, soft halo in its direction colour |
+  | Secondary value | `.small .val`, `.stat b` | Mono 500, 20–27 px |
   | Label | `.lbl`, `th` | Mono 500, 11 px, 0.12em tracking, uppercase |
-  | Body | `body` | Sans 400, 15 px / 1.5 |
+  | Body | `body` | Sans 400, 15 px / 1.55 |
   | Note | `.note` | Sans 400, 13 px, `--muted` |
 
-- **Colour (semantic tokens; components never use raw hex):**
+- **Colour (semantic tokens; components never use raw hex, except the per-tool chip hues):**
 
   | Token | Dark | Light | Meaning |
   |---|---|---|---|
-  | `--bg0` | #0d1012 | #eceff0 | Page ground |
-  | `--panel` / `--panel2` | #141a1d / #1a2125 | #ffffff / #f4f6f7 | Panel / inset or hover |
-  | `--line` / `--line2` | 10% / 20% white | 13% / 22% ink | Rules / control borders |
-  | `--ink` / `--muted` | #e4eaed / #8f9ca5 | #11171a / #56626b | Text / secondary text |
+  | `--bg0` | #080b0d | #e6ebef | Page ground under the light fields |
+  | `--field1` / `--field2` | cyan 13% / amber 8% | cyan 20% / amber 16% | Still light fields behind the glass |
+  | `--glass` | rgba(22,29,34,.58) | rgba(255,255,255,.60) | Panel material (with 22 px backdrop blur) |
+  | `--glass-solid` | #151b1f | #f7f9fa | Fallback when backdrop blur is unsupported |
+  | `--well` / `--well-in` | 3.5% white / 35% black inner shadow | 55% white / 6% ink inner shadow | Engraved readouts, inputs, lists |
+  | `--line` / `--line2` / `--hi` | 9% / 18% / 10% white | 11% / 20% ink / 95% white | Edges / control borders / top highlight |
+  | `--ink` / `--muted` | #e6ecef / #93a0a9 | #10181d / #53606a | Text / secondary text |
   | `--down` = `--accent` | #3ad3e3 | #067785 | Download, primary action, links, focus |
+  | `--accent-hi` / `--accent-lo` | #b9f6fc / #0b8796 | #5fe3f0 / #045d68 | Light and shadow side of accent objects |
   | `--up` | #ffa53d | #b45f00 | Upload |
-  | `--good` / `--ok` / `--bad` | #45cf8f / #e2c34b / #ff5c66 | #13804d / #8a6a00 / #c42f3b | Pass / caution / fail |
-  | `--high` | #ff7a45 | #b8451a | High-severity vulnerability |
-  | `--you` | #f2f5f6 | #11171a | "You" marker in comparisons |
+  | `--good` / `--ok` / `--bad` / `--high` | #45cf8f / #e2c34b / #ff5c66 / #ff7a45 | #13804d / #8a6a00 / #c42f3b / #b8451a | Pass / caution / fail / high severity |
 
-  Cyan always means download and amber always means upload, everywhere (gauge, sparkline, map dots, timeline, history). Violet is never used.
-- **Spacing:** 4 px base; panel padding 18–20 px (16 px under 480 px); gaps 8 / 14 / 16 px.
-- **Radius:** `--r-panel` 6 px, `--r-ctl` 4 px, chips and badges 2 px, markers 1 px. The GO button is the only circle.
-- **Elevation:** none. Separation comes from `--line` rules and `--panel2` insets.
+  Cyan always means download and amber always means upload, everywhere (dial, sparkline, map, timeline, history, comparison "you" bar). Tool chips each have their own hue (speed cyan, router green, ping amber, DNS blue, IP teal, calculator slate, password rose, device lime, subnet cobalt, compare gold) so the toolkit reads as distinct objects.
+- **Spacing:** 4 px base; panel padding 22–24 px (18 px under 480 px, 26–28 px at 1280 px+); gaps 10 / 16 / 22 px.
+- **Radius:** panels 20 px, wells and tiles 14–16 px, controls 12 px, chips and tags 999 px. The GO button is a sphere.
+- **Elevation:** three levels: page (light fields), glass panel (`--shadow` + top `--hi` highlight), raised object (coloured drop shadow + inner top highlight + inner bottom shade). Wells go *into* the glass (inner shadow).
 
 ## Components
-- **Buttons (one family):** `.go2` / `.orb` = filled accent (primary, one per area); `.ghost` = outlined (secondary); `.stopbtn` = outlined `--bad` (destructive). All: Mono label, 4 px radius, min-height 36 px (44 px on touch), hover = border/background step, press = translateY(1px) or scale(.97) for the orb, disabled = 45% opacity.
-- **Segmented control `.seg`:** joined buttons with internal rules; selected = filled accent.
-- **Readout groups:** related values share one bordered box split by rules (`.big`, `.small`), not separate cards. Download/upload tiles carry a 2 px top rule in their direction colour.
-- **Lists (fixes, router questions, MAC results):** one bordered box, rows split by rules. Severity shown as a bordered tag (`.sev`) with text, never colour alone.
-- **Callouts:** 3 px left rule in the state colour, neutral background.
-- **Charts:** flat 3 px lines, faint area fill (≤20%), no shadows; gauge = 22 px butt-capped arc in the phase colour with an ink needle mark.
-- **Map:** stylised dot-matrix land; dots stand for real bytes; small, faint halos only on markers and moving packets.
+- **Glass panel `.glass`:** `--glass` fill, 1 px `--line`, 20 px radius, `backdrop-filter: blur(22px) saturate(150%)` (with `-webkit-` prefix for Safari), inset top highlight and soft drop shadow; solid fallback via `@supports`.
+- **GO sphere `.orb`:** radial specular highlight top-left, accent body shading to `--accent-lo`, coloured cast shadow, sitting in a 10 px tinted ring. Hover lifts 2 px; press scales to .97.
+- **Dial:** lit glass bezel, engraved track, value arc in the phase colour with a soft halo and a white glass bead at the head; mono value in the centre during a test.
+- **Buttons (one family):** primary `.go2` = accent glass object; secondary `.ghost` = raised glass control; destructive `.stopbtn` = tinted red glass. Mono labels, 12 px radius, min-height 38 px (44 px on touch). Hover lifts 1 px, press settles and scales .98.
+- **Segmented control `.seg`:** engraved track, selected option is a raised accent thumb.
+- **Readouts:** wells with an inner shadow; download/upload wells carry a light line in their direction colour along the top edge.
+- **Tool tiles `.tile2`:** raised glass cards with a 3D colour chip icon; hover lifts 2 px; the open tool gets a coloured rim.
+- **Lists (fixes, CVEs, router questions, MAC results):** wells or raised glass rows with 8 px gaps. Severities are tinted pills with words, never colour alone.
+- **Charts:** 3 px lines with a soft halo in the series colour and a faint area fill; the throughput chart stretches to fill the readout column on wide screens and shows a hint when empty.
+- **Map:** stylised dot-matrix land in an engraved well; markers and moving packets have small halos; each dot stands for real bytes.
 
 ## Motion
-- Weighted for a productivity tool (restraint first): state changes only, 120 ms (`--t-fast`) or 180 ms (`--t`), `cubic-bezier(.2,.7,.2,1)`.
-- Allowed: button press/hover, meter width, gauge needle easing toward the live value, map packets (real data), chart drawing as data arrives.
-- Not allowed: pulsing or breathing indicators, looping rings, drifting backgrounds, parallax or tilt, fade-in on scroll, staggered list entrances, bouncy springs.
-- Animation loops run only while something changes (the gauge stops redrawing when the needle settles).
+- Weighted for a product people use daily: restraint first, polish second.
+- Allowed: one entrance of the speed-test panel on load (550 ms rise), hover lift and press on controls (140 ms), state transitions (220 ms), the dial needle easing toward the live value, map packets (real data), charts drawing as data arrives.
+- Not allowed: pulsing or breathing indicators, looping rings, drifting backgrounds, parallax or pointer tilt, fade-in on scroll, staggered list entrances, bouncy springs.
+- Animation loops run only while something changes (the dial stops redrawing when the needle settles).
 - `prefers-reduced-motion: reduce`: transitions and animations are cut to 0.01 ms and the map animation starts switched off; every state is still visible.
 
 ## Accessibility
 - Target: WCAG 2.2 AA.
-- Text contrast ≥ 4.5:1 for all text tokens on `--panel` in both themes (checked: muted 6.2:1, accent 5.3:1 light / 9.7:1 dark, white on light accent 5.3:1).
+- Text contrast ≥ 4.5:1 for all text tokens on the glass in both themes (checked against the solid fallback colours: muted 6.2:1, accent 5.3:1 light / 9.7:1 dark, white on light accent 5.3:1). Glass alpha stays ≥ 0.58 so text never sits on a busy background.
 - Focus: 2 px `--accent` outline, 2 px offset, on every control, `summary` and link.
 - Touch targets ≥ 44 px on coarse pointers (checked at 320 and 390 px: none under 44 px); inputs use 16 px text on touch to prevent iOS zoom.
 - Colour is never the only signal: severities, grades and statuses always carry words.
@@ -76,16 +81,22 @@ Plain and specific. Say what the number means and what to do next. Labels are no
 ## Rules: Do
 - Use tokens; add a token before adding a colour.
 - Keep download cyan and upload amber in every new chart or view.
-- Group related numbers in one ruled box; keep numbers in Mono with tabular figures.
+- Put related numbers in wells side by side; keep numbers in Mono with tabular figures.
 - Define default, hover, focus-visible, active, disabled and loading states for any new control.
 - Test new UI at 320, 390 and 1280 px, in both themes and with reduced motion.
 
 ## Rules: Don't
-- Don't add glass, blur, glow, drop shadows, gradients on surfaces, or violet.
+- Don't use violet, or mix light directions: every highlight comes from the top-left.
+- Don't put text directly on the light fields; text sits on glass or in wells.
 - Don't add looping or attention-seeking animation to status elements.
-- Don't introduce a second button style, card style or radius.
+- Don't introduce a second button style, card style or radius scale.
 - Don't rely on hover for anything essential.
 - Don't put real personal data (routers, MAC or IP addresses, speeds) in screenshots or docs; use the fictional sample set.
+
+## Browser support
+- Chrome / Edge 111+, Safari 16.2+ (macOS and iOS), Firefox 113+ (all use `color-mix`). Backdrop blur uses the standard property plus `-webkit-backdrop-filter` for Safari; browsers without blur get the solid panel colour.
+- The light fields are a fixed `body::before` layer, not `background-attachment: fixed`, which iOS Safari doesn't support.
+- Inputs use 16 px text on touch so iOS Safari doesn't zoom.
 
 ## Quality Gates
 - Every text token must pass 4.5:1 on its surface in both themes.
