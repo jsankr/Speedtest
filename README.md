@@ -283,7 +283,7 @@ No accounts, no ads, no analytics, no cookies, no third-party scripts. Results, 
 | My IP & ISP | ipinfo.io, ipify.org | A request (they see your IP, like any website) |
 | Device lookup | **Nothing** — uses the bundled `oui.txt` | — (api.maclookup.app only if `oui.txt` is missing) |
 | Wi-Fi password, calculators, subnet | **Nothing** | — |
-| Fonts | fonts.googleapis.com | Standard font request (falls back to system fonts if blocked) |
+| Fonts | **Nothing** — the typefaces ship with the app | — |
 
 Precise location (optional) is rounded to two decimals and stored only on your device.
 
@@ -385,6 +385,7 @@ flowchart LR
 ├── index.html            # the whole app: HTML, CSS and JavaScript, no dependencies
 ├── oui.txt               # IEEE MAC maker registry (offline device lookup)
 ├── oui-LICENSE.txt       # licence for oui.txt
+├── fonts/                # Instrument Sans, Instrument Serif, Geist Mono (Latin subset, WOFF) + OFL licences
 ├── DESIGN.md             # design system: tokens, components, motion, accessibility
 ├── server/
 │   └── server.py         # optional self-hosted test server
@@ -401,7 +402,8 @@ flowchart LR
 
 The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
 
-- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. IBM Plex Sans for text, IBM Plex Mono for every number and label. No violet.
+- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. No violet.
+- **Typography:** Instrument Serif for section titles (with one italic accent word), Instrument Sans for reading text, Geist Mono for every number, label and button. The fonts are bundled, so the page makes no font requests.
 - **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
 - **One button family:** a cyan glass object for the main action, raised glass for the rest, tinted red glass for Stop.
 - **Motion with a job:** one entrance on load, hover lift and press on controls (140–220 ms), live data. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
@@ -418,6 +420,7 @@ The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every 
 | Exploited vulnerabilities | CISA Known Exploited Vulnerabilities catalogue (via NVD) | "Actively exploited" badge |
 | MAC makers | IEEE registry via oui-data by silverwind, BSD-2-Clause (see `oui-LICENSE.txt`) | Device lookup |
 | Volunteer servers | LibreSpeed | Server list |
+| Typefaces | Instrument Sans and Instrument Serif (Instrument), Geist Mono (Vercel), via the Google Fonts repository; SIL Open Font License 1.1 (see `fonts/`) | All text |
 | Streaming/call requirements | Netflix and Zoom published requirements | Readiness tiles |
 
 CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSpeed or any router maker. Product names are their owners' trademarks.
@@ -428,7 +431,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |
+| *latest* | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
+| `c56eb8d` | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |
 | `d284597` | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
 | `200e531` | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |
 | `e427d4e` | Detailed README with fictional sample screenshots (router, CVEs, speeds, history, MACs, IPs); self-host test server; map labels no longer overlap when you and the server are close; records covering only another firmware line count as "fixed in your version" |

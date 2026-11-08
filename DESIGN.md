@@ -15,17 +15,23 @@ CleanSpeed should feel like a precision instrument made of glass: depth, light a
 
 ## Style Foundations
 - **Visual style:** frosted-glass panels over two still light fields (cyan top-left, amber bottom-right) and a faint dot grid; engraved "wells" for readouts and inputs; raised 3D objects (GO sphere, tool chips, segmented thumb, dial bead) lit from the top-left. Violet is never used.
-- **Typography:** IBM Plex Sans (UI text, headings) and IBM Plex Mono (numbers, labels, buttons, data). Fallbacks: system-ui / ui-monospace.
+- **Typography:** three faces with one job each, bundled with the app (Latin subset, WOFF, SIL Open Font License) so no font request leaves the device.
+  - **Instrument Serif** (`--display`) — section titles, with one word set in italic accent colour ("Live network *map*"), and the italic half of the wordmark.
+  - **Instrument Sans** (`--body`, variable 400–700) — reading text, tool names and descriptions, notes.
+  - **Geist Mono** (`--mono`, `--num`, variable 100–900) — every number, unit, label, button and table.
+  - Fallbacks: ui-serif/Georgia, system-ui/-apple-system, ui-monospace/SF Mono. Antialiased, kerning on, `font-display: swap`; canvases redraw when the fonts arrive.
 
-  | Token | Use | Size / weight |
+  | Token | Use | Face, size / weight |
   |---|---|---|
-  | Wordmark | `h1` + glass chip | Mono 600, 20 px, 0.16em tracking, uppercase |
-  | Section heading | `h2` | Sans 600, 16 px |
-  | Primary value | `.val` | Mono 500, clamp(30–46 px), tabular, slashed zero, soft halo in its direction colour |
-  | Secondary value | `.small .val`, `.stat b` | Mono 500, 20–27 px |
-  | Label | `.lbl`, `th` | Mono 500, 11 px, 0.12em tracking, uppercase |
-  | Body | `body` | Sans 400, 15 px / 1.55 |
-  | Note | `.note` | Sans 400, 13 px, `--muted` |
+  | Wordmark | `h1` + glass chip | "Clean" Instrument Sans 600, 23 px · "*Speed*" Instrument Serif italic, 27 px, accent |
+  | Section title | `h2` | Instrument Serif 400, 25 px / 1.1, −0.01em, one italic accent word |
+  | Tool title | `.tool h3` | Instrument Serif 400, 22 px |
+  | Primary value | `.val` | Geist Mono 500, clamp(30–46 px), tabular, soft halo in its direction colour |
+  | Secondary value | `.small .val`, `.stat b`, `.bignum` | Geist Mono 500, 20–34 px |
+  | Label | `.lbl`, `th`, `.tag` | Geist Mono 500, 11 px, 0.09em tracking, uppercase |
+  | Control | buttons, segmented, chips | Geist Mono 500, 12.5–13 px |
+  | Body | `body`, `.conn`, tool descriptions | Instrument Sans 400, 15 px / 1.55 (descriptions 12.5–13 px) |
+  | Note | `.note` | Instrument Sans 400, 13 px, `--muted` |
 
 - **Colour (semantic tokens; components never use raw hex, except the per-tool chip hues):**
 
