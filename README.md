@@ -27,7 +27,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 6. [Install, use and self-host](#install-use-and-self-host)
 7. [Troubleshooting](#troubleshooting)
 8. [Limitations](#limitations)
-9. [Architecture](#architecture)
+9. [Architecture](#architecture) · [Design system](#design-system)
 10. [Data sources and licences](#data-sources-and-licences)
 11. [Changelog](#changelog)
 
@@ -46,7 +46,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **History** | Every test saved on your device, trend chart, filter by network, editable network label, CSV export. |
 | **Router security** | Scores your router settings, looks up known vulnerabilities for your exact model and firmware in the U.S. National Vulnerability Database (NVD), and gives step-by-step fixes — **manufacturer-approved fixes only**. |
 | **Toolkit** | Ping & outage monitor, DNS benchmark, My IP & ISP, data/time calculator, Wi-Fi password generator & strength check, device (MAC) lookup, subnet calculator, global compare. |
-| **App** | Single HTML file, dark and light themes, installable, no build step, no third-party scripts, no analytics. |
+| **App** | Single HTML file, "instrument panel" design (see [DESIGN.md](DESIGN.md)), dark and light themes, reduced-motion support, installable, no build step, no third-party scripts, no analytics. |
 
 ---
 
@@ -57,7 +57,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | Ready | Testing | Done |
 |:--:|:--:|:--:|
 | <img src="docs/screenshots/01-home.png" width="250"> | <img src="docs/screenshots/02-test-running.png" width="250"> | <img src="docs/screenshots/03-results.png" width="250"> |
-| Tap **GO**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **RETEST** replaces GO. The chart overlays download (cyan) and upload (violet). |
+| Tap **GO**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **RETEST** replaces GO. The chart overlays download (cyan) and upload (amber). |
 
 - **Steps** at the top light up in order: Ping → Download → Upload.
 - **Network** — pick Wi-Fi, Mobile or Ethernet. Browsers on iPhone don't reveal the connection type, so CleanSpeed asks once and remembers. Where the browser does report it (some Android/desktop Chrome builds), it's detected automatically.
@@ -71,7 +71,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 |:--:|:--:|
 | <img src="docs/screenshots/04-live-map-download.png" width="300"> | <img src="docs/screenshots/05-live-map-upload.png" width="300"> |
 
-- **Map** — a stylised dot-matrix world, zoomed to fit the route. Every moving dot is **real data**: a dot leaves only when that much data has actually been received (download, **server → you**, cyan) or sent (upload, **you → server**, violet), counted from the same byte counters as the result. The legend under the map says how much each dot stands for (16 KB to 256 MB, so there are never more than about 50 a second).
+- **Map** — a stylised dot-matrix world, zoomed to fit the route. Every moving dot is **real data**: a dot leaves only when that much data has actually been received (download, **server → you**, cyan) or sent (upload, **you → server**, amber), counted from the same byte counters as the result. The legend under the map says how much each dot stands for (16 KB to 256 MB, so there are never more than about 50 a second).
 - **Timing** — each dot's trip lasts the measured one-way delay (ping ÷ 2) shown **20× slower**, so the eye can follow it; a ring flashes when it lands. Pings (green) go out and come back over their measured round-trip time.
 - **Live ping** — after a test, while the map is on screen and the page is in front, the app pings the last server every 2 seconds and animates each one. Untick **Live ping** to stop; the setting is remembered.
 - **Cloudflare** — the app asks Cloudflare which data centre answered (its `/meta` and `/cdn-cgi/trace` endpoints) and draws the route to that city. If you and that data centre are in the same area, the server is drawn a short way off and labelled *near you*.
@@ -362,7 +362,7 @@ Open `http://<server-ip>:8080/` to run CleanSpeed against it directly — good f
 ```mermaid
 flowchart LR
     subgraph Browser["index.html (single file)"]
-        UI[Glass UI · gauge · charts · map canvas]
+        UI[Instrument UI · gauge · charts · map canvas]
         ENG[Test engine<br/>download · upload · ping · ndt7]
         RT[Router check<br/>NVD matcher · fix builder]
         TK[Toolkit<br/>monitor · DNS · IP · MAC · subnet · calc · password]
@@ -385,6 +385,7 @@ flowchart LR
 ├── index.html            # the whole app: HTML, CSS and JavaScript, no dependencies
 ├── oui.txt               # IEEE MAC maker registry (offline device lookup)
 ├── oui-LICENSE.txt       # licence for oui.txt
+├── DESIGN.md             # design system: tokens, components, motion, accessibility
 ├── server/
 │   └── server.py         # optional self-hosted test server
 └── docs/screenshots/     # images used in this README (sample data)
@@ -395,6 +396,16 @@ flowchart LR
 - Tests cancel cleanly through an `AbortController`; every network request has a timeout.
 
 ---
+
+## Design system
+
+The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
+
+- **Instrument panel:** graphite (or light grey) flat panels with 1 px rules, IBM Plex Sans for text and IBM Plex Mono for every number and label, 6 px / 4 px corners. No glass, blur, glow, shadows or violet.
+- **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
+- **One button family:** filled for the main action, outlined for the rest, red outline for Stop.
+- **Motion with a job:** 120–180 ms on state changes only. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
+- **Accessibility (WCAG 2.2 AA):** text contrast at least 4.5:1 in both themes, visible focus outlines, touch targets at least 44 px, no sideways scrolling at 320 px.
 
 ## Data sources and licences
 
@@ -415,7 +426,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |
+| *latest* | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
+| `200e531` | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |
 | `e427d4e` | Detailed README with fictional sample screenshots (router, CVEs, speeds, history, MACs, IPs); self-host test server; map labels no longer overlap when you and the server are close; records covering only another firmware line count as "fixed in your version" |
 | `f7f4ce8` | Device lookup: on-device IEEE maker registry (no third-party lookup) |
 | `c4a10ea` | Router check: manufacturer-only fixes, firmware-line-aware matching |
