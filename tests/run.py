@@ -129,6 +129,8 @@ def e2e(browser, port):
     check("upload measured", num(ul) > 0, ul)
     check("RETEST offered after a test", "RETEST" in page.inner_text("#go").upper(), page.inner_text("#go"))
     check("result saved to history", page.locator("#rows tr").count() >= 1)
+    lab = page.get_attribute("#collider", "aria-label") or ""
+    check("collider teardown describes the result", "download" in lab and "ping" in lab, lab)
     h = page.evaluate("document.scrollingElement.scrollHeight")
     check("page height stays sane after a test (charts don't grow)", h < 12000, f"{h}px")
     sp = page.evaluate("Math.round(document.getElementById('spark').getBoundingClientRect().height)")

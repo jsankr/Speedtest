@@ -40,6 +40,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **Speed test** | Download, upload, idle ping, jitter and **loaded ping** (latency while the line is busy). Live gauge and throughput chart. Stop at any time; **Retest** after a run. |
 | **Units** | Bytes or bits per second: KB/s, MB/s, GB/s, Kbps, Mbps, Gbps. Decimal (1000) or binary (1024, shown as MiB/s, Mibps). |
 | **Servers** | Automatic (lowest ping), Cloudflare (anycast), Measurement Lab (ndt7), 22 LibreSpeed volunteer servers worldwide, or your own server. "Measure ping to all" compares them. |
+| **Packet collider** | A 3D collider view of the test: real packets as photons around a beam ring, showers in the detector, and an exploded teardown of ping, download and upload at the end. |
 | **Live map** | Route from you to the test server with animated data flow, live download/upload/ping tiles and a telemetry timeline. |
 | **Insights** | Responsiveness grade (A+ to F) from loaded ping, what the connection can handle (streaming, calls, gaming, backups), your place among 100+ countries. |
 | **Global comparison** | Your result against the world and national medians (Ookla Speedtest Global Index), for broadband or mobile. |
@@ -79,6 +80,21 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 - **Live tiles** — download now, upload now, ping now, data down, data up, elapsed.
 - **Timeline** — download and upload on the left axis, ping (orange dots) on the right axis, with phase bands.
 - **Route facts** — straight-line distance and the physical minimum round trip (light in fibre ≈ 200 km per ms). If your ping is *lower* than that minimum, you weren't really connected to that city (often a VPN or iCloud Private Relay).
+
+### Packet collider (3D)
+
+| During download | After the test: teardown |
+|:--:|:--:|
+| <img src="docs/screenshots/25-collider-download.png" width="300"> | <img src="docs/screenshots/26-collider-teardown.png" width="300"> |
+
+The same test drawn as a particle collider. The ring is the route to the test server, the port on the ring is the server, and the detector in the middle is your device.
+
+- **Ping:** green probes travel from the detector to the server port and back, one per measured ping, taking the measured round trip (slowed 20× so you can see it). The time flashes where each lands.
+- **Download:** a cyan packet enters at the server port only when that much data has really arrived (the note under the picture gives the size, e.g. 1 packet = 4 MB). It rides the ring once, dives into the detector and breaks into a shower of curved tracks.
+- **Upload:** an amber packet leaves the detector for each chunk really sent, rides the ring and exits at the port.
+- **Speed you can see:** packets ride the ring faster as the live speed rises; the camera turns slowly while a test runs.
+- **Teardown:** when the test ends, the detector comes apart into its three layers, labelled with your ping and jitter, download and upload. The last saved result is shown this way when the page opens.
+- **Cost:** drawn with the browser's 2D canvas, capped at 30 frames a second during a test and paused when the panel is off screen, so it doesn't compete with the measurement. *Animate* turns it off; *Reduce motion* turns it off by default. Screen readers get the result as text.
 
 ### 3. Result insights
 
@@ -468,7 +484,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |
+| *latest* | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |
+| `f2c01ce` | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |
 | `3cd2379` | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
 | `c56eb8d` | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |
 | `d284597` | Redesign: instrument-panel design system ([DESIGN.md](DESIGN.md)); flat dial gauge; cyan download / amber upload; one button family; no glows, pulses or tilt; gauge stops redrawing when idle; reduced-motion support; 44 px touch targets; contrast checked in both themes; new app icon |
