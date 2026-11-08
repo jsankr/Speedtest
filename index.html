@@ -367,6 +367,19 @@ footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8p
   .orb{forced-color-adjust:none} .seg button[aria-pressed="true"]{outline:2px solid Highlight;outline-offset:-2px} .skip{border:2px solid CanvasText}}
 /* Motion off: every state still shows, nothing moves. */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* ---- Help assistant (on-device, no network) ---- */
+#helpPanel .hlog{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding:12px;margin:12px 0;scroll-behavior:smooth}
+#helpPanel .hm{max-width:92%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.5;border:1px solid var(--line)}
+#helpPanel .hm.me{align-self:flex-end;background:color-mix(in srgb,var(--accent) 16%,var(--glass-solid));color:var(--ink)}
+#helpPanel .hm.bot{align-self:flex-start;background:var(--glass-solid);color:var(--ink)}
+#helpPanel .hm h3{font:500 17px var(--display);margin:0 0 4px}
+#helpPanel .hm p{margin:0 0 6px} #helpPanel .hm ol,#helpPanel .hm ul{margin:4px 0 8px;padding-left:20px}
+#helpPanel .hsrc{font-size:12px;color:var(--muted);margin:6px 0 0}
+#helpPanel .hrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+#helpPanel .hrow .ghost{font-size:13px;padding:6px 12px}
+#helpPanel form{display:flex;gap:8px;flex-wrap:wrap} #helpPanel form input{flex:1 1 220px}
 </style>
 </head>
 <body>
@@ -652,6 +665,22 @@ footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8p
       <div class="ctl"><label for="dur">Seconds per phase</label><input type="number" id="dur" min="4" max="30" value="10"></div>
     </div>
     <p class="note">1 byte = 8 bits, so 1 MB/s = 8 Mbps and 1 GB/s = 8 Gbps. Internet plans are sold in bits (Mbps/Gbps); file downloads show bytes (MB/s). Each test moves roughly your speed × twice the phase length, so lower the seconds per phase on mobile data.</p>
+  </section>
+
+
+  <!-- ============ Help assistant ============ -->
+  <section class="glass pad" id="helpPanel" aria-label="Help assistant">
+    <div class="srvhead"><h2>Ask CleanSpeed</h2><span class="tag">Answers stay on this device</span></div>
+    <p class="note">A help assistant with a built-in knowledge base about this app: how tests work, what the numbers mean, fixes for slow results, privacy, the router check and the toolkit. It reads your last saved test to diagnose it, runs entirely in this page and sends nothing anywhere.</p>
+    <div class="hlog well" id="hLog" role="log" aria-live="polite" aria-label="Conversation with the help assistant" tabindex="0"></div>
+    <div class="hrow" id="hChips" role="group" aria-label="Suggested questions" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <form id="hForm" autocomplete="off">
+      <label for="hQ" class="sr">Your question</label>
+      <input type="search" id="hQ" placeholder="Ask, for example: why is my upload slow?" maxlength="200" enterkeyhint="send">
+      <button class="go2" type="submit">Ask</button>
+      <button class="ghost" type="button" id="hDiag">Diagnose my last test</button>
+      <button class="ghost" type="button" id="hClear">Clear</button>
+    </form>
   </section>
 
 </main>
@@ -2231,6 +2260,153 @@ const col=(()=>{
   $("colAnim").checked=!reduce.matches; $("colAnim").onchange=()=>{ if(!$("colAnim").checked){ parts=[]; tracks=[]; hits=[]; flashes=[] } kick() };
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change",kick);
   return {start,end,ping,kick,get cost(){return frameCost}};
+})();
+
+
+/* ---- Help assistant: knowledge stack + on-device retrieval (no network, nothing stored) ---- */
+const HELP=(()=>{
+  /* Each entry: id, title, keywords (synonyms people actually type), answer paragraphs / steps, source in the docs, actions */
+  const KB=[
+  {id:"start",t:"Run a speed test",k:"start run begin test go button first how use measure check speed",
+   a:["Tap Go. CleanSpeed measures idle ping and jitter, then download, then upload, with loaded ping (latency while the line is busy) running alongside. The result is saved on this device. Tap Stop at any time, or Retest after a run."],src:"What it does",go:[["Go to the test","tool:speed"]]},
+  {id:"units",t:"MB/s or Mbps? Which unit is right",k:"unit units mbps mb/s megabit megabyte bits bytes kbps gbps convert difference plan advertised",
+   a:["Plans are sold in bits (Mbps, Gbps); file downloads show bytes (MB/s). 1 byte = 8 bits, so 1 MB/s = 8 Mbps and 1 GB/s = 8 Gbps. A 450 Mbps plan peaks near 56 MB/s.","Pick the unit under Settings. Decimal (1000) matches what ISPs advertise; binary (1024) shows MiB/s."],src:"Settings and units",go:[["Open Settings","sec:Settings"]]},
+  {id:"slowup",t:"Upload is slow",k:"upload slow low up speed slower uploading backup video call send cloud asymmetric",
+   a:["Many cable, DSL and mobile plans give far less upload than download, so a low upload alone can be normal. Compare it with the upload figure on your plan.","If it is well below that, test on a cable, then try another server. Run Diagnose my last test below for a check against your last result."],src:"Troubleshooting",go:[["Open Settings","sec:Settings"]]},
+  {id:"slowdown",t:"My internet feels slow",k:"internet slow speed low bad poor sluggish buffering buffer streaming not working fast result what to do improve fix",
+   a:["Work from the cheapest check outward: 1) test next to the router, 2) test on a cable, 3) try another server, 4) turn off any VPN or Private Relay, 5) restart the router and the ISP box. If a cable is fast and Wi-Fi is slow, the wireless link is the problem. If both are slow, contact your ISP with the History export as evidence.","Diagnose my last test below checks your result for the common causes."],src:"Troubleshooting",go:[["Open History","sec:History"]]},
+  {id:"stuck100",t:"Speed stuck near 11-12 MB/s (about 93 Mbps)",k:"stuck capped 100 mbps 12 mb/s 11 93 slow fast ethernet cable port gigabit limit stuck plan faster",
+   a:["That ceiling is the signature of a link that negotiated 100 Mbps instead of 1 Gbps. Usual causes are a loose or damaged cable, a 4-wire cable, or an old switch or port.","Reseat or replace the cable between the ISP box and the router (Cat5e or better), then check the router's WAN link speed."],src:"Troubleshooting",go:[]},
+  {id:"wifislow",t:"Results far below my plan on Wi-Fi",k:"wifi wi-fi wireless slow below plan weak signal 2.4 5ghz distance interference router far",
+   a:["Distance, the 2.4 GHz band and interference cost the most. Test next to the router on 5 GHz, then compare with a cable. If the cable is fast and Wi-Fi is slow, the problem is the wireless link, not your ISP."],src:"Troubleshooting",go:[]},
+  {id:"pinghigh",t:"Ping is higher than usual, or lower than physically possible",k:"ping high latency vpn private relay icloud lag proxy lower impossible map minimum",
+   a:["iCloud Private Relay or a VPN can route traffic elsewhere, which raises ping or makes it look too good for the map's physical minimum.","Turn Private Relay off for this network (Settings, Wi-Fi, the i next to the network) or disconnect the VPN, then retest."],src:"Troubleshooting",go:[["Check VPN / relay in My IP","tool:ip"]]},
+  {id:"loaded",t:"Loaded ping and the A+ to F grade",k:"loaded ping bufferbloat grade responsiveness latency under load video call lag gaming grade a f",
+   a:["Loaded ping is your latency while the line is busy. A big jump (bufferbloat) is what makes calls and games stutter while someone downloads, even when speed is fine. The grade comes from it.","The usual fix is Smart Queue Management (SQM, fq_codel or CAKE) or a bandwidth limit set to about 90% of your plan in the router's QoS settings."],src:"How the measurement works",go:[]},
+  {id:"jitter",t:"What is jitter",k:"jitter variation ping stable consistency",a:["Jitter is how much your ping varies from one request to the next. Low and steady is better for calls and games; above about 30 ms is noticeable."],src:"How the measurement works",go:[]},
+  {id:"method",t:"How the speed is measured",k:"how measured method accurate accuracy streams parallel ramp tcp average algorithm calculate precise trust",
+   a:["Download uses several parallel HTTP streams (6 by default) and counts bytes as they arrive. Upload sends parallel POSTs sized to take about 0.6 s each. The final figure is the average after discarding the first 25% of the phase, while TCP is still ramping up.","Loaded ping is probed on a separate host (1.1.1.1) so the probe is not queued behind the test's own traffic."],src:"How the measurement works",go:[]},
+  {id:"uploadfail",t:"Upload could not be measured",k:"upload failed error not measured missing couldn't confirm timeout no upload",
+   a:["The server did not confirm uploads in time. Download and ping are still saved. Change server and retest."],src:"Troubleshooting",go:[["Open Settings","sec:Settings"]]},
+  {id:"servers",t:"Choosing a test server",k:"server servers choose change select automatic cloudflare librespeed m-lab mlab ndt7 nearest closest region country",
+   a:["Automatic picks the lowest ping. You can also choose Cloudflare (anycast), Measurement Lab (ndt7), any of 22 LibreSpeed volunteer servers, or your own server. Use Change server under Go; Measure ping to all compares them."],src:"What it does",go:[["Go to the test","tool:speed"]]},
+  {id:"mlab",t:"Measurement Lab and my IP address",k:"m-lab mlab measurement lab publish public ip data open consent privacy ndt7",
+   a:["M-Lab publishes every test as open data, including your IP address, date and time. CleanSpeed asks you to confirm that before running an M-Lab test."],src:"Privacy",go:[]},
+  {id:"ownserver",t:"Run my own test server",k:"own server self host selfhost python lan local test home network https caddy nginx",
+   a:["Run `python3 server/server.py --port 8080` (Python 3.9+, no logging) and open http://<server-ip>:8080/ to test your LAN or Wi-Fi without the internet in the way.","To use it from the hosted copy, via Change server, Your own server, it must be served over https, for example behind Caddy or nginx, because browsers block http requests from https pages."],src:"Self-host a test server",go:[]},
+  {id:"privacy",t:"What leaves my device",k:"privacy data tracking track analytics cookies ads secure safe private collect send log store account sign up",
+   a:["No accounts, ads, analytics, cookies or third-party scripts. Results, history, settings and location stay in this browser. The app contacts a service only when you use the feature that needs it, for example the test server you picked, 1.1.1.1 for loaded ping, NVD for the router check (brand and model only), or ipinfo and ipify for My IP & ISP.","Device lookup, the Wi-Fi password tool, the calculators and this help assistant send nothing."],src:"Privacy",go:[]},
+  {id:"router",t:"Router security check",k:"router security check score vulnerabilities cve nvd firmware model brand scan safe settings admin wps upnp",
+   a:["It scores your router settings from your answers, looks up known vulnerabilities for your model and firmware in the U.S. National Vulnerability Database, and gives step-by-step fixes, manufacturer-approved fixes only (no beta or third-party firmware).","Only the brand and model are sent to NVD, never your answers or firmware version. A browser cannot log in to your router, so the check relies on what you tell it."],src:"Router security",go:[["Open the router check","tool:router"]]},
+  {id:"cantconfirm",t:"Router check says 'can't confirm'",k:"cant confirm can't confirm unknown affected unsure cve record version missing not sure router",
+   a:["The public record for that issue lacks version data, so it cannot be matched to your firmware. Check the maker's own security advisory for your model."],src:"Limitations",go:[["Open the router check","tool:router"]]},
+  {id:"lookupfail",t:"Router lookup failed",k:"lookup failed nvd rate limit unreachable error router vulnerabilities not loading",
+   a:["NVD was unreachable or rate-limited. Wait a minute and retry. The settings score still works without it."],src:"Troubleshooting",go:[["Open the router check","tool:router"]]},
+  {id:"collider",t:"The packet collider view",k:"collider 3d animation hadron lhc cms detector packets photon teardown blender particles bunches",
+   a:["It draws the test as a particle collider modelled on CERN's CMS detector. A collision happens for each chunk of data really received, amber bunches leave for each chunk sent, and green probes run out and back for each ping. When the test ends the detector opens up with ping, download and upload on its parts.","The detector is rendered in Blender, with live data drawn on top through the same camera."],src:"Packet collider",go:[["Show the collider","sec:Packet collider"]]},
+  {id:"animoff",t:"Turn animations off",k:"animation animate off stop disable motion reduce reduced battery performance cpu slow laggy stutter collider map",
+   a:["Untick Animate on the collider and the map. If your system has Reduce motion turned on, animations start switched off and every state is still shown."],src:"Design system",go:[["Show the collider","sec:Packet collider"]]},
+  {id:"map",t:"The live map",k:"map live route dots stylised position location where server cloudflare colo data centre telemetry timeline",
+   a:["The map is stylised, not geographic. Each moving dot is real data counted as it arrives or leaves, slowed so the eye can follow. Your position comes from your time zone unless you allow precise location or run My IP & ISP, and it stays on this device. If a content blocker stops Cloudflare's reply, the map falls back to pulses around you."],src:"Live map",go:[["Show the map","sec:Live network map"]]},
+  {id:"history",t:"History and CSV export",k:"history export csv save past results trend delete clear spreadsheet excel download label",
+   a:["Every test is saved on this device with a trend chart. You can filter by network, edit a test's network label and export CSV. If Excel shows odd characters, import the file as UTF-8."],src:"History",go:[["Open History","sec:History"]]},
+  {id:"nettype",t:"Network type is wrong",k:"network type wifi mobile ethernet wrong label cellular detect",
+   a:["iPhone browsers do not expose the connection type. Pick Wi-Fi, Mobile or Ethernet under Go, and change past tests in History."],src:"Troubleshooting",go:[["Open History","sec:History"]]},
+  {id:"install",t:"Install it like an app",k:"install app home screen add pwa iphone android desktop offline icon shortcut",
+   a:["iPhone or iPad (Safari): Share, then Add to Home Screen. Android (Chrome): the menu, then Add to Home screen or Install app. Desktop Chrome or Edge: the install icon in the address bar."],src:"Install, use and self-host",go:[]},
+  {id:"dns",t:"DNS benchmark",k:"dns benchmark fastest resolver cloudflare google quad9 adguard opendns change dns faster browsing",
+   a:["It times Cloudflare, Google, Quad9, AdGuard and OpenDNS from your connection and recommends the fastest. To apply it everywhere, set it on the router (Internet or DHCP settings, DNS, Manual). Devices switch when they reconnect."],src:"Toolkit",go:[["Open DNS benchmark","tool:dns"]]},
+  {id:"myip",t:"My IP & ISP, IPv6, VPN and relay check",k:"ip address isp ipv6 vpn relay private whats my ip provider asn location",
+   a:["It shows your public IP, ISP and whether IPv6, a VPN or iCloud Private Relay is in play. ipinfo.io and ipify.org see your IP, like any website you visit."],src:"Toolkit",go:[["Open My IP & ISP","tool:ip"]]},
+  {id:"mac",t:"Device lookup says 'Unknown maker'",k:"mac address device lookup unknown maker vendor oui private randomised randomized who made",
+   a:["The address is probably private (randomised), or not in the IEEE registry. Check the device's Wi-Fi settings for Private address. Lookup uses the bundled oui.txt, so nothing is sent."],src:"Toolkit",go:[["Open Device lookup","tool:mac"]]},
+  {id:"password",t:"Wi-Fi password tool",k:"wifi password generate strong strength test passphrase random secure",
+   a:["It generates a strong random password and tests the strength of one you type. Everything is computed on this device and nothing is sent."],src:"Toolkit",go:[["Open Wi-Fi password","tool:pw"]]},
+  {id:"subnet",t:"Subnet calculator and CGNAT",k:"subnet calculator cidr mask range cgnat ip ranges network prefix",
+   a:["It shows the range, mask, usable hosts and flags CGNAT (100.64.0.0/10) ranges, which mean your ISP shares one public address between customers."],src:"Toolkit",go:[["Open Subnet calculator","tool:subnet"]]},
+  {id:"calc",t:"Data and time calculator",k:"calculator data download time how long gb file size usage estimate monthly cap",
+   a:["Enter a speed and a file size to get the download time, or the reverse. A test moves about your speed multiplied by the seconds in each phase, in each direction, so at 35 MB/s with 10-second phases expect roughly 350 MB down plus the upload."],src:"Toolkit",go:[["Open Data calculator","tool:calc"]]},
+  {id:"pingmon",t:"Ping and outage monitor",k:"ping monitor outage drops packet loss uptime intermittent disconnect cuts latency over time",
+   a:["It sends tiny requests to 1.1.1.1, google.com or your test server and records latency, loss and outages with start and end times. Useful evidence for an ISP when the connection drops."],src:"Toolkit",go:[["Open Ping monitor","tool:ping"]]},
+  {id:"compare",t:"Global comparison",k:"compare global country world median ookla rank average where do i stand percentile",
+   a:["Your result is compared with national and global medians from the Ookla Speedtest Global Index, for broadband or mobile. The data is a third-party compilation with a publication lag."],src:"Global comparison",go:[["Open comparison","tool:compare"]]},
+  {id:"mobiledata",t:"Using less mobile data",k:"mobile data cellular usage lots gb cap save reduce limit seconds streams",
+   a:["Lower Seconds per phase and the number of Parallel streams in Settings. A test moves roughly your speed times the phase length in each direction."],src:"Troubleshooting",go:[["Open Settings","sec:Settings"]]},
+  {id:"fast",t:"Very high speeds (several Gbps)",k:"gbps multi gigabit fast 2.5g 10g cpu browser limit cannot reach high speed 5 gbps",
+   a:["Above a few Gbps, the browser and device CPU can be the limit rather than the line. Wire the test device with a 2.5G or 10G port, close other tabs and try more parallel streams."],src:"Limitations",go:[["Open Settings","sec:Settings"]]},
+  {id:"limits",t:"What a browser can't do",k:"limitation traceroute port scan wifi channel signal strength router login native not possible cant can't missing feature",
+   a:["No traceroute, port scan, Wi-Fi channel scan or signal strength, and no router login. The router check relies on your answers plus public vulnerability data, and the map is stylised."],src:"Limitations",go:[]},
+  {id:"theme",t:"Dark and light theme, accessibility",k:"theme dark light mode accessibility accessible keyboard screen reader contrast wcag font size reduce motion",
+   a:["The app follows your system theme. It targets WCAG 2.2 AA: 4.5:1 text contrast, visible focus, 44 px touch targets, a skip link, and no sideways scroll at 320 px. Reduce motion is respected."],src:"Accessibility",go:[]},
+  {id:"free",t:"Is it free, ad-free and open source",k:"free cost price ads advertising open source license github who made sign up account",
+   a:["Yes: free, no ads, no tracking, no sign-up, open source. The whole app is a single HTML file."],src:"What it does",go:[]},
+  {id:"selfhost",t:"Host my own copy",k:"host fork github pages deploy copy clone publish netlify cloudflare pages nginx static",
+   a:["Fork the repository, then Settings, Pages, Deploy from a branch, main / root. Replace index.html to update. Any static host works. Keep oui.txt beside index.html for offline device lookup, and assets/3d for the rendered 3D plates (optional: without them the app draws its own)."],src:"Host your own copy",go:[]}
+  ];
+
+  /* ---- retrieval: stemmed tokens, synonym expansion, IDF-weighted scoring over title / keywords / answer ---- */
+  const STOP=new Set("a an the is are was were be to of in on at for and or my me i it its this that do does how what why when can you your with from as by not no about if".split(" "));
+  const SYN={slow:["slower","laggy","low","poor","bad"],wifi:["wi-fi","wireless"],"wi-fi":["wifi","wireless"],lag:["ping","latency"],laggy:["ping","latency"],
+    safe:["privacy","secure"],secure:["privacy","security"],spy:["privacy","tracking"],logging:["privacy","log"],crash:["error","failed"],broken:["error","failed"],
+    hang:["error","failed"],update:["install","host"],pc:["desktop"],phone:["mobile","iphone","android"],isp:["provider"],"100mbps":["100","mbps"],cap:["capped","limit"],
+    "download":["down"],"upload":["up"],bufferbloat:["loaded"],streaming:["grade","responsiveness"],gaming:["grade","ping","latency"],calls:["grade","jitter","ping"],zoom:["grade","jitter"],
+    cost:["free","price"],delete:["clear","history"],export:["csv"],password:["wifi","password"]};
+  const stem=w=>w.replace(/(ing|ed|es|s)$/,m=>w.length>4?"":m);
+  const tok=t=>t.toLowerCase().replace(/[^a-z0-9/.\- ]+/g," ").split(/\s+/).filter(w=>w&&!STOP.has(w)).map(w=>w.replace(/^[.\-]+|[.\-]+$/g,"")).filter(Boolean);
+  const expand=ws=>{ const out=[]; for(const w of ws){ out.push(stem(w)); for(const x of SYN[w]||[]) out.push(stem(x)) } return out };
+  const docs=KB.map(e=>({e,t:new Set(expand(tok(e.t))),k:new Set(expand(tok(e.k))),a:new Set(expand(tok(e.a.join(" "))))}));
+  const df=new Map(); for(const d of docs){ const u=new Set([...d.t,...d.k,...d.a]); for(const w of u) df.set(w,(df.get(w)||0)+1) }
+  const idf=w=>Math.log(1+docs.length/(1+(df.get(w)||0)));
+  function search(q){ const ws=[...new Set(expand(tok(q)))]; if(!ws.length) return [];
+    return docs.map(d=>{ let sc=0,hit=0; for(const w of ws){ const wt=idf(w); let h=0; if(d.t.has(w)) h=Math.max(h,3); if(d.k.has(w)) h=Math.max(h,2.4); if(d.a.has(w)) h=Math.max(h,1); if(h){ sc+=wt*h; hit++ } }
+      return {e:d.e,score:sc*(0.6+0.4*hit/ws.length),hit} }).filter(x=>x.hit).sort((a,b)=>b.score-a.score) }
+
+  /* ---- diagnosis of the last saved test ---- */
+  function diagnose(){
+    let h=null; try{ h=store.get("history",[])[0] }catch{}
+    if(!h||!fin(h.down)) return {title:"No test to diagnose yet",paras:["Run a test first, then ask again. I read your last saved result on this device."],steps:[],go:[["Go to the test","tool:speed"]]};
+    const mb=v=>fin(v)?(v/1e6):null, down=mb(h.down), up=mb(h.up), P=fin(h.ping)?h.ping:null, J=fin(h.jitter)?h.jitter:null, L=fin(h.lping)?h.lping:null;
+    const found=[]; const add=(t,why,fix)=>found.push({t,why,fix});
+    if(down>=88&&down<=97) add("Download looks capped at about 100 Mbps","That is the signature of a link that negotiated Fast Ethernet instead of gigabit.","Reseat or replace the cable from the ISP box to the router (Cat5e or better) and check the router's WAN link speed.");
+    if(L!=null&&P!=null&&L-P>100) add(`Latency jumps by ${Math.round(L-P)} ms under load`,"Your line fills up and queues (bufferbloat), which makes calls and games stutter while anything downloads.","Turn on SQM (fq_codel or CAKE) in the router, or limit bandwidth to about 90% of your plan in QoS.");
+    else if(L!=null&&P!=null&&L-P>40) add(`Latency rises by ${Math.round(L-P)} ms under load`,"Mild queueing. Fine for browsing, noticeable on busy video calls.","SQM or a QoS bandwidth limit at about 90% of the plan would help.");
+    if(P!=null&&P>100) add(`Ping is high (${P.toFixed(0)} ms)`,"A far test server, a VPN or iCloud Private Relay, or a congested Wi-Fi link.","Pick a nearer server, turn off the VPN or Private Relay, and retest next to the router.");
+    if(J!=null&&J>30) add(`Jitter is high (${J.toFixed(0)} ms)`,"Unstable latency usually comes from Wi-Fi interference or a congested line.","Test on a cable; if jitter drops, the cause is Wi-Fi (try 5 GHz, move closer).");
+    if(down!=null&&up!=null&&up>0&&up/down<0.04) add("Upload is very low compared with download","Normal on some cable and mobile plans, but it slows video calls, cloud backups and uploads.","Compare with your plan's upload figure; if it is far below, change server and retest, then contact your ISP.");
+    if(up===0||(h.up!=null&&!fin(h.up))) add("Upload was not measured","The server did not confirm uploads in time.","Change server and retest.");
+    const sum=`Last test: ${down.toFixed(0)} Mbps down${up!=null?`, ${up.toFixed(0)} Mbps up`:""}${P!=null?`, ${P.toFixed(0)} ms ping`:""}${L!=null?`, ${L.toFixed(0)} ms loaded`:""}.`;
+    if(!found.length) return {title:"Nothing wrong stands out",paras:[sum,"No cap, queueing, high latency or lopsided upload showed up. If it is still below your plan, compare Wi-Fi with a cable and try another server."],steps:[],go:[["Open History","sec:History"]]};
+    return {title:`${found.length} thing${found.length>1?"s":""} worth checking`,paras:[sum],steps:found.map(f=>`${f.t}. ${f.why} ${f.fix}`),go:[["Open History","sec:History"]]};
+  }
+
+  const SUGGEST=["Why is my speed stuck at about 12 MB/s?","What is loaded ping?","Does this app collect my data?","How does the router check work?","MB/s or Mbps?","How do I install it on my phone?"];
+  return {KB,search,diagnose,SUGGEST};
+})();
+(function helpUI(){
+  const log=$("hLog"), q=$("hQ"), sections={"Settings":"Settings","History":"History","Packet collider":"Packet collider","Live network map":"Live network map","Global comparison":"Global comparison"};
+  function act(a){ const [kind,arg]=a.split(":"); if(kind==="tool") openTool(arg); else { const el=document.querySelector(`section[aria-label="${sections[arg]||arg}"]`); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"}) } }
+  function btnRow(go,extra){ const row=document.createElement("div"); row.className="hrow";
+    for(const [label,a] of go){ const b=document.createElement("button"); b.type="button"; b.className="ghost"; b.textContent=label; b.addEventListener("click",()=>act(a)); row.append(b) }
+    for(const [label,fn] of extra||[]){ const b=document.createElement("button"); b.type="button"; b.className="ghost"; b.textContent=label; b.addEventListener("click",fn); row.append(b) }
+    return row.children.length?row:null }
+  function say(role,build){ const m=document.createElement("div"); m.className="hm "+role; build(m); log.append(m); log.scrollTop=role==='bot'?log.scrollTop+m.getBoundingClientRect().top-log.getBoundingClientRect().top-8:log.scrollHeight; return m }
+  function para(m,t){ const p=document.createElement("p"); p.textContent=t; m.append(p) }
+  function entry(e,related){ say("bot",m=>{ const h=document.createElement("h3"); h.textContent=e.t; m.append(h); e.a.forEach(t=>para(m,t));
+      const s=document.createElement("p"); s.className="hsrc"; s.textContent="From the docs: "+e.src; m.append(s);
+      const row=btnRow(e.go||[], related.map(r=>["Also: "+r.t,()=>ask(r.t,true)])); if(row) m.append(row) }) }
+  function ask(text,silent){ text=text.trim(); if(!text) return; say("me",m=>{ m.textContent=text });
+    const r=HELP.search(text);
+    if(!r.length||r[0].score<2.2){ say("bot",m=>{ para(m,"That is not in my knowledge base, and I would rather say so than guess. Try different words, pick a topic below, or open an issue on the project's GitHub page."); const row=btnRow([],HELP.KB.filter(e=>["start","stuck100","privacy","router"].includes(e.id)).map(e=>[e.t,()=>ask(e.t,true)])); if(row) m.append(row) }); return }
+    const rel=r.slice(1,3).filter(x=>x.score>r[0].score*0.55).map(x=>x.e); entry(r[0].e,rel) }
+  function showDiag(){ say("me",m=>{ m.textContent="Diagnose my last test" }); const d=HELP.diagnose();
+    say("bot",m=>{ const h=document.createElement("h3"); h.textContent=d.title; m.append(h); d.paras.forEach(t=>para(m,t));
+      if(d.steps.length){ const ol=document.createElement("ol"); d.steps.forEach(t=>{ const li=document.createElement("li"); li.textContent=t; ol.append(li) }); m.append(ol) }
+      const s=document.createElement("p"); s.className="hsrc"; s.textContent="Based on your last saved test, read on this device."; m.append(s); const row=btnRow(d.go); if(row) m.append(row) }) }
+  function reset(){ log.textContent=""; say("bot",m=>{ para(m,"Hi. Ask me anything about CleanSpeed: how a test works, why a result looks off, what leaves your device, or how to use a tool. I answer from the app's own documentation."); }) }
+  const chips=$("hChips"); HELP.SUGGEST.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.className="ghost"; b.textContent=t; b.style.cssText="font-size:13px;padding:6px 12px"; b.addEventListener("click",()=>ask(t,true)); chips.append(b) });
+  $("hForm").addEventListener("submit",e=>{ e.preventDefault(); const v=q.value; q.value=""; ask(v) });
+  $("hDiag").addEventListener("click",showDiag); $("hClear").addEventListener("click",()=>{ reset(); q.focus() });
+  reset();
 })();
 
 syncUnits(); requestAnimationFrame(animate); refreshLibre();

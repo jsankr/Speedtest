@@ -46,6 +46,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **Global comparison** | Your result against the world and national medians (Ookla Speedtest Global Index), for broadband or mobile. |
 | **History** | Every test saved on your device, trend chart, filter by network, editable network label, CSV export. |
 | **Router security** | Scores your router settings, looks up known vulnerabilities for your exact model and firmware in the U.S. National Vulnerability Database (NVD), and gives step-by-step fixes — **manufacturer-approved fixes only**. |
+| **Help assistant** | "Ask CleanSpeed": a built-in assistant with a knowledge base about the app. Ask in plain words, or press *Diagnose my last test* to check your last saved result for a 100 Mbps cap, bufferbloat, high ping or jitter, and lopsided upload. Runs entirely in the page; nothing is sent. |
 | **Toolkit** | Ping & outage monitor, DNS benchmark, My IP & ISP, data/time calculator, Wi-Fi password generator & strength check, device (MAC) lookup, subnet calculator, global compare. |
 | **App** | Single HTML file, "glass instrument" design (see [DESIGN.md](DESIGN.md)) that fits phones, tablets and laptops, dark and light themes, reduced-motion support, installable, no build step, no third-party scripts, no analytics. |
 
@@ -96,6 +97,18 @@ The same test drawn as a particle collider, modelled on the real structure of CE
 - **Rendering pipeline:** `blender/render_plates.py` builds the scene in code and `.github/workflows/render.yml` renders it with Blender 4.2 LTS on GitHub Actions whenever the script changes, then commits the plates. Nine teardown frames are rendered and cross-faded as the detector opens. About 1 MB in total, loaded after the page is usable.
 - **Teardown:** when the test ends, the detector opens the way CMS is opened for maintenance — endcaps slide out along the beam and the barrel wheels part — and each part carries a result: ping and jitter, download, upload. The last saved result is shown this way when the page opens.
 - **Cost:** the detector is drawn once and reused, only the particles move; at most 30 frames a second during a test and paused off screen, so it doesn't compete with the measurement. *Animate* turns it off; *Reduce motion* turns it off by default. Screen readers get the result as text.
+
+### Help assistant
+
+<img src="docs/screenshots/27-help-assistant.png" width="300">
+
+An on-device help agent at the bottom of the page. It is deliberately **not** a hosted chatbot: a hosted model needs a server and an API key and would send every question off your device, which this app promises never to do. Instead:
+
+- **Knowledge stack:** about 40 curated entries (how a test is measured, units, slow-result causes, privacy, the router check, the collider, each toolkit tool), each with the documentation section it comes from, shown under every answer.
+- **Retrieval:** stemmed keywords, synonyms and IDF-weighted scoring over each entry's title, keywords and text. No network, no model download, no storage of your questions.
+- **Diagnosis:** reads your last saved test and applies the rules from the Troubleshooting table.
+- **Honest limits:** when nothing matches well it says it doesn't know instead of guessing, and offers topics.
+- **Action buttons** jump to the tool or section the answer is about.
 
 ### 3. Result insights
 
@@ -488,7 +501,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Real 3D rendering with Blender: the collider (9 teardown frames), GO sphere (light and dark) and dial bezel are path-traced in Cycles on GitHub Actions; live packets, tracks and labels are overlaid through the Blender camera; collision tracks spray in 3D; teardown labels never overlap |
+| *latest* | Help assistant: on-device knowledge base (about 40 entries with sources), retrieval, one-press diagnosis of the last test, no network; tests and screenshot added |
+| `da345f9` | Real 3D rendering with Blender: the collider (9 teardown frames), GO sphere (light and dark) and dial bezel are path-traced in Cycles on GitHub Actions; live packets, tracks and labels are overlaid through the Blender camera; collision tracks spray in 3D; teardown labels never overlap |
 | `e0e1858` | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
 | `f5985d7` | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |
 | `f2c01ce` | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |

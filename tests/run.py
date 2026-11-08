@@ -194,6 +194,23 @@ def e2e(browser, port):
     check("toolkit runs without script errors", not page.errors, "; ".join(page.errors))
     ctx.close()
 
+    # help assistant: answers from its own knowledge base, no network, honest when it doesn't know
+    ctx, page = new_page(browser, port, width=390, height=844)
+    page.goto(f"http://127.0.0.1:{port}/")
+    page.evaluate("localStorage.setItem('history',JSON.stringify([{down:93e6,up:20e6,ping:20,jitter:4,lping:180,t:Date.now()}]))")
+    def ask(q):
+        page.fill("#hQ", q); page.press("#hQ", "Enter")
+        return page.eval_on_selector_all("#hLog .hm.bot", "e=>e[e.length-1].innerText")
+    check("help: 100 Mbps cap question answered", "100 Mbps" in ask("why is my speed stuck at 12 MB/s"))
+    check("help: privacy question answered", "No accounts" in ask("does this app collect my data"))
+    check("help: slow upload answered", "Upload is slow" in ask("upload is slow"))
+    check("help: says so when it does not know", "not in my knowledge base" in ask("what is the capital of France"))
+    page.click("#hDiag")
+    diag = page.eval_on_selector_all("#hLog .hm.bot", "e=>e[e.length-1].innerText")
+    check("help: diagnoses the last saved test", "capped at about 100 Mbps" in diag and "under load" in diag, diag[:120])
+    check("help: log is a labelled live region", page.eval_on_selector("#hLog", "e=>e.getAttribute('role')==='log'&&!!e.getAttribute('aria-label')"))
+    ctx.close()
+
     # layout at every common width, both themes
     for w, h in [(320, 640), (390, 844), (768, 1024), (1024, 768), (1440, 900)]:
         for scheme in ("dark", "light"):

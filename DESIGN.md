@@ -64,6 +64,7 @@ CleanSpeed should feel like a precision instrument made of glass: depth, light a
 - **Tool tiles `.tile2`:** raised glass cards with a 3D colour chip icon; hover lifts 2 px; the open tool gets a coloured rim.
 - **Lists (fixes, CVEs, router questions, MAC results):** wells or raised glass rows with 8 px gaps. Severities are tinted pills with words, never colour alone.
 - **Charts:** 3 px lines with a soft halo in the series colour and a faint area fill; the throughput chart stretches to fill the readout column on wide screens and shows a hint when empty.
+- **Help assistant `#helpPanel`:** a glass panel with an engraved conversation well (`role=log`, labelled, keyboard-scrollable), user messages tinted with the accent, assistant messages on solid glass with a serif title, a source line under every answer and ghost-button actions. Answers come from an on-device knowledge base; it never makes a network request and never stores questions. New knowledge goes into the `KB` array with its docs section as `src`.
 - **Map:** stylised dot-matrix land in an engraved well; markers and moving packets have small halos; each dot stands for real bytes.
 
 ## Motion
