@@ -111,6 +111,7 @@ def e2e(browser, port):
         const se=document.scrollingElement; const out={y:Math.round(scrollY), sh:se.scrollHeight, ch:se.clientHeight, top:Math.round(r.top), h:Math.round(r.height),
         bodyOv:getComputedStyle(document.body).overflowY, htmlOv:getComputedStyle(document.documentElement).overflowY}; window.scrollTo(0,0); return out }""")
     check("page scrolls to lower sections", sc["y"] > 0, json.dumps(sc))
+    check("page height is sane (no runaway growth)", sc["sh"] < 12000, json.dumps(sc))
     page.locator("#unitB").scroll_into_view_if_needed()
     vis = page.evaluate("(()=>{const r=document.getElementById('unitB').getBoundingClientRect(); return [Math.round(r.top), innerHeight, Math.round(scrollY)]})()")
     check("controls far down the page can be scrolled into view", 0 <= vis[0] < vis[1], str(vis))
@@ -135,7 +136,9 @@ def e2e(browser, port):
       const anc=[]; for(let e=b;e;e=e.parentElement){const c=getComputedStyle(e); if(c.overflow!=='visible'||c.transform!=='none'||c.contain!=='none'||(c.backdropFilter&&c.backdropFilter!=='none')||(c.webkitBackdropFilter&&c.webkitBackdropFilter!=='none')) anc.push(`${e.tagName}.${e.className}:${c.overflow}/${c.transform}/${c.contain}`)}
       const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
       return {rect:[r.x,r.y,r.width,r.height].map(Math.round),vh:innerHeight,vw:innerWidth,sy:Math.round(scrollY),anc,hit:hit&&(hit.tagName+'.'+hit.className+':'+hit.textContent.slice(0,10))}}""")
-    if browser.browser_type.name == "webkit": print("  DIAG", json.dumps(diag))
+    if browser.browser_type.name == "webkit":
+        print("  DIAG", json.dumps(diag))
+        print("  DIAG tall", page.evaluate("()=>[...document.querySelectorAll('body *')].map(e=>[e.tagName+'#'+e.id+'.'+(typeof e.className==='string'?e.className:''),Math.round(e.getBoundingClientRect().height)]).filter(x=>x[1]>2500).slice(-8)"))
     tap(page, "#unitb button[data-u='Mb']")
     check("unit switch updates labels", "bps" in page.inner_text(".tile.d .unit").lower(), page.inner_text(".tile.d .unit"))
 
