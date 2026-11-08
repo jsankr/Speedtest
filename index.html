@@ -186,7 +186,7 @@ td select{font:12px var(--mono);padding:4px 6px;min-height:0}
 .tile.u .val{color:var(--up);text-shadow:0 0 22px color-mix(in srgb,var(--up) 30%,transparent)}
 .tile.d::before,.tile.u::before{content:"";position:absolute;left:16px;right:16px;top:-1px;height:2px;border-radius:2px}
 .tile.d::before{background:linear-gradient(90deg,transparent,var(--down),transparent)} .tile.u::before{background:linear-gradient(90deg,transparent,var(--up),transparent)}
-.spark{width:100%;height:100%;min-height:84px;display:block;border-radius:12px}
+.spark{width:100%;height:100%;min-height:84px;display:block;border-radius:12px;contain:size} /* size comes from the grid row, never from the canvas bitmap */
 .small{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .small .val{font-size:clamp(20px,6vw,27px)}
 @media (max-width:360px){.small{gap:6px}.small .tile{padding:12px 10px}}
@@ -603,8 +603,8 @@ footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8p
     </div>
     <p class="verdict" id="verdict">Run a test to see how your connection compares with your country and the world.</p>
     <div class="cmpgrid">
-      <div class="bars" id="cmpBars" aria-label="Your result against medians"></div>
-      <div><div class="lbl" style="margin-bottom:10px">Country medians, download</div><div class="rank" id="cmpRank"></div></div>
+      <div class="bars" id="cmpBars" role="group" aria-label="Your result against medians"></div>
+      <div><div class="lbl" style="margin-bottom:10px">Country medians, download</div><div class="rank" id="cmpRank" role="region" aria-label="Country medians, download" tabindex="0"></div></div>
     </div>
     <p class="src" id="cmpSrc"></p>
   </section>
@@ -828,7 +828,7 @@ function animate(ts){
 function gaugeKick(){ if(!gaugeRaf) gaugeRaf=requestAnimationFrame(animate) }
 const setGauge=bps=>{ needleTarget=bps?conv(bps)||0:0; gaugeKick() };
 const sp=$("spark"), sx=sp.getContext("2d"); let series={down:[],up:[]};
-if("ResizeObserver" in window) new ResizeObserver(()=>drawSpark()).observe(sp);
+if("ResizeObserver" in window){ let sparkRaf=0; new ResizeObserver(()=>{ cancelAnimationFrame(sparkRaf); sparkRaf=requestAnimationFrame(drawSpark) }).observe(sp) }
 function drawSpark(){
   // match the canvas to its laid-out size (the chart stretches to fill the readout column on wide screens)
   const dpr=Math.min(2,devicePixelRatio||1), cw=Math.round(sp.clientWidth*dpr), ch=Math.round(sp.clientHeight*dpr);
