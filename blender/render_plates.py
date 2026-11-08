@@ -69,13 +69,15 @@ def reset():
     except Exception:
         pass
     sc.render.film_transparent = True
+    sc.cycles.film_transparent_glass = True   # glass shows the page behind it, not the black world
+    sc.view_settings.exposure = -0.7
     sc.render.resolution_percentage = 100
     sc.render.image_settings.file_format = "WEBP"
     sc.render.image_settings.color_mode = "RGBA"
-    sc.render.image_settings.quality = 82
+    sc.render.image_settings.quality = 78
     try:
         sc.view_settings.view_transform = "AgX"
-        sc.view_settings.look = "AgX - Medium High Contrast"
+        sc.view_settings.look = "AgX - Punchy"
     except Exception:
         pass
     world = bpy.data.worlds.new("World"); sc.world = world; world.use_nodes = True
@@ -85,7 +87,7 @@ def reset():
         sky.sky_type = "NISHITA"; sky.sun_elevation = math.radians(35); sky.sun_rotation = math.radians(140)
     except Exception:
         pass
-    bg = nt.nodes.new("ShaderNodeBackground"); bg.inputs["Strength"].default_value = 0.22
+    bg = nt.nodes.new("ShaderNodeBackground"); bg.inputs["Strength"].default_value = 0.12
     out = nt.nodes.new("ShaderNodeOutputWorld")
     nt.links.new(sky.outputs["Color"], bg.inputs["Color"]); nt.links.new(bg.outputs["Background"], out.inputs["Surface"])
     return sc
@@ -112,14 +114,14 @@ def material(name, color, metallic=0.0, rough=0.4, transmission=0.0, ior=1.45, c
 MATS = {}
 def mats():
     MATS.update({
-        "yoke":    material("Iron yoke, red paint", (0.42, 0.045, 0.03), metallic=0.25, rough=0.42, coat=0.3),
+        "yoke":    material("Iron yoke, red paint", (0.30, 0.018, 0.012), metallic=0.2, rough=0.45, coat=0.25),
         "muon":    material("Muon chambers, aluminium", (0.62, 0.64, 0.66), metallic=1.0, rough=0.34),
         "sol":     material("Solenoid, polished steel", (0.80, 0.82, 0.84), metallic=1.0, rough=0.16, aniso=0.5),
         "hcal":    material("HCAL, brass", (0.78, 0.52, 0.22), metallic=1.0, rough=0.28),
         "ecal":    material("ECAL, lead tungstate crystal", (0.62, 0.92, 0.86), rough=0.04, transmission=1.0, ior=2.2),
         "tracker": material("Tracker, silicon and kapton", (0.62, 0.48, 0.20), metallic=0.6, rough=0.32),
         "pipe":    material("Beam pipe, steel", (0.78, 0.80, 0.82), metallic=1.0, rough=0.2),
-        "dipole":  material("Dipole cryostat, blue paint", (0.03, 0.16, 0.55), metallic=0.15, rough=0.32, coat=0.5),
+        "dipole":  material("Dipole cryostat, blue paint", (0.012, 0.07, 0.32), metallic=0.1, rough=0.35, coat=0.4),
         "flange":  material("Flange, steel", (0.70, 0.72, 0.74), metallic=1.0, rough=0.25),
     })
 
@@ -156,6 +158,14 @@ def cylinder_between(name, p0, p1, radius, mat, segments=32):
     ob = mesh_object(name, bm, MATS[mat], bevel=0)
     ob.location = (p0 + p1) / 2
     ob.rotation_mode = "QUATERNION"; ob.rotation_quaternion = d.to_track_quat("Z", "Y")
+    return ob
+
+def pipe_curve(name, pts, radius):
+    cu = bpy.data.curves.new(name, "CURVE"); cu.dimensions = "3D"; cu.bevel_depth = radius; cu.bevel_resolution = 6; cu.use_fill_caps = True
+    sp = cu.splines.new("POLY"); sp.points.add(len(pts) - 1)
+    for i, p in enumerate(pts): sp.points[i].co = (p.x, p.y, p.z, 1)
+    cu.materials.append(MATS["pipe"])
+    ob = bpy.data.objects.new(name, cu); bpy.context.scene.collection.objects.link(ob); ob.data.splines[0].use_smooth = True
     return ob
 
 def torus(name, major, minor, mat, segs=96, rsegs=24, z=0.0):
@@ -215,15 +225,13 @@ def build_collider(e):
     z_out = ENDCAP[1] + 1.05 * e
     t_out = math.asin(min(1.0, z_out / RING))
     for sgn in (-1, 1):
-        pts = [ring_point(sgn * (t_out + i * 0.02)) for i in range(48)]
-        for i in range(len(pts) - 1):
-            cylinder_between(f"pipe{sgn}-{i}", pts[i], pts[i + 1], 0.03, "pipe", 16)
+        pipe_curve(f"pipe{sgn}", [ring_point(sgn * (t_out + i * 0.02)) for i in range(48)], 0.03)
     if e > 0.05:
         cylinder_between("pipe-inner", B(0, 0, -z_out), B(0, 0, z_out), 0.025, "pipe", 16)
     # dipole magnets along the ring, clear of the opened endcaps
     for sgn in (-1, 1):
-        for k in range(9):
-            t0 = sgn * (0.62 + k * 0.075); t1 = t0 + sgn * 0.06
+        for k in range(7):
+            t0 = sgn * (0.62 + k * 0.09); t1 = t0 + sgn * 0.084
             cylinder_between(f"dipole{sgn}-{k}", ring_point(t0), ring_point(t1), 0.11, "dipole", 40)
             cylinder_between(f"flange{sgn}-{k}", ring_point(t1), ring_point(t1 + sgn * 0.004), 0.125, "flange", 40)
     # floor that only catches shadows, so the plate stays transparent
@@ -238,10 +246,10 @@ def collider():
         reset(); mats()
         e = ease(f / (FRAMES - 1))
         build_collider(e)
-        area_light("Key", (3.5, -6.0, 6.5), (0, 0, 0), 2600, 5)
-        area_light("Fill", (6.5, 5.0, 1.5), (0, 0, 0), 900, 6, (0.85, 0.92, 1.0))
-        area_light("Rim", (-5.0, 2.0, 5.0), (0, 0, 0), 1800, 4)
-        area_light("Inside", (2.2, 0.0, 1.0), (0, 0, 0), 120, 1.0, (0.7, 0.95, 1.0))  # lights the cut-away wedge
+        area_light("Key", (3.5, -6.0, 6.5), (0, 0, 0), 1100, 5)
+        area_light("Fill", (6.5, 5.0, 1.5), (0, 0, 0), 380, 6, (0.85, 0.92, 1.0))
+        area_light("Rim", (-5.0, 2.0, 5.0), (0, 0, 0), 900, 4)
+        area_light("Inside", (2.2, 0.0, 1.0), (0, 0, 0), 60, 1.0, (0.7, 0.95, 1.0))  # lights the cut-away wedge
         cam = camera(CAM_LOC, CAM_TARGET, lens=50)
         bpy.context.view_layer.update()
         render(os.path.join(OUT, f"collider-{f:02d}.webp"), WIDTH, HEIGHT)
@@ -265,8 +273,8 @@ def go_spheres():
         for f in bm.faces: f.smooth = True
         mesh_object("Sphere", bm, body, bevel=0)
         torus("Seat", 1.12, 0.09, ringm, z=0.0)
-        area_light("Key", (-2.5, -2.5, 4.0), (0, 0, 0), 420, 2.0)
-        area_light("Rim", (3.0, 2.5, 1.5), (0, 0, 0), 180, 3.0)
+        area_light("Key", (-2.5, -2.5, 4.0), (0, 0, 0), 200, 2.0)
+        area_light("Rim", (3.0, 2.5, 1.5), (0, 0, 0), 90, 3.0)
         area_light("Under", (0.0, -3.0, -2.5), (0, 0, 0), 60, 3.0, (0.7, 0.95, 1.0))
         camera((0, -0.001, 8), (0, 0, 0), ortho=2.6)
         render(os.path.join(OUT, f"{name}.webp"), 512, 512)
@@ -278,9 +286,6 @@ def bezel():
     glass = material("Lens", (0.9, 0.97, 1.0), rough=0.02, transmission=1.0, ior=1.45)
     # canvas: 860×688 px, dial centre at (430, 0.57·688), track radius 0.37·860; 1 world unit = 100 px
     torus("Bezel", 3.48, 0.13, metal, segs=160, rsegs=32)
-    torus("Inner lip", 2.78, 0.05, metal, segs=160, rsegs=24)
-    bm = bmesh.new(); bmesh.ops.create_circle(bm, cap_ends=True, segments=128, radius=3.42)
-    lens = mesh_object("Lens", bm, glass, bevel=0); lens.location.z = -0.05
     area_light("Key", (-4.0, 4.0, 6.0), (0, 0, 0), 900, 4.0)
     area_light("Rim", (5.0, -3.0, 2.0), (0, 0, 0), 400, 5.0)
     cy = 0.57 * 6.88 - 3.44   # camera sits above the dial centre so the centre lands at 57% of the height
