@@ -334,7 +334,8 @@ def main():
                     if a.only and suite.__name__ != a.only: continue
                     try: suite(browser, port)
                     except Exception as e:
-                        check(f"{suite.__name__} suite ran to the end ({name})", False, str(e).strip().splitlines()[0][:300])
+                        lines = [l.strip() for l in str(e).strip().splitlines() if l.strip()]
+                        check(f"{suite.__name__} suite ran to the end ({name})", False, " | ".join(lines[:2] + lines[-4:])[:700])
                 browser.close()
     finally:
         srv.terminate()
