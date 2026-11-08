@@ -186,7 +186,8 @@ td select{font:12px var(--mono);padding:4px 6px;min-height:0}
 .tile.u .val{color:var(--up);text-shadow:0 0 22px color-mix(in srgb,var(--up) 30%,transparent)}
 .tile.d::before,.tile.u::before{content:"";position:absolute;left:16px;right:16px;top:-1px;height:2px;border-radius:2px}
 .tile.d::before{background:linear-gradient(90deg,transparent,var(--down),transparent)} .tile.u::before{background:linear-gradient(90deg,transparent,var(--up),transparent)}
-.spark{width:100%;height:100%;min-height:84px;display:block;border-radius:12px;contain:size} /* size comes from the grid row, never from the canvas bitmap */
+.sparkbox{position:relative;min-height:84px;min-width:0}
+.spark{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:12px} /* absolutely placed: the grid row sizes the chart, the bitmap never sizes the row (WebKit grew it without limit) */
 .small{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .small .val{font-size:clamp(20px,6vw,27px)}
 @media (max-width:360px){.small{gap:6px}.small .tile{padding:12px 10px}}
@@ -397,7 +398,7 @@ footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8p
         <div class="tile u"><div class="lbl"><span class="dot" style="color:var(--up);background:var(--up)"></span>Upload</div>
           <div><span class="val" id="ul">—</span><span class="unit" data-unit></span></div></div>
       </div>
-      <canvas class="spark" id="spark" width="900" height="152" role="img" aria-label="Throughput over time"></canvas>
+      <div class="sparkbox"><canvas class="spark" id="spark" width="900" height="152" role="img" aria-label="Throughput over time"></canvas></div>
       <div class="small">
         <div class="tile"><div class="lbl">Ping</div><div><span class="val" id="ping">—</span><span class="unit">ms</span></div></div>
         <div class="tile"><div class="lbl">Jitter</div><div><span class="val" id="jit">—</span><span class="unit">ms</span></div></div>

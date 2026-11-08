@@ -129,16 +129,12 @@ def e2e(browser, port):
     check("upload measured", num(ul) > 0, ul)
     check("RETEST offered after a test", "RETEST" in page.inner_text("#go").upper(), page.inner_text("#go"))
     check("result saved to history", page.locator("#rows tr").count() >= 1)
+    h = page.evaluate("document.scrollingElement.scrollHeight")
+    check("page height stays sane after a test (charts don't grow)", h < 12000, f"{h}px")
+    sp = page.evaluate("Math.round(document.getElementById('spark').getBoundingClientRect().height)")
+    check("throughput chart keeps a sensible height", 60 <= sp <= 700, f"{sp}px")
     check("Copy result enabled", page.is_enabled("#copyRes"))
 
-    page.locator("#unitb").scroll_into_view_if_needed()
-    diag = page.evaluate("""()=>{const b=document.querySelector("#unitb button[data-u='Mb']"); const r=b.getBoundingClientRect();
-      const anc=[]; for(let e=b;e;e=e.parentElement){const c=getComputedStyle(e); if(c.overflow!=='visible'||c.transform!=='none'||c.contain!=='none'||(c.backdropFilter&&c.backdropFilter!=='none')||(c.webkitBackdropFilter&&c.webkitBackdropFilter!=='none')) anc.push(`${e.tagName}.${e.className}:${c.overflow}/${c.transform}/${c.contain}`)}
-      const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
-      return {rect:[r.x,r.y,r.width,r.height].map(Math.round),vh:innerHeight,vw:innerWidth,sy:Math.round(scrollY),anc,hit:hit&&(hit.tagName+'.'+hit.className+':'+hit.textContent.slice(0,10))}}""")
-    if browser.browser_type.name == "webkit":
-        print("  DIAG", json.dumps(diag))
-        print("  DIAG tall", page.evaluate("()=>[...document.querySelectorAll('body *')].map(e=>[e.tagName+'#'+e.id+'.'+(typeof e.className==='string'?e.className:''),Math.round(e.getBoundingClientRect().height)]).filter(x=>x[1]>2500).slice(-8)"))
     tap(page, "#unitb button[data-u='Mb']")
     check("unit switch updates labels", "bps" in page.inner_text(".tile.d .unit").lower(), page.inner_text(".tile.d .unit"))
 
