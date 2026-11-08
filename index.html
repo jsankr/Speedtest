@@ -417,7 +417,7 @@ footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8p
     <div class="mapwrap colwrap"><canvas id="collider" role="img" aria-label="Packet collider"></canvas></div>
     <p class="note" id="colKey"></p>
     <div class="legend"><span><i style="background:var(--down)"></i>Download packet</span><span><i style="background:var(--up)"></i>Upload packet</span><span><i style="background:var(--good)"></i>Ping probe</span></div>
-    <p class="note">The same test as a particle detector. The ring is the route to the server and the detector in the middle is your device. Packets are launched only when that much data has really moved; the paths are a picture, not a map. After each test the detector comes apart into its three layers: ping, download and upload.</p>
+    <p class="note">The same test as a particle collider, modelled on CERN's CMS detector on the LHC ring: tracker, crystal and brass calorimeters, the solenoid magnet and the red iron yoke with muon chambers. Your device is the collision point; the ring of blue magnets is the route to the server. A collision or bunch is launched only when that much data has really moved; the paths are a picture, not a map. After each test the detector opens up like CMS does for maintenance, one part per result.</p>
   </section>
 
   <section class="glass pad" id="livePanel" aria-label="Live network map">
@@ -2026,127 +2026,178 @@ $("cmpType").value=connLabel()==="Mobile data"?"mobile":"fixed"; syncNet();
 if(!byId(selected)&&selected!=="auto") selected="auto";
 initCompare(); fillWhich(); renderServers(); syncServerName();
 { const h=store.get("history",[]); if(h[0]){ last=h[0]; showResult(last); $("copyRes").disabled=false } }
-/* =================== Packet collider: a 3D view of the test, driven by the real byte counters ===================
-   A beam ring (the route to the server) feeds a detector at the centre (your device).
-   Download: cyan packets enter at the server port, ride the ring once, dive into the detector and shower.
-   Upload: amber packets leave the detector, ride the ring once and exit at the port.
-   Ping: green probes go detector → port → detector over their measured round trip (slowed so they're visible).
-   A packet is launched only when that much data has really arrived or left; ring speed follows the live rate.
-   After the test the detector comes apart into three labelled layers (ping, download, upload): the teardown. */
+/* =================== Packet collider: a CMS-style detector on an LHC-style ring, driven by the real byte counters ===================
+   Modelled on the real thing: a 12-sided barrel detector around the beam pipe — silicon tracker, crystal electromagnetic
+   calorimeter, brass hadron calorimeter, superconducting solenoid and a red iron return yoke with muon chambers — sitting on
+   a ring of blue dipole magnets.
+   Download: two cyan bunches race in along the beam pipe from both sides and collide in the centre; the collision showers
+   tracks that curl in the magnetic field and light up the calorimeters. One collision is launched only when that much data
+   has really arrived. Upload: amber bunches leave the centre in both directions for each chunk really sent.
+   Ping: green probes run out along the pipe and back over each measured round trip (slowed 20×).
+   Teardown: when the test ends the detector opens like CMS does for maintenance — endcaps slide out, barrel wheels part —
+   and each part carries a result (ping, download, upload). */
 const col=(()=>{
-  const cv=$("collider"), cx=cv.getContext("2d"), SLOWC=20, MAXP=180, MAXT=260;
+  const cv=$("collider"); let cx=cv.getContext("2d"); const  SLOWC=20, MAXP=120, MAXT=320, RING=4.2;
   const reduce=matchMedia("(prefers-reduced-motion: reduce)");
-  let W=0,H=0,dpr=1, yaw=-0.55, parts=[], tracks=[], flashes=[], seen={dir:"",b:0,acc:0,t:0}, per=0, raf=0, last=0, vis=false;
+  let W=0,H=0,dpr=1, yaw=0.98, sway=0, stat=document.createElement("canvas"), statKey="", parts=[], tracks=[], hits=[], flashes=[], seen={dir:"",b:0,acc:0}, per=0, raf=0, last=0, lastDraw=0, vis=false;
   let explode=0, explodeT0=0, result=null, frameCost=0;
   const tok=n=>css(n), dark=()=>getComputedStyle(document.documentElement).colorScheme.includes("dark");
-  let lastDraw=0;
-  function size(){ dpr=Math.min(2,devicePixelRatio||1); const r=cv.getBoundingClientRect(); W=Math.max(1,Math.round(r.width*dpr)); H=Math.max(1,Math.round(r.height*dpr));
-    if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H } }
-  // camera: yaw around Y, fixed pitch, perspective
-  const PITCH=0.5, DIST=3.4;
-  function P(x,y,z){ const cy=Math.cos(yaw), sy=Math.sin(yaw), X=x*cy-z*sy, Z=x*sy+z*cy;
-    const cp=Math.cos(PITCH), sp=Math.sin(PITCH), Y2=y*cp-Z*sp, Z2=y*sp+Z*cp;
-    const e=ease(explode), nar=W/dpr<640, s=Math.min(W,H*1.6)*(0.42-(nar?0.1:0.07)*e)/(1+Z2/DIST); return [W/2+e*W*(nar?0.12:0.06)+X*s, H*(0.56+0.14*e)-Y2*s, Z2, s] }
-  const ringPt=(t,r=1,y=0)=>[Math.cos(t)*r,y,Math.sin(t)*r]; // t: angle; port at t=0
-  const lerp=(a,b,k)=>a+(b-a)*k, ease=k=>1-Math.pow(1-k,3);
-  // layer offsets for the exploded teardown
-  const lift=()=>{ const e=ease(explode); return {ring:-0.2*e, ping:0, down:0.36*e, up:0.72*e} };
-  const LAYERS=[["ping",0.16,"--good"],["down",0.27,"--down"],["up",0.38,"--up"]];
-  function ellipse(r,y,col,a,w,front){ cx.strokeStyle=col; cx.lineWidth=w*dpr; cx.beginPath();
-    for(let i=0;i<=72;i++){ const t=i/72*Math.PI*2, p=P(Math.cos(t)*r,y,Math.sin(t)*r); i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]) }
-    cx.globalAlpha=a; cx.stroke(); cx.globalAlpha=1 }
-  function glowDot(x,y,r,c,a=1){ const g=cx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,c); g.addColorStop(1,c+"00"); cx.globalAlpha=a; cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,Math.PI*2); cx.fill(); cx.globalAlpha=1 }
-  function drawScene(){
-    const L=lift(), line=tok("--line2"), muted=tok("--muted");
-    // beam ring: three concentric pipes
-    for(const [r,a] of [[0.94,.35],[1,.75],[1.06,.35]]) ellipse(r,L.ring,line,a,1.4);
-    // dipole magnets every 30°: short blocks across the beam pipe, brighter at the front
-    for(let i=1;i<12;i++){ const t=i/12*Math.PI*2, a=P(Math.cos(t)*0.9,L.ring,Math.sin(t)*0.9), b=P(Math.cos(t)*1.1,L.ring,Math.sin(t)*1.1);
-      cx.strokeStyle=tok("--accent"); cx.globalAlpha=Math.max(.15,Math.min(.55,.45-a[2]*.3)); cx.lineWidth=5*dpr; cx.beginPath(); cx.moveTo(a[0],a[1]); cx.lineTo(b[0],b[1]); cx.stroke(); cx.globalAlpha=1 }
-    // beamline from the port to the detector
-    const p0=P(1,L.ring,0), p1=P(0.42,L.ring,0); cx.strokeStyle=line; cx.lineWidth=1.4*dpr; cx.setLineDash([5*dpr,5*dpr]); cx.beginPath(); cx.moveTo(p0[0],p0[1]); cx.lineTo(p1[0],p1[1]); cx.stroke(); cx.setLineDash([]);
-    // server port
-    const pp=P(1.12,L.ring,0); cx.fillStyle=tok("--accent"); cx.globalAlpha=.9; cx.fillRect(pp[0]-4*dpr,pp[1]-9*dpr,8*dpr,18*dpr); cx.globalAlpha=1;
-    cx.fillStyle=muted; cx.font=`500 ${12*dpr}px ${tok("--body")}`; cx.textBaseline="middle";
-    const nm=tel.lastSrv?tel.lastSrv.name:"Server", nw=cx.measureText(nm).width, fits=pp[0]+12*dpr+nw<W-8*dpr;
-    cx.textAlign=fits?"left":"right"; let ly=fits?pp[1]:pp[1]+22*dpr; if(ly>H-12*dpr) ly=pp[1]-24*dpr; cx.fillText(nm,fits?pp[0]+12*dpr:Math.min(W-8*dpr,pp[0]+nw/2),ly);
-    // detector barrel: three layers (ping, download, upload), each a short cylinder
-    for(const [k,r,c] of LAYERS){ const y=L[k], h=0.07, col=tok(c);
-      ellipse(r,y-h,col,.45,1.2); ellipse(r,y+h,col,.9,1.8);
-      for(const t of [0,Math.PI/2,Math.PI,Math.PI*1.5]){ const a=P(Math.cos(t)*r,y-h,Math.sin(t)*r), b=P(Math.cos(t)*r,y+h,Math.sin(t)*r); cx.strokeStyle=col; cx.globalAlpha=.35; cx.beginPath(); cx.moveTo(a[0],a[1]); cx.lineTo(b[0],b[1]); cx.stroke(); cx.globalAlpha=1 } }
-    const c0=P(0,lift().ping,0); glowDot(c0[0],c0[1],10*dpr,tok("--ink"),.5);
+  const ease=k=>1-Math.pow(1-k,3), lerp=(a,b,k)=>a+(b-a)*k;
+  // real-detector materials (physical colours, the same in both themes)
+  const MAT={tracker:[196,178,128], ecal:[86,170,170], hcal:[184,128,62], sol:[178,188,196], yoke:[176,48,40], muon:[150,156,160], pipe:[200,206,210], dipole:[38,98,178]};
+  const BARREL=[["tracker",0.07,0.27],["ecal",0.27,0.37],["hcal",0.37,0.53],["sol",0.53,0.6],["yoke",0.6,0.68],["muon",0.68,0.72],["yoke",0.72,0.83],["muon",0.83,0.87],["yoke",0.87,1.0]];
+  const WHEELS=[-0.75,-0.45,-0.15,0.15,0.45,0.75], ENDCAP=[0.75,0.98];
+  function size(){ dpr=Math.min(2,devicePixelRatio||1); const r=cv.getBoundingClientRect(); W=Math.max(1,Math.round(r.width*dpr)); H=Math.max(1,Math.round(r.height*dpr)); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H } }
+  // camera
+  const PITCH=0.36, DIST=5.6;
+  function P(x,y,z){ const yy=yaw+sway, cy=Math.cos(yy), sy=Math.sin(yy), X=x*cy+z*sy, Z=-x*sy+z*cy;
+    const cp=Math.cos(PITCH), sp=Math.sin(PITCH), Y2=y*cp-Z*sp, Z2=y*sp+Z*cp;  // Z2: + is away from the camera
+    const e=ease(explode), nar=W/dpr<640, s=Math.min(W,H*1.7)*(nar?0.21:0.19)*(1-0.18*e)/(1+Z2/DIST);
+    return [W*0.5+X*s, H*(0.5+0.04*e)-Y2*s, Z2] }
+  const camDir=()=>{ const yy=yaw+sway; return [Math.sin(yy)*Math.cos(PITCH)*-1, Math.sin(PITCH), Math.cos(yy)*Math.cos(PITCH)] };
+  // teardown offsets along the beam axis
+  function zShift(z){ const e=ease(explode); if(!e) return 0; const s=Math.sign(z)||0;
+    if(Math.abs(z)>=ENDCAP[0]-1e-6) return s*1.05*e;        // endcaps slide out
+    return z*0.55*e }                                        // barrel wheels part
+  const ring=t=>[-RING+RING*Math.cos(t),0,RING*Math.sin(t)]; // tangent to the beam axis at the detector (t=0)
+  function shade(rgb,n,a=1){ const L=[-0.45,0.75,0.5], d=Math.max(0,(n[0]*L[0]+n[1]*L[1]+n[2]*L[2])/Math.hypot(...L)); const k=0.38+0.72*d;
+    return `rgba(${Math.min(255,rgb[0]*k)|0},${Math.min(255,rgb[1]*k)|0},${Math.min(255,rgb[2]*k)|0},${a})` }
+  // ---- geometry: quads with a world normal, painted far to near
+  function cutSectors(){ // the four sectors nearest the camera are cut away, so the collision point is visible
+    const N=12, rot=Math.PI/12, d=[]; for(let i=0;i<N;i++){ const m=rot+(i+.5)/N*Math.PI*2; d.push([P(Math.cos(m),Math.sin(m),0)[2],i]) }
+    d.sort((a,b)=>a[0]-b[0]); return new Set(d.slice(0,4).map(x=>x[1])) }
+  function prism(quads,mat,r0,r1,z0,z1,caps=[true,true],cut=null){
+    const N=12, rot=Math.PI/12;
+    const p=(r,t,z)=>[Math.cos(t)*r,Math.sin(t)*r,z];
+    if(cut) for(let i=0;i<N;i++){ const a=rot+i/N*Math.PI*2, b=rot+(i+1)/N*Math.PI*2;
+      if(cut.has(i)&&!cut.has((i+N-1)%N)) quads.push({pts:[p(r0,a,z0),p(r1,a,z0),p(r1,a,z1),p(r0,a,z1)],n:[Math.sin(a),-Math.cos(a),0],mat,cap:true,two:true});
+      if(cut.has(i)&&!cut.has((i+1)%N)) quads.push({pts:[p(r0,b,z1),p(r1,b,z1),p(r1,b,z0),p(r0,b,z0)],n:[-Math.sin(b),Math.cos(b),0],mat,cap:true,two:true}) }
+    for(let i=0;i<N;i++){ if(cut&&cut.has(i)) continue; const a=rot+i/N*Math.PI*2, b=rot+(i+1)/N*Math.PI*2, m=(a+b)/2;
+      quads.push({pts:[p(r1,a,z0),p(r1,b,z0),p(r1,b,z1),p(r1,a,z1)],n:[Math.cos(m),Math.sin(m),0],mat});              // outer face
+      if(caps[1]) quads.push({pts:[p(r0,a,z1),p(r1,a,z1),p(r1,b,z1),p(r0,b,z1)],n:[0,0,1],mat,cap:true});           // front cap
+      if(caps[0]) quads.push({pts:[p(r0,b,z0),p(r1,b,z0),p(r1,a,z0),p(r0,a,z0)],n:[0,0,-1],mat,cap:true});          // back cap
+    }
+  }
+  function detector(){
+    const q=[], cut=cutSectors();
+    for(let w=0;w<WHEELS.length-1;w++){ const z0=WHEELS[w], z1=WHEELS[w+1], dz=zShift((z0+z1)/2)+0;
+      for(const [m,r0,r1] of BARREL) prism(q,m,r0,r1,z0+dz,z1+dz,[true,true],cut) }
+    for(const s of [-1,1]){ const z0=s>0?ENDCAP[0]:-ENDCAP[1], z1=s>0?ENDCAP[1]:-ENDCAP[0], dz=zShift(s*0.9);
+      for(const [m,r0,r1] of [["hcal",0.1,0.53],["yoke",0.53,0.7],["muon",0.7,0.74],["yoke",0.74,1.0]]) prism(q,m,r0,r1,z0+dz,z1+dz) }
+    return q;
+  }
+  function paint(q){
+    const cam=camDir(), list=[];
+    for(const f of q){ const pr=f.pts.map(p=>P(...p)); let area=0; for(let i=0;i<4;i++){ const a=pr[i], b=pr[(i+1)%4]; area+=a[0]*b[1]-b[0]*a[1] }
+      if(area>=0&&!f.two) continue;                           // back face: hidden (cut walls are drawn from both sides)
+      list.push({pr,z:(pr[0][2]+pr[1][2]+pr[2][2]+pr[3][2])/4,f}) }
+    list.sort((a,b)=>b.z-a.z);
+    for(const {pr,f} of list){ const rgb=MAT[f.mat]; cx.fillStyle=shade(rgb,f.n); cx.beginPath(); pr.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])); cx.closePath(); cx.fill();
+      cx.strokeStyle=`rgba(0,0,0,${f.cap?.28:.18})`; cx.lineWidth=0.7*dpr; cx.stroke();
+      if(f.mat==="ecal"&&f.cap){ cx.strokeStyle="rgba(255,255,255,.18)"; cx.lineWidth=0.5*dpr; for(let k=1;k<4;k++){ const a=[lerp(pr[0][0],pr[1][0],k/4),lerp(pr[0][1],pr[1][1],k/4)], b=[lerp(pr[3][0],pr[2][0],k/4),lerp(pr[3][1],pr[2][1],k/4)]; cx.beginPath(); cx.moveTo(...a); cx.lineTo(...b); cx.stroke() } } }
+  }
+  function cylinder(a,b,r,rgb,alpha=1){ // a short tube between two points (dipole magnets, beam pipe), drawn as a thick line with a highlight
+    const A=P(...a), B=P(...b), s=r*Math.min(W,H*1.7)*0.27/(1+(A[2]+B[2])/2/DIST);
+    cx.lineCap="round"; cx.strokeStyle=`rgba(${rgb[0]*.55|0},${rgb[1]*.55|0},${rgb[2]*.55|0},${alpha})`; cx.lineWidth=s*2; cx.beginPath(); cx.moveTo(A[0],A[1]); cx.lineTo(B[0],B[1]); cx.stroke();
+    cx.strokeStyle=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`; cx.lineWidth=s*1.3; cx.beginPath(); cx.moveTo(A[0],A[1]-s*.25); cx.lineTo(B[0],B[1]-s*.25); cx.stroke();
+    cx.strokeStyle=`rgba(255,255,255,${.35*alpha})`; cx.lineWidth=s*.35; cx.beginPath(); cx.moveTo(A[0],A[1]-s*.6); cx.lineTo(B[0],B[1]-s*.6); cx.stroke() }
+  function drawRing(){ // the accelerator: blue dipole magnets along a ring that passes through the detector
+    const segs=[]; for(let i=-14;i<=14;i++){ if(Math.abs(i)<1) continue; const t0=i*0.06, t1=t0+0.045*Math.sign(i); segs.push([t0,t1]) }
+    segs.sort((a,b)=>P(...ring(b[0]))[2]-P(...ring(a[0]))[2]);
+    for(const [t0,t1] of segs){ const d=P(...ring(t0))[2]; if(d<-1.2&&Math.abs(t0)<0.1) continue;
+      const fade=Math.max(.25,Math.min(1,1-(d-1)/6)); cylinder(ring(t0),ring(t1),0.07,MAT.dipole,fade) }
+  }
+  function beamPipe(near){ // the beam pipe follows the ring; far end behind the detector, near end in front
+    const e=ease(explode), z0=0.98+1.05*e, t0=Math.asin(Math.min(1,z0/RING)), a=P(...ring(t0)), b=P(...ring(-t0)), farPos=a[2]>b[2];
+    const seg=sgn=>{ for(let i=0;i<10;i++){ const u0=t0+i*0.08, u1=u0+0.085; cylinder(ring(sgn*u0),ring(sgn*u1),0.03,MAT.pipe,.9) } };
+    if(near) seg(farPos?-1:1); else seg(farPos?1:-1);
+    if(!near&&e>0.05){ cx.globalAlpha=e; cylinder([0,0,-z0],[0,0,z0],0.025,MAT.pipe,.55); cx.globalAlpha=1 } }
+  function drawStatic(){
+    const key=[W,H,dark(),explode.toFixed(3)].join(); if(key===statKey) return; statKey=key;
+    stat.width=W; stat.height=H; const real=cx; cx=stat.getContext("2d"); cx.clearRect(0,0,W,H);
+    drawRing(); beamPipe(false); paint(detector()); beamPipe(true); cx=real }
+  // ---- packets and collisions
+  function rateSpeed(){ const r=tel.cur[tel.phase]||0; return 0.5+1.2*Math.min(1,Math.log10(1+bpsToMbps(r))/3) }
+  function where(p,now){ // returns a world point, or null
+    const tm=now-p.t0; if(tm<0) return null;
+    if(p.dir==="ping"){ const k=tm/p.dur; if(k>=1) return null; const u=k<.5?k*2:(1-k)*2; return ring(p.side*0.9*u) }
+    const d=p.dur; if(tm>=d) return null; const k=tm/d;
+    return p.dir==="down"? ring(p.side*0.9*(1-k)) : ring(p.side*0.9*k) }
+  function spawn(dir,n){ const now=performance.now();
+    for(let i=0;i<n&&parts.length<MAXP;i++){ const dur=1100/rateSpeed();
+      if(dir==="down"){ parts.push({dir,side:1,t0:now+i*140,dur,pair:true}); parts.push({dir,side:-1,t0:now+i*140,dur}) }
+      else parts.push({dir,side:(i%2?1:-1),t0:now+i*140,dur}) } }
+  function ping(ms){ if(!fin(ms)||parts.length>=MAXP) return; parts.push({dir:"ping",side:Math.random()<.5?1:-1,t0:performance.now(),dur:Math.min(3500,Math.max(700,ms*SLOWC)),ms}) }
+  function feed(){
+    const d=tel.phase; if(!tel.on||(d!=="down"&&d!=="up")){ seen.dir=""; return }
+    const b=tel.bytes[d]||0; if(seen.dir!==d){ seen={dir:d,b,acc:0}; return }
+    seen.acc+=Math.max(0,b-seen.b); seen.b=b; const rate=tel.cur[d]||0;
+    per=[64e3,256e3,1e6,4e6,16e6,64e6,256e6].find(v=>rate/v<=8)||256e6;
+    const n=Math.min(4,Math.floor(seen.acc/per)); seen.acc-=n*per; if(n) spawn(d,n) }
+  function collide(now){ // tracks curl in the solenoid field (perpendicular to the beam), stop in the calorimeters
+    const c=tok("--down"); for(let i=0;i<14&&tracks.length<MAXT;i++){ const a=Math.random()*Math.PI*2, charge=Math.random()<.5?-1:1;
+      const pt=0.6+Math.random()*2.4, reach=Math.random()<.7?0.36:0.52;  // electrons stop in ECAL, hadrons in HCAL
+      tracks.push({a,k:charge/pt*1.6,reach,c:Math.random()<.25?"#ffffff":c,t0:now,life:650+Math.random()*450,z:(Math.random()-.5)*0.05}) }
+    flashes.push({p:[0,0,0],t0:now,c:"#ffffff",r:10}) }
+  function drawTracks(now){
+    tracks=tracks.filter(t=>{ const k=(now-t.t0)/t.life; if(k>=1) return false; const grow=Math.min(1,k*2.2), steps=14;
+      cx.strokeStyle=t.c; cx.globalAlpha=(1-k)*.95; cx.lineWidth=1.4*dpr; cx.beginPath();
+      let x=0,y=0,a=t.a, first=true; const ds=t.reach*grow/steps;
+      for(let i=0;i<=steps;i++){ const q=P(x,y,t.z); first?cx.moveTo(q[0],q[1]):cx.lineTo(q[0],q[1]); first=false; a+=t.k*ds*3; x+=Math.cos(a)*ds; y+=Math.sin(a)*ds }
+      cx.stroke(); cx.globalAlpha=1;
+      if(grow>=1&&!t.hit){ t.hit=true; hits.push({p:[x,y,t.z],t0:now,c:t.reach<0.4?"#7fe9f2":"#ffb560"}) }
+      return true });
+    hits=hits.filter(h=>{ const k=(now-h.t0)/500; if(k>=1) return false; const q=P(...h.p); glow(q[0],q[1],(5+k*6)*dpr,h.c,(1-k)*(dark()?.9:.6)); return true });
+  }
+  function glow(x,y,r,c,a){ const g=cx.createRadialGradient(x,y,0,x,y,r); const hex=c.length===7?c:"#ffffff"; g.addColorStop(0,hex); g.addColorStop(1,hex+"00"); cx.globalAlpha=a; cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,Math.PI*2); cx.fill(); cx.globalAlpha=1 }
+  function drawParts(now){
+    parts=parts.filter(p=>{
+      const done=(now-p.t0)>=p.dur;
+      if(done){ if(p.dir==="ping"){ flashes.push({p:[0,0,0],t0:now,c:tok("--good"),txt:p.ms.toFixed(0)+" ms",r:14}) }
+        else if(p.dir==="down"&&p.pair) collide(now); else if(p.dir==="up") flashes.push({p:ring(p.side*0.9),t0:now,c:tok("--up"),r:12}); return false }
+      const w=where(p,now); if(!w) return true;
+      const c=tok(p.dir==="ping"?"--good":p.dir==="down"?"--down":"--up"), q=P(...w);
+      let prev=q; for(let i=1;i<=8;i++){ const tw=where(p,now-i*18); if(!tw) break; const r=P(...tw);
+        cx.strokeStyle=c; cx.globalAlpha=(1-i/9)*.85; cx.lineWidth=(3.4-i*.35)*dpr; cx.lineCap="round"; cx.beginPath(); cx.moveTo(prev[0],prev[1]); cx.lineTo(r[0],r[1]); cx.stroke(); prev=r }
+      cx.globalAlpha=1; glow(q[0],q[1],(dark()?13:9)*dpr,c,dark()?.95:.6); cx.fillStyle="#fff"; cx.beginPath(); cx.arc(q[0],q[1],2.2*dpr,0,Math.PI*2); cx.fill();
+      return true });
+    flashes=flashes.filter(f=>{ const k=(now-f.t0)/650; if(k>=1) return false; const q=P(...f.p); glow(q[0],q[1],(f.r+k*12)*dpr,f.c,(1-k)*(dark()?1:.6));
+      if(f.txt){ cx.fillStyle=f.c; cx.globalAlpha=1-k; cx.font=`600 ${12*dpr}px ${tok("--mono")}`; cx.textAlign="center"; cx.fillText(f.txt,q[0],q[1]-(22+k*16)*dpr); cx.globalAlpha=1 } return true });
   }
   function labels(){
-    if(explode<=0.02||!result) return; const L=lift(), e=ease(explode);
-    const rows=[["up",0.38,`Upload  ${fmt(result.up)} ${unitLabel()}`,"--up"],["down",0.27,`Download  ${fmt(result.down)} ${unitLabel()}`,"--down"],["ping",0.16,`Ping  ${fin(result.ping)?result.ping.toFixed(1):"—"} ms${fin(result.jitter)?`  ·  jitter ${result.jitter.toFixed(1)} ms`:""}`,"--good"]];
-    cx.font=`600 ${(W/dpr<640?12.5:14)*dpr}px ${tok("--body")}`; cx.textBaseline="middle"; cx.textAlign="left";
-    for(const [k,r,txt,c] of rows){
-      // anchor on the left-most point of the layer's top rim, label sits to its left with a short leader
-      let a=null; for(let i=0;i<48;i++){ const t=i/48*Math.PI*2, q=P(Math.cos(t)*r,L[k]+0.07,Math.sin(t)*r); if(!a||q[0]<a[0]) a=q }
-      const tw=cx.measureText(txt).width, tx=Math.max(10*dpr, a[0]-tw-28*dpr), ty=a[1]-6*dpr;
-      cx.globalAlpha=e; cx.strokeStyle=tok(c); cx.lineWidth=1.2*dpr; cx.beginPath(); cx.moveTo(a[0],a[1]); cx.lineTo(Math.min(a[0]-6*dpr,tx+tw+6*dpr),ty); cx.stroke();
-      cx.fillStyle=tok("--ink"); cx.fillText(txt,tx,ty-11*dpr); cx.globalAlpha=1 }
+    if(explode<=0.02||!result) return; const e=ease(explode);
+    const rows=[[-0.87,`Ping ${fin(result.ping)?result.ping.toFixed(1):"—"} ms${fin(result.jitter)?` · jitter ${result.jitter.toFixed(1)} ms`:""}`,"--good"],
+                [0,`Download ${fmt(result.down)} ${unitLabel()}`,"--down"],[0.87,`Upload ${fin(result.up)?fmt(result.up):"—"} ${unitLabel()}`,"--up"]];
+    cx.font=`600 ${(W/dpr<640?12:14)*dpr}px ${tok("--body")}`; cx.textBaseline="middle"; cx.textAlign="center";
+    for(const [z,txt,c] of rows){ const top=P(0,1.02,z+zShift(z)), tw=cx.measureText(txt).width;
+      const x=Math.min(W-tw/2-10*dpr,Math.max(tw/2+10*dpr,top[0])), y=Math.max(18*dpr,top[1]-26*dpr);
+      cx.globalAlpha=e; cx.fillStyle=dark()?"rgba(10,14,16,.72)":"rgba(255,255,255,.82)"; cx.beginPath(); cx.roundRect?cx.roundRect(x-tw/2-8*dpr,y-13*dpr,tw+16*dpr,26*dpr,8*dpr):cx.rect(x-tw/2-8*dpr,y-13*dpr,tw+16*dpr,26*dpr); cx.fill();
+      cx.strokeStyle=tok(c); cx.lineWidth=1.4*dpr; cx.stroke(); cx.beginPath(); cx.moveTo(x,y+13*dpr); cx.lineTo(top[0],top[1]); cx.stroke();
+      cx.fillStyle=tok("--ink"); cx.fillText(txt,x,y); cx.globalAlpha=1 }
   }
-  // ---- packets
-  function rateSpeed(){ const r=tel.cur[tel.phase]||0; return 0.3+0.9*Math.min(1,Math.log10(1+bpsToMbps(r))/3) } // laps per second: 0.3 (slow line) to 1.2 (gigabit)
-  function spawn(dir,n){ for(let i=0;i<n&&parts.length<MAXP;i++) parts.push({dir,t0:performance.now()+i*110,lap:1/rateSpeed(),j:(Math.random()-.5)*0.05}) }
-  function ping(ms){ if(!fin(ms)||parts.length>=MAXP) return; parts.push({dir:"ping",t0:performance.now(),dur:Math.min(3500,Math.max(700,ms*SLOWC)),ms}) }
-  function feed(now){
-    const d=tel.phase; if(!tel.on||(d!=="down"&&d!=="up")){ seen.dir=""; return }
-    const b=tel.bytes[d]||0; if(seen.dir!==d){ seen={dir:d,b,acc:0,t:now}; return }
-    seen.acc+=Math.max(0,b-seen.b); seen.b=b; const rate=tel.cur[d]||0;
-    per=[64e3,256e3,1e6,4e6,16e6,64e6,256e6].find(v=>rate/v<=24)||256e6;
-    const n=Math.min(8,Math.floor(seen.acc/per)); seen.acc-=n*per; if(n) spawn(d,n);
-  }
-  function shower(x,y,c,n){ for(let i=0;i<n&&tracks.length<MAXT;i++){ const a=Math.random()*Math.PI*2, v=(50+Math.random()*110)*dpr, curl=(Math.random()<.5?-1:1)*(1.5+Math.random()*3);
-      tracks.push({x,y,a,v,curl,c,t0:performance.now(),life:500+Math.random()*500}) } }
-  function where(p,now,L){
-    if(p.dir==="ping"){ const k=(now-p.t0)/p.dur; if(k<0||k>=1) return null; const u=k<.5?k*2:(1-k)*2; return [lerp(0.1,1,u),L.ping+0.02,0] }
-    const lapDur=p.lap*1000, inDur=420, tm=now-p.t0; if(tm<0||tm>=lapDur+inDur) return null;
-    if(p.dir==="down"){ if(tm<lapDur){ const a=(tm/lapDur)*Math.PI*2; return ringPt(a,1+p.j,L.ring) } const u=(tm-lapDur)/inDur; return [lerp(1,0.05,u),lerp(L.ring,L.down,u),0] }
-    if(tm<inDur){ const u=tm/inDur; return [lerp(0.05,1,u),lerp(L.up,L.ring,u),0] } const a=((tm-inDur)/lapDur)*Math.PI*2; return ringPt(-a,1+p.j,L.ring) }
-  function drawParts(now){
-    const L=lift();
-    parts=parts.filter(p=>{
-      const done=p.dir==="ping"?(now-p.t0)>=p.dur:(now-p.t0)>=p.lap*1000+420;
-      if(done){ if(p.dir==="ping"){ const q=P(0,L.ping,0); flashes.push({x:q[0],y:q[1],t0:now,txt:p.ms.toFixed(0)+" ms",c:tok("--good")}) }
-        else if(p.dir==="down"){ const q=P(0,L.down,0); shower(q[0],q[1],tok("--down"),9) } else { const q=P(1.3,L.ring,0); flashes.push({x:q[0],y:q[1],t0:now,c:tok("--up")}) } return false }
-      const pt=where(p,now,L); if(!pt) return true;
-      const c=tok(p.dir==="ping"?"--good":p.dir==="down"?"--down":"--up"), q=P(...pt), depth=Math.max(.35,Math.min(1,1-q[2]*.35));
-      // photon streak: the packet's own path over the last 140 ms, fading out behind it
-      let prev=q; for(let i=1;i<=7;i++){ const tp=where(p,now-i*16,L); if(!tp) break; const r=P(...tp);
-        cx.strokeStyle=c; cx.globalAlpha=depth*(1-i/8)*.8; cx.lineWidth=(3.2-i*.35)*dpr; cx.lineCap="round"; cx.beginPath(); cx.moveTo(prev[0],prev[1]); cx.lineTo(r[0],r[1]); cx.stroke(); prev=r }
-      cx.globalAlpha=1; glowDot(q[0],q[1],(dark()?12:8)*dpr*depth,c,(dark()?.9:.5)*depth); cx.fillStyle="#fff"; cx.globalAlpha=depth; cx.beginPath(); cx.arc(q[0],q[1],2.2*dpr,0,Math.PI*2); cx.fill(); cx.globalAlpha=1;
-      return true });
-    tracks=tracks.filter(t=>{ const k=(now-t.t0)/t.life; if(k>=1) return false; cx.strokeStyle=t.c; cx.globalAlpha=(1-k)*.9; cx.lineWidth=1.3*dpr; cx.beginPath();
-      let x=t.x,y=t.y,a=t.a; cx.moveTo(x,y); const steps=10, len=t.v*k;
-      for(let i=0;i<steps;i++){ a+=t.curl*0.06; x+=Math.cos(a)*len/steps; y+=Math.sin(a)*len/steps*0.6; cx.lineTo(x,y) } cx.stroke(); cx.globalAlpha=1; return true });
-    flashes=flashes.filter(f=>{ const k=(now-f.t0)/700; if(k>=1) return false; cx.strokeStyle=f.c; cx.globalAlpha=1-k; cx.lineWidth=1.5*dpr; cx.beginPath(); cx.arc(f.x,f.y,(6+k*22)*dpr,0,Math.PI*2); cx.stroke();
-      if(f.txt){ cx.fillStyle=f.c; cx.font=`600 ${12*dpr}px ${tok("--mono")}`; cx.textAlign="center"; cx.fillText(f.txt,f.x,f.y-(16+k*14)*dpr) } cx.globalAlpha=1; return true });
-  }
-  function hint(){ if(tel.on||result) return; cx.fillStyle=tok("--muted"); cx.font=`500 ${13*dpr}px ${tok("--body")}`; cx.textAlign="center"; cx.fillText("Run a test to fire real packets through the collider",W/2,H*0.94) }
+  function hint(){ if(tel.on||result) return; cx.fillStyle=tok("--muted"); cx.font=`500 ${13*dpr}px ${tok("--body")}`; cx.textAlign="center"; cx.fillText("Run a test to collide real packets in the detector",W/2,H*0.95) }
   function frame(now){
     raf=0; if(tel.on&&now-lastDraw<32){ raf=requestAnimationFrame(frame); return } lastDraw=now;
     const t0=performance.now(); size(); cx.clearRect(0,0,W,H);
     const animating=$("colAnim").checked&&!reduce.matches;
-    if(tel.on&&animating){ yaw+=(now-last||16)/1000*0.12; feed(now) } last=now;
-    if(explodeT0){ explode=Math.min(1,(now-explodeT0)/1400); if(explode>=1) explodeT0=0 }
-    drawScene(); if(animating) drawParts(now); labels(); hint();
+    if(tel.on&&animating) feed(); last=now;
+    if(explodeT0){ explode=Math.min(1,(now-explodeT0)/1600); if(explode>=1) explodeT0=0 }
+    drawStatic(); cx.drawImage(stat,0,0); if(animating){ drawParts(now); drawTracks(now) } labels(); hint();
     frameCost=frameCost*.9+(performance.now()-t0)*.1;
-    if(vis&&animating&&(tel.on||parts.length||tracks.length||flashes.length||explodeT0)) raf=requestAnimationFrame(frame);
-    $("colKey").textContent=tel.on&&per&&(tel.phase==="down"||tel.phase==="up")?`Each ${tel.phase==="down"?"cyan":"amber"} packet is ${per>=1e6?per/1e6+" MB":per/1e3+" KB"} of data actually ${tel.phase==="down"?"received":"sent"}. Packets ride faster as the speed rises.`
-      :tel.on&&tel.phase==="ping"?"Green probes go to the server port and back over each measured round trip, shown 20× slower."
-      :result?"Teardown of the last test: the detector's three layers carry ping, download and upload.":"";
+    if(vis&&animating&&(tel.on||parts.length||tracks.length||flashes.length||hits.length||explodeT0)) raf=requestAnimationFrame(frame);
+    $("colKey").textContent=tel.on&&per&&(tel.phase==="down"||tel.phase==="up")
+      ?(tel.phase==="down"?`Each collision is ${per>=1e6?per/1e6+" MB":per/1e3+" KB"} of data actually received. Bunches travel faster as the speed rises.`:`Each amber bunch is ${per>=1e6?per/1e6+" MB":per/1e3+" KB"} of data actually sent.`)
+      :tel.on&&tel.phase==="ping"?"Green probes run along the beam pipe and back over each measured round trip, shown 20× slower."
+      :result?"Teardown of the last test: the detector opened up, one part per result.":"";
   }
   function kick(){ if(!raf) raf=requestAnimationFrame(frame) }
-  function start(){ parts=[]; tracks=[]; flashes=[]; seen.dir=""; explode=0; explodeT0=0; result=null; kick() }
+  function start(){ parts=[]; tracks=[]; hits=[]; flashes=[]; seen.dir=""; explode=0; explodeT0=0; result=null; kick() }
   function end(res){ if(res&&fin(res.down)){ result=res; explodeT0=($("colAnim").checked&&!reduce.matches)?performance.now():0; if(!explodeT0) explode=1 } kick();
     $("collider").setAttribute("aria-label",res&&fin(res.down)?`Packet collider teardown: ping ${fin(res.ping)?res.ping.toFixed(1):"unknown"} ms, download ${fmt(res.down)} ${unitLabel()}, upload ${fin(res.up)?fmt(res.up):"not measured"} ${unitLabel()}`:"Packet collider") }
-  // show the last saved result as a teardown on load
   try{ const h=store.get("history",[]); if(h&&h[0]&&fin(h[0].down)){ result=h[0]; explode=1 } }catch{}
   if("IntersectionObserver" in window) new IntersectionObserver(e=>{ vis=e[0].isIntersecting; if(vis) kick() }).observe(cv); else vis=true;
   if("ResizeObserver" in window) new ResizeObserver(()=>kick()).observe(cv);
-  $("colAnim").checked=!reduce.matches; $("colAnim").onchange=()=>{ if(!$("colAnim").checked){ parts=[]; tracks=[]; flashes=[] } kick() };
+  $("colAnim").checked=!reduce.matches; $("colAnim").onchange=()=>{ if(!$("colAnim").checked){ parts=[]; tracks=[]; hits=[]; flashes=[] } kick() };
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change",kick);
   return {start,end,ping,kick,get cost(){return frameCost}};
 })();

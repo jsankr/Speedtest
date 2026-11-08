@@ -40,7 +40,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **Speed test** | Download, upload, idle ping, jitter and **loaded ping** (latency while the line is busy). Live gauge and throughput chart. Stop at any time; **Retest** after a run. |
 | **Units** | Bytes or bits per second: KB/s, MB/s, GB/s, Kbps, Mbps, Gbps. Decimal (1000) or binary (1024, shown as MiB/s, Mibps). |
 | **Servers** | Automatic (lowest ping), Cloudflare (anycast), Measurement Lab (ndt7), 22 LibreSpeed volunteer servers worldwide, or your own server. "Measure ping to all" compares them. |
-| **Packet collider** | A 3D collider view of the test: real packets as photons around a beam ring, showers in the detector, and an exploded teardown of ping, download and upload at the end. |
+| **Packet collider** | A 3D CMS/LHC-style collider view of the test: bunches collide for every chunk really received, tracks curl through the calorimeters, and the detector opens up at the end with ping, download and upload on its parts. |
 | **Live map** | Route from you to the test server with animated data flow, live download/upload/ping tiles and a telemetry timeline. |
 | **Insights** | Responsiveness grade (A+ to F) from loaded ping, what the connection can handle (streaming, calls, gaming, backups), your place among 100+ countries. |
 | **Global comparison** | Your result against the world and national medians (Ookla Speedtest Global Index), for broadband or mobile. |
@@ -87,14 +87,14 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 |:--:|:--:|
 | <img src="docs/screenshots/25-collider-download.png" width="300"> | <img src="docs/screenshots/26-collider-teardown.png" width="300"> |
 
-The same test drawn as a particle collider. The ring is the route to the test server, the port on the ring is the server, and the detector in the middle is your device.
+The same test drawn as a particle collider, modelled on the real structure of CERN's CMS detector sitting on the LHC ring. It is drawn in 3D (perspective, shaded faces, painter's sort) with the browser's own 2D canvas — no WebGL, library or photographs.
 
-- **Ping:** green probes travel from the detector to the server port and back, one per measured ping, taking the measured round trip (slowed 20× so you can see it). The time flashes where each lands.
-- **Download:** a cyan packet enters at the server port only when that much data has really arrived (the note under the picture gives the size, e.g. 1 packet = 4 MB). It rides the ring once, dives into the detector and breaks into a shower of curved tracks.
-- **Upload:** an amber packet leaves the detector for each chunk really sent, rides the ring and exits at the port.
-- **Speed you can see:** packets ride the ring faster as the live speed rises; the camera turns slowly while a test runs.
-- **Teardown:** when the test ends, the detector comes apart into its three layers, labelled with your ping and jitter, download and upload. The last saved result is shown this way when the page opens.
-- **Cost:** drawn with the browser's 2D canvas, capped at 30 frames a second during a test and paused when the panel is off screen, so it doesn't compete with the measurement. *Animate* turns it off; *Reduce motion* turns it off by default. Screen readers get the result as text.
+- **The model, from the beam outwards:** silicon tracker, crystal electromagnetic calorimeter (teal), brass hadron calorimeter, the superconducting solenoid (silver) and the red iron return yoke with grey muon chambers, built as a 12-sided barrel of five wheels plus two endcaps. The wedge facing you is cut away, like an event display, so the collision point is visible. Blue dipole magnets mark the ring; the ring is the route to the test server and the collision point is your device.
+- **Download:** for each chunk really received (the note under the picture gives the size), two cyan bunches race in along the beam pipe from both sides and collide in the centre. Tracks curl in the magnetic field and light up where they stop: electrons in the crystal calorimeter, hadrons in the brass one.
+- **Upload:** an amber bunch leaves the centre along the pipe for each chunk really sent.
+- **Ping:** green probes run along the pipe and back over each measured round trip (slowed 20×), and the time flashes in the centre.
+- **Teardown:** when the test ends, the detector opens the way CMS is opened for maintenance — endcaps slide out along the beam and the barrel wheels part — and each part carries a result: ping and jitter, download, upload. The last saved result is shown this way when the page opens.
+- **Cost:** the detector is drawn once and reused, only the particles move; at most 30 frames a second during a test and paused off screen, so it doesn't compete with the measurement. *Animate* turns it off; *Reduce motion* turns it off by default. Screen readers get the result as text.
 
 ### 3. Result insights
 
@@ -484,7 +484,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |
+| *latest* | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
+| `f5985d7` | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |
 | `f2c01ce` | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |
 | `3cd2379` | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
 | `c56eb8d` | Glass instrument redesign: frosted-glass panels over still light fields, engraved wells, 3D GO sphere, glass dial with bead, colour-coded 3D tool chips, raised segmented controls, one entrance on load and hover lift; chart fills the readout column on wide screens; layouts checked at 320–1440 px; Safari prefixes and solid fallback; glass app icon |

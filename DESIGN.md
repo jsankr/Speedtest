@@ -70,7 +70,7 @@ CleanSpeed should feel like a precision instrument made of glass: depth, light a
 - Weighted for a product people use daily: restraint first, polish second.
 - Allowed: one entrance of the speed-test panel on load (550 ms rise), hover lift and press on controls (140 ms), state transitions (220 ms), the dial needle easing toward the live value, map packets (real data), charts drawing as data arrives.
 - Not allowed: pulsing or breathing indicators, looping rings, drifting backgrounds, parallax or pointer tilt, fade-in on scroll, staggered list entrances, bouncy springs.
-- The packet collider is the one ambient 3D moment: it moves only while a test runs (data-driven packets, slow camera turn), is capped at 30 fps, pauses off screen, ends in a single teardown animation, and respects *Animate* and *Reduce motion*.
+- The packet collider is the one ambient 3D moment, modelled on CMS/LHC with physical material colours (iron red, brass, crystal teal, magnet silver, dipole blue) while the data keeps its own colours (cyan, amber, green). It moves only while a test runs (data-driven bunches, fixed camera, detector cached), is capped at 30 fps, pauses off screen, ends in a single teardown animation, and respects *Animate* and *Reduce motion*.
 - Animation loops run only while something changes (the dial stops redrawing when the needle settles).
 - `prefers-reduced-motion: reduce`: transitions and animations are cut to 0.01 ms and the map animation starts switched off; every state is still visible.
 
