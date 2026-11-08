@@ -343,7 +343,7 @@ def main():
                     try: suite(browser, port)
                     except Exception as e:
                         lines = [l.strip() for l in str(e).strip().splitlines() if l.strip()]
-                        check(f"{suite.__name__} suite ran to the end ({name})", False, " | ".join(lines[:2] + lines[-4:])[:700])
+                        check(f"{suite.__name__} suite ran to the end ({name})", False, " | ".join(lines[:5] + lines[-3:])[:900])
                 browser.close()
     finally:
         srv.terminate()
