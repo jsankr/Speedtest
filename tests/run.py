@@ -100,6 +100,14 @@ def e2e(browser, port):
     ctx, page = new_page(browser, port, width=1280, height=900)
     check("loads without script errors", not page.errors, "; ".join(page.errors))
     check("title is CleanSpeed", page.title() == "CleanSpeed", page.title())
+    sc = page.evaluate("""()=>{ window.scrollTo(0, 3000); const r=document.getElementById('unitB').getBoundingClientRect();
+        const se=document.scrollingElement; const out={y:Math.round(scrollY), sh:se.scrollHeight, ch:se.clientHeight, top:Math.round(r.top), h:Math.round(r.height),
+        bodyOv:getComputedStyle(document.body).overflowY, htmlOv:getComputedStyle(document.documentElement).overflowY}; window.scrollTo(0,0); return out }""")
+    check("page scrolls to lower sections", sc["y"] > 0, json.dumps(sc))
+    page.locator("#unitB").scroll_into_view_if_needed()
+    vis = page.evaluate("(()=>{const r=document.getElementById('unitB').getBoundingClientRect(); return [Math.round(r.top), innerHeight, Math.round(scrollY)]})()")
+    check("controls far down the page can be scrolled into view", 0 <= vis[0] < vis[1], str(vis))
+    page.evaluate("window.scrollTo(0,0)")
 
     use_own_server(page, port)
     check("own server selected", "Custom" in page.inner_text("#srvName"), page.inner_text("#srvName"))
