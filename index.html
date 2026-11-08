@@ -2161,15 +2161,16 @@ const col=(()=>{
   function collide(now){ // tracks curl in the solenoid field (perpendicular to the beam), stop in the calorimeters
     const c=tok("--down"); for(let i=0;i<14&&tracks.length<MAXT;i++){ const a=Math.random()*Math.PI*2, charge=Math.random()<.5?-1:1;
       const pt=0.6+Math.random()*2.4, reach=Math.random()<.7?0.36:0.52;  // electrons stop in ECAL, hadrons in HCAL
-      tracks.push({a,k:charge/pt*1.6,reach,c:Math.random()<.25?"#ffffff":c,t0:now,life:650+Math.random()*450,z:(Math.random()-.5)*0.05}) }
+      const th=0.45+Math.random()*(Math.PI-0.9); /* polar angle: real jets spray along the beam too, not only across it */
+      tracks.push({a,k:charge/pt*1.6,reach,cot:Math.cos(th)/Math.sin(th),c:Math.random()<.25?"#ffffff":c,t0:now,life:650+Math.random()*450,z:0}) }
     flashes.push({p:[0,0,0],t0:now,c:"#ffffff",r:10}) }
   function drawTracks(now){
     tracks=tracks.filter(t=>{ const k=(now-t.t0)/t.life; if(k>=1) return false; const grow=Math.min(1,k*2.2), steps=14;
       cx.strokeStyle=t.c; cx.globalAlpha=(1-k)*.95; cx.lineWidth=1.4*dpr; cx.beginPath();
-      let x=0,y=0,a=t.a, first=true; const ds=t.reach*grow/steps;
-      for(let i=0;i<=steps;i++){ const q=P(x,y,t.z); first?cx.moveTo(q[0],q[1]):cx.lineTo(q[0],q[1]); first=false; a+=t.k*ds*3; x+=Math.cos(a)*ds; y+=Math.sin(a)*ds }
+      let x=0,y=0,z=0,a=t.a, first=true; const ds=t.reach*grow/steps;
+      for(let i=0;i<=steps;i++){ const q=P(x,y,z); first?cx.moveTo(q[0],q[1]):cx.lineTo(q[0],q[1]); first=false; a+=t.k*ds*3; x+=Math.cos(a)*ds; y+=Math.sin(a)*ds; z=Math.max(-0.9,Math.min(0.9,z+ds*t.cot)) }
       cx.stroke(); cx.globalAlpha=1;
-      if(grow>=1&&!t.hit){ t.hit=true; hits.push({p:[x,y,t.z],t0:now,c:t.reach<0.4?"#7fe9f2":"#ffb560"}) }
+      if(grow>=1&&!t.hit){ t.hit=true; hits.push({p:[x,y,z],t0:now,c:t.reach<0.4?"#7fe9f2":"#ffb560"}) }
       return true });
     hits=hits.filter(h=>{ const k=(now-h.t0)/500; if(k>=1) return false; const q=P(...h.p); glow(q[0],q[1],(5+k*6)*dpr,h.c,(1-k)*(dark()?.9:.6)); return true });
   }
@@ -2193,10 +2194,15 @@ const col=(()=>{
     const rows=[[-0.87,`Ping ${fin(result.ping)?result.ping.toFixed(1):"—"} ms${fin(result.jitter)?` · jitter ${result.jitter.toFixed(1)} ms`:""}`,"--good"],
                 [0,`Download ${fmt(result.down)} ${unitLabel()}`,"--down"],[0.87,`Upload ${fin(result.up)?fmt(result.up):"—"} ${unitLabel()}`,"--up"]];
     cx.font=`600 ${(W/dpr<640?12:14)*dpr}px ${tok("--body")}`; cx.textBaseline="middle"; cx.textAlign="center";
-    for(const [z,txt,c] of rows){ const top=P(0,1.02,z+zShift(z)), tw=cx.measureText(txt).width;
-      const x=Math.min(W-tw/2-10*dpr,Math.max(tw/2+10*dpr,top[0])), y=Math.max(18*dpr,top[1]-26*dpr);
+    if(W/dpr<640) rows[0][1]=rows[0][1].replace(/ · jitter.*$/,"");
+    /* place left to right; a label that would touch the one before drops to the next row */
+    const boxes=rows.map(([z,txt,c])=>{ const top=P(0,1.02,z+zShift(z)), tw=cx.measureText(txt).width;
+      return {top,txt,c,tw,x:Math.min(W-tw/2-10*dpr,Math.max(tw/2+10*dpr,top[0])),y:Math.max(18*dpr,top[1]-26*dpr)} }).sort((a,b)=>a.x-b.x);
+    const placed=[];
+    for(const b of boxes){ while(placed.some(o=>Math.abs(o.y-b.y)<30*dpr&&Math.abs(o.x-b.x)<(o.tw+b.tw)/2+22*dpr)) b.y+=30*dpr; placed.push(b) }
+    for(const {top,txt,c,tw,x,y} of placed){
       cx.globalAlpha=e; cx.fillStyle=dark()?"rgba(10,14,16,.72)":"rgba(255,255,255,.82)"; cx.beginPath(); cx.roundRect?cx.roundRect(x-tw/2-8*dpr,y-13*dpr,tw+16*dpr,26*dpr,8*dpr):cx.rect(x-tw/2-8*dpr,y-13*dpr,tw+16*dpr,26*dpr); cx.fill();
-      cx.strokeStyle=tok(c); cx.lineWidth=1.4*dpr; cx.stroke(); cx.beginPath(); cx.moveTo(x,y+13*dpr); cx.lineTo(top[0],top[1]); cx.stroke();
+      cx.strokeStyle=tok(c); cx.lineWidth=1.4*dpr; cx.stroke(); cx.beginPath(); cx.moveTo(x,top[1]<y?y-13*dpr:y+13*dpr); cx.lineTo(top[0],top[1]); cx.stroke();
       cx.fillStyle=tok("--ink"); cx.fillText(txt,x,y); cx.globalAlpha=1 }
   }
   function hint(){ if(tel.on||result) return; cx.fillStyle=tok("--muted"); cx.font=`500 ${13*dpr}px ${tok("--body")}`; cx.textAlign="center"; cx.fillText("Run a test to collide real packets in the detector",W/2,H*0.95) }

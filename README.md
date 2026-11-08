@@ -87,12 +87,13 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 |:--:|:--:|
 | <img src="docs/screenshots/25-collider-download.png" width="300"> | <img src="docs/screenshots/26-collider-teardown.png" width="300"> |
 
-The same test drawn as a particle collider, modelled on the real structure of CERN's CMS detector sitting on the LHC ring. It is drawn in 3D (perspective, shaded faces, painter's sort) with the browser's own 2D canvas — no WebGL, library or photographs.
+The same test drawn as a particle collider, modelled on the real structure of CERN's CMS detector sitting on the LHC ring. The detector, the GO sphere and the dial's metal bezel are **rendered in Blender** (Cycles path tracing, physical materials: painted iron, brushed aluminium, polished steel, brass, lead-tungstate crystal glass) and shipped as small WebP plates in `assets/3d/`. The live data — bunches, tracks, hits, probes, labels — is drawn on top in the browser, projected through the exact Blender camera (`assets/3d/scene.json`), so packets ride the rendered beam pipe. If the plates are missing (for example the single-file download), the app falls back to its own canvas-drawn 3D model, so nothing breaks.
 
 - **The model, from the beam outwards:** silicon tracker, crystal electromagnetic calorimeter (teal), brass hadron calorimeter, the superconducting solenoid (silver) and the red iron return yoke with grey muon chambers, built as a 12-sided barrel of five wheels plus two endcaps. The wedge facing you is cut away, like an event display, so the collision point is visible. Blue dipole magnets mark the ring; the ring is the route to the test server and the collision point is your device.
 - **Download:** for each chunk really received (the note under the picture gives the size), two cyan bunches race in along the beam pipe from both sides and collide in the centre. Tracks curl in the magnetic field and light up where they stop: electrons in the crystal calorimeter, hadrons in the brass one.
 - **Upload:** an amber bunch leaves the centre along the pipe for each chunk really sent.
 - **Ping:** green probes run along the pipe and back over each measured round trip (slowed 20×), and the time flashes in the centre.
+- **Rendering pipeline:** `blender/render_plates.py` builds the scene in code and `.github/workflows/render.yml` renders it with Blender 4.2 LTS on GitHub Actions whenever the script changes, then commits the plates. Nine teardown frames are rendered and cross-faded as the detector opens. About 1 MB in total, loaded after the page is usable.
 - **Teardown:** when the test ends, the detector opens the way CMS is opened for maintenance — endcaps slide out along the beam and the barrel wheels part — and each part carries a result: ping and jitter, download, upload. The last saved result is shown this way when the page opens.
 - **Cost:** the detector is drawn once and reused, only the particles move; at most 30 frames a second during a test and paused off screen, so it doesn't compete with the measurement. *Animate* turns it off; *Reduce motion* turns it off by default. Screen readers get the result as text.
 
@@ -318,7 +319,7 @@ Open **https://jsankr.github.io/Speedtest/** in Safari, Chrome, Edge or Firefox.
 
 ### Host your own copy
 
-The whole app is `index.html`, plus `oui.txt` for offline device lookup.
+The whole app is `index.html`, plus `oui.txt` for offline device lookup and `assets/3d/` for the rendered 3D plates (optional: without them the app draws its own).
 
 1. Fork or copy this repository.
 2. **Settings → Pages → Deploy from a branch → `main` / root.**
@@ -341,6 +342,7 @@ python3 server/server.py --port 8080
 | `POST /up` | Reads and discards the body |
 | `GET /` | Serves `../index.html` (the app) |
 | `GET /oui.txt` | The MAC maker registry, so Device lookup works offline when self-hosted |
+| `GET /assets/3d/*` | The Blender-rendered plates for the collider, GO sphere and dial bezel |
 
 Open `http://<server-ip>:8080/` to run CleanSpeed against it directly — good for testing your LAN or Wi-Fi without the internet in the way. To use it from the GitHub Pages copy instead (**Change server → Your own server**), it must be served over **https** (put Caddy or nginx in front), because browsers block http requests from https pages.
 
@@ -402,17 +404,19 @@ flowchart LR
 ├── index.html            # the whole app: HTML, CSS and JavaScript, no dependencies
 ├── oui.txt               # IEEE MAC maker registry (offline device lookup)
 ├── oui-LICENSE.txt       # licence for oui.txt
+├── assets/3d/            # Blender-rendered plates (collider teardown frames, GO sphere, bezel) + scene.json camera
+├── blender/render_plates.py  # builds and renders the 3D scene (Blender 4.2 LTS, Cycles)
 ├── fonts/                # Instrument Sans, Instrument Serif, Geist Mono (Latin subset, WOFF) + OFL licences
 ├── DESIGN.md             # design system: tokens, components, motion, accessibility
 ├── tests/run.py          # end-to-end + WCAG 2.2 AA tests (Chromium, Firefox, WebKit)
-├── .github/workflows/    # CI: runs the tests on every push
+├── .github/workflows/    # CI: tests on every push; render.yml re-renders the 3D plates
 ├── docs/TEARDOWN.md      # design, usability and accessibility audit
 ├── server/
 │   └── server.py         # optional self-hosted test server
 └── docs/screenshots/     # images used in this README (sample data)
 ```
 
-- No framework, no build step, no package manager. Charts, gauge and map are drawn with Canvas 2D.
+- No framework, no build step, no package manager. Charts, gauge and map are drawn with Canvas 2D; the 3D objects are pre-rendered in Blender and live data is overlaid on them.
 - Icons and the web-app manifest are embedded as data URIs.
 - Tests cancel cleanly through an `AbortController`; every network request has a timeout.
 
@@ -422,7 +426,7 @@ flowchart LR
 
 The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
 
-- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. No violet.
+- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. The GO sphere, dial bezel and collider are path-traced in Blender. No violet.
 - **Typography:** Instrument Serif for section titles, Instrument Sans for reading text, labels and buttons (sentence case), Geist Mono only for numbers, units and addresses. The fonts are bundled, so the page makes no font requests.
 - **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
 - **One button family:** a cyan glass object for the main action, raised glass for the rest, tinted red glass for Stop.
@@ -484,7 +488,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
+| *latest* | Real 3D rendering with Blender: the collider (9 teardown frames), GO sphere (light and dark) and dial bezel are path-traced in Cycles on GitHub Actions; live packets, tracks and labels are overlaid through the Blender camera; collision tracks spray in 3D; teardown labels never overlap |
+| `e0e1858` | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
 | `f5985d7` | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |
 | `f2c01ce` | Teardown and testing: WCAG 2.2 AA fixes (skip link, main landmark, ARIA roles, labelled charts, live status, gradient contrast, target sizes, forced colours); design fixes (no accent-word headings, sentence-case labels, mono only for numbers); Safari chart-height bug fixed; automated tests in Chromium, Firefox and WebKit on every push; [docs/TEARDOWN.md](docs/TEARDOWN.md) |
 | `3cd2379` | Typography: Instrument Serif titles with italic accents, Instrument Sans text, Geist Mono numbers and labels; fonts bundled (no Google Fonts request); canvases redraw when fonts load |
