@@ -87,6 +87,13 @@ def new_page(browser, port, *, width=390, height=844, scheme="dark", mobile=Fals
     page.reload(); page.wait_for_timeout(500)
     return ctx, page
 
+def tap(page, sel):
+    """Click like a person: bring the control into view first, then click it."""
+    loc = page.locator(sel).first
+    loc.scroll_into_view_if_needed()
+    page.wait_for_timeout(100)
+    loc.click()
+
 def use_own_server(page, port, secs=4):
     page.click("#srvOpen")
     page.fill("#custom", f"http://127.0.0.1:{port}")
@@ -123,7 +130,7 @@ def e2e(browser, port):
     check("result saved to history", page.locator("#rows tr").count() >= 1)
     check("Copy result enabled", page.is_enabled("#copyRes"))
 
-    page.click("#unitb button[data-u='M']") if page.locator("#unitb button[data-u='M']").count() else page.click("#unitb button >> nth=1")
+    tap(page, "#unitb button[data-u='Mb']")
     check("unit switch updates labels", "bps" in page.inner_text(".tile.d .unit").lower(), page.inner_text(".tile.d .unit"))
 
     page.click("#go"); page.wait_for_timeout(1200); t0 = time.time(); page.click("#stopTest")
@@ -131,7 +138,7 @@ def e2e(browser, port):
     check("Stop ends a running test within 3 s", time.time() - t0 < 3, f"{time.time()-t0:.1f}s")
 
     with page.expect_download(timeout=5000) as dl_info:
-        page.click("#exp")
+        tap(page, "#exp")
     path = dl_info.value.path(); head = open(path, encoding="utf-8-sig").readline().strip()
     check("CSV export downloads with header", head.startswith("timestamp,network,download_Bps"), head)
     check("no script errors after test, stop and export", not page.errors, "; ".join(page.errors))
@@ -160,7 +167,7 @@ def e2e(browser, port):
 
     # toolkit
     ctx, page = new_page(browser, port, width=390, height=844)
-    def tool(t): page.click(f".tile2[data-tool='{t}']")
+    def tool(t): tap(page, f".tile2[data-tool='{t}']")
     tool("subnet"); page.fill("#snIn", "100.72.10.5/10"); page.wait_for_timeout(150)
     check("subnet calculator spots carrier-grade NAT", "carrier-grade" in page.inner_text("#snOut").lower())
     tool("calc"); page.fill("#clSpeed", "35"); page.click("#clPresets button >> nth=0"); page.wait_for_timeout(150)
