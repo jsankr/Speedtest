@@ -55,6 +55,13 @@ class H(BaseHTTPRequestHandler):
             except (BrokenPipeError, ConnectionResetError):
                 pass  # client aborted at end of phase; expected
             return
+        static = {"/oui.txt": "text/plain; charset=utf-8", "/oui-LICENSE.txt": "text/plain; charset=utf-8"}
+        if u.path in static:  # on-device MAC maker registry, so Device lookup works when self-hosted
+            f = os.path.join(os.path.dirname(WEB), u.path.lstrip("/"))
+            if os.path.exists(f):
+                body = open(f, "rb").read()
+                self.send_response(200); self.send_header("Content-Type", static[u.path])
+                self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body); return
         if u.path in ("/", "/index.html") and os.path.exists(WEB):
             body = open(WEB, "rb").read()
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")

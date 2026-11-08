@@ -1,0 +1,36 @@
+# End-to-end and WCAG 2.2 AA tests in Chromium, Firefox and WebKit (Safari's engine).
+# Hermetic: the app and test server run on localhost; every other request is answered by
+# fictional fixtures in tests/run.py or blocked.
+name: Tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install axe-core (WCAG rules engine)
+        run: npm install --no-save --no-package-lock axe-core@4.10.2
+      - name: Install Playwright and ${{ matrix.browser }}
+        run: |
+          pip install playwright==1.49.1
+          python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Run tests
+        env:
+          AXE_PATH: node_modules/axe-core/axe.min.js
+        run: python tests/run.py --browser ${{ matrix.browser }}

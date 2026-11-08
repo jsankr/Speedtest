@@ -32,7 +32,7 @@
   --shadow-lift:0 30px 56px -26px rgba(20,45,65,.55),0 4px 10px -3px rgba(20,45,65,.18);
   --ink:#10181d; --muted:#53606a; --soft:rgba(255,255,255,.55); --track:rgba(16,30,40,.10);
   --down:#067785; --up:#b45f00; --you:#10181d; --good:#13804d; --ok:#8a6a00; --bad:#c42f3b; --high:#b8451a;
-  --accent:#067785; --accent-hi:#5fe3f0; --accent-lo:#045d68; --on-accent:#ffffff;
+  --accent:#067785; --accent-hi:#0a7d8c; --accent-lo:#045d68; --on-accent:#ffffff;
   --panel:var(--glass-solid); --panel2:var(--well); --glass-strong:var(--well); --glass-line:var(--line); --orb1:var(--accent); --orb2:var(--accent);
   --r-panel:20px; --r-ctl:12px; --r-chip:8px; --tap:44px; --ease:cubic-bezier(.2,.7,.2,1); --t-fast:140ms; --t:220ms;
   /* Type: Instrument Serif for titles, Instrument Sans for reading, Geist Mono for every number and label. */
@@ -50,7 +50,7 @@
   --shadow-lift:0 36px 70px -28px rgba(0,0,0,.95),0 6px 14px -4px rgba(0,0,0,.5);
   --ink:#e6ecef; --muted:#93a0a9; --soft:rgba(255,255,255,.04); --track:rgba(210,235,245,.09);
   --down:#3ad3e3; --up:#ffa53d; --you:#f2f5f6; --good:#45cf8f; --ok:#e2c34b; --bad:#ff5c66; --high:#ff7a45;
-  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#0b8796; --on-accent:#03181b;
+  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg0:#080b0d; --field1:rgba(58,211,227,.13); --field2:rgba(255,165,61,.08); --field3:rgba(110,150,180,.06);
@@ -60,7 +60,7 @@
   --shadow-lift:0 36px 70px -28px rgba(0,0,0,.95),0 6px 14px -4px rgba(0,0,0,.5);
   --ink:#e6ecef; --muted:#93a0a9; --soft:rgba(255,255,255,.04); --track:rgba(210,235,245,.09);
   --down:#3ad3e3; --up:#ffa53d; --you:#f2f5f6; --good:#45cf8f; --ok:#e2c34b; --bad:#ff5c66; --high:#ff7a45;
-  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#0b8796; --on-accent:#03181b;
+  --accent:#3ad3e3; --accent-hi:#b9f6fc; --accent-lo:#139aa9; --on-accent:#03181b;
   color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -78,6 +78,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 1.4px) 0 0/22px 22px,
     var(--bg0)}
 [hidden]{display:none!important}
+.skip{position:absolute;left:16px;top:-72px;z-index:10;padding:12px 18px;min-height:44px;display:inline-flex;align-items:center;border-radius:12px;background:var(--accent);color:var(--on-accent);font:600 14px var(--body);text-decoration:none;transition:top var(--t-fast) var(--ease)}
+.skip:focus{top:max(12px,env(safe-area-inset-top,0px))}
+main{display:grid;gap:inherit;outline:none}
 a{color:var(--accent)}
 
 .wrap{max-width:1200px;margin:0 auto;display:grid;gap:22px}
@@ -89,8 +92,7 @@ h1::before{content:"";width:30px;height:30px;border-radius:9px;flex:none;
   box-shadow:0 8px 16px -8px var(--accent),inset 0 -3px 6px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.6)}
 h1 span{color:var(--accent);font:italic 400 27px/1 var(--display);letter-spacing:0;margin-left:1px}
 h2{font:400 25px/1.1 var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
-h2 em,.tool h3 em{font-style:italic;color:var(--accent)}
-.tag{font:500 11px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.tag{font:500 13px var(--body);color:var(--muted);padding:6px 10px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
 
 /* ---------- Material ---------- */
 .glass{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:var(--r-panel);
@@ -100,7 +102,7 @@ h2 em,.tool h3 em{font-style:italic;color:var(--accent)}
 .pad{padding:22px 24px;display:grid;gap:16px}
 @media (max-width:480px){.pad{padding:18px}}
 .well{background:var(--well);border:1px solid var(--line);border-radius:14px;box-shadow:inset 0 1px 3px var(--well-in)}
-.lbl{font:500 11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.lbl{font:500 13px var(--body);color:var(--muted);display:flex;gap:8px;align-items:center}
 .dot{width:9px;height:9px;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 18%,transparent)}
 .note{font-size:13px;color:var(--muted);max-width:75ch;margin:0}
 
@@ -109,29 +111,29 @@ button{font-family:var(--body);-webkit-tap-highlight-color:transparent;touch-act
 button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible,label.srv:focus-within{outline:2px solid var(--accent);outline-offset:3px}
 .ghost,.chips button,.go2,.stopbtn{min-height:38px;transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease),background-color var(--t-fast) var(--ease),border-color var(--t-fast) var(--ease)}
 @media (pointer:coarse){.ghost,.chips button,.seg button,.go2,.stopbtn,.tile2,.srv{min-height:var(--tap)}}
-.ghost{font:500 12.5px var(--mono);letter-spacing:.03em;color:var(--ink);border-radius:var(--r-ctl);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+.ghost{font:500 14px var(--body);color:var(--ink);border-radius:var(--r-ctl);padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
   background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02)),var(--soft);border:1px solid var(--line2);box-shadow:inset 0 1px 0 var(--hi),0 6px 14px -10px rgba(0,0,0,.5)}
 .ghost:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 60%,var(--line2));box-shadow:inset 0 1px 0 var(--hi),0 10px 20px -12px rgba(0,0,0,.6)}
 .ghost:active,.chips button:active{transform:translateY(0) scale(.98)}
 .ghost:disabled{opacity:.45;cursor:default;transform:none}
-.go2{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--on-accent);border:0;border-radius:var(--r-ctl);padding:11px 22px;cursor:pointer;
+.go2{font:600 14.5px var(--body);color:var(--on-accent);border:0;border-radius:var(--r-ctl);padding:11px 22px;cursor:pointer;
   background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.55),rgba(255,255,255,0) 45%),linear-gradient(160deg,var(--accent-hi),var(--accent) 40%,var(--accent-lo));
   box-shadow:0 12px 24px -12px var(--accent),inset 0 -3px 8px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.6)}
 .go2:hover{transform:translateY(-1px);box-shadow:0 16px 28px -12px var(--accent),inset 0 -3px 8px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.6)}
 .go2:active{transform:translateY(0) scale(.98)}
 .go2:disabled{opacity:.5;cursor:default;transform:none}
-.stopbtn{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 55%,transparent);border-radius:var(--r-ctl);padding:10px 24px;cursor:pointer;
+.stopbtn{font:600 14.5px var(--body);color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 55%,transparent);border-radius:var(--r-ctl);padding:10px 24px;cursor:pointer;
   background:color-mix(in srgb,var(--bad) 8%,var(--soft));box-shadow:inset 0 1px 0 var(--hi)}
 .stopbtn:hover{background:color-mix(in srgb,var(--bad) 14%,var(--soft))}
 .seg{display:inline-flex;gap:3px;padding:3px;border-radius:calc(var(--r-ctl) + 3px);background:var(--well);border:1px solid var(--line);box-shadow:inset 0 1px 3px var(--well-in);flex-wrap:wrap}
-.seg button{font:500 13px var(--mono);background:transparent;color:var(--ink);border:0;border-radius:var(--r-ctl);padding:7px 13px;cursor:pointer;min-height:34px;transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.seg button{font:500 14px var(--body);background:transparent;color:var(--ink);border:0;border-radius:var(--r-ctl);padding:7px 13px;cursor:pointer;min-height:34px;transition:background-color var(--t-fast) var(--ease),color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
 .seg button:hover{background:var(--soft)}
 @media (pointer:coarse){.seg button{min-height:var(--tap);padding-inline:14px}.seg{padding:2px}}
 .seg button[aria-pressed="true"],.seg button[aria-checked="true"]{color:var(--on-accent);
   background:radial-gradient(120% 140% at 30% 0%,rgba(255,255,255,.45),rgba(255,255,255,0) 45%),linear-gradient(160deg,var(--accent-hi),var(--accent) 45%,var(--accent-lo));
   box-shadow:0 6px 12px -8px var(--accent),inset 0 1px 0 rgba(255,255,255,.55)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chips button{font:12px var(--mono);border-radius:999px;border:1px solid var(--line2);background:var(--soft);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:inset 0 1px 0 var(--hi)}
+.chips button{font:13px var(--body);border-radius:999px;border:1px solid var(--line2);background:var(--soft);color:var(--ink);padding:6px 12px;cursor:pointer;box-shadow:inset 0 1px 0 var(--hi)}
 .chips button:hover{border-color:var(--accent);transform:translateY(-1px)}
 input[type=text],input[type=number],input[type=search],select,textarea{font:14px var(--body);color:var(--ink);background:var(--well);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;min-width:0;min-height:38px;box-shadow:inset 0 1px 3px var(--well-in)}
 @media (pointer:coarse){input[type=text],input[type=number],input[type=search],select{min-height:var(--tap)} input,select,textarea{font-size:16px!important}}
@@ -146,7 +148,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:18px;hei
 .gaugebox{padding:24px 20px 22px;display:grid;justify-items:center;gap:14px;border-right:1px solid var(--line)}
 @media (max-width:860px){.gaugebox{border-right:0;border-bottom:1px solid var(--line)}}
 .steps{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;padding:3px;border-radius:999px;background:var(--well);border:1px solid var(--line);box-shadow:inset 0 1px 3px var(--well-in)}
-.step{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:6px 12px;border-radius:999px;color:var(--muted);display:flex;gap:7px;align-items:center;transition:background-color var(--t) var(--ease),color var(--t) var(--ease)}
+.step{font:500 13px var(--body);padding:6px 12px;border-radius:999px;color:var(--muted);display:flex;gap:7px;align-items:center;transition:background-color var(--t) var(--ease),color var(--t) var(--ease)}
 .step i{width:7px;height:7px;border-radius:50%;background:var(--track)}
 .step.on{color:var(--ink);background:var(--soft);box-shadow:inset 0 1px 0 var(--hi),0 4px 10px -8px rgba(0,0,0,.6)} .step.on i{background:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
 .step.done{color:var(--ink)} .step.done i{background:var(--good)}
@@ -154,22 +156,22 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:18px;hei
 canvas#gauge{width:100%;aspect-ratio:1/0.8;height:auto;display:block}
 /* GO: a lit glass sphere sitting in a recessed ring */
 .orb{position:absolute;left:50%;top:57%;transform:translate(-50%,-50%);width:32%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:0;
-  font:600 clamp(18px,4.6vw,25px)/1 var(--mono);letter-spacing:.12em;color:var(--on-accent);text-shadow:0 1px 0 rgba(255,255,255,.35);
+  font:600 clamp(20px,5vw,27px)/1 var(--body);letter-spacing:.01em;color:var(--on-accent);text-shadow:0 1px 0 rgba(255,255,255,.35);
   background:
-    radial-gradient(circle at 34% 26%,rgba(255,255,255,.95) 0,rgba(255,255,255,.35) 14%,rgba(255,255,255,0) 34%),
+    radial-gradient(circle at 32% 24%,rgba(255,255,255,.95) 0,rgba(255,255,255,.35) 12%,rgba(255,255,255,0) 28%),
     radial-gradient(circle at 50% 115%,color-mix(in srgb,var(--accent-hi) 70%,transparent) 0,transparent 45%),
     radial-gradient(circle at 50% 45%,var(--accent) 0,var(--accent-lo) 78%);
   box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 10%,transparent),0 0 0 11px var(--line),0 22px 34px -14px color-mix(in srgb,var(--accent-lo) 90%,black),inset 0 -10px 18px rgba(0,0,0,.28),inset 0 2px 2px rgba(255,255,255,.55);
   transition:transform var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
 .orb:hover{transform:translate(-50%,-52%)}
 .orb:active{transform:translate(-50%,-50%) scale(.97)}
-.orb.again{font-size:clamp(12px,3.3vw,16px);letter-spacing:.1em}
-.phase{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-height:18px;text-align:center}
-.netpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font:13px var(--mono);color:var(--muted)}
+.orb.again{font-size:clamp(15px,3.8vw,19px)}
+.phase{font:500 14px var(--body);color:var(--muted);min-height:18px;text-align:center}
+.netpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font:14px var(--body);color:var(--muted)}
 .netpick.need .seg{outline:2px solid var(--bad);outline-offset:2px}
-.netpick .auto{font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.netpick .auto{font-size:12.5px}
 td select{font:12px var(--mono);padding:4px 6px;min-height:0}
-.serverchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font:13px var(--mono);color:var(--muted);text-align:center}
+.serverchip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font:14px var(--body);color:var(--muted);text-align:center}
 .serverchip b{color:var(--ink);font-weight:500}
 .err{color:var(--bad);font:13px var(--mono);text-align:center;max-width:46ch}
 
@@ -204,7 +206,7 @@ td select{font:12px var(--mono);padding:4px 6px;min-height:0}
   background:radial-gradient(120% 120% at 30% 0%,rgba(255,255,255,.5),rgba(255,255,255,0) 50%),linear-gradient(150deg,color-mix(in srgb,currentColor 75%,white),currentColor 55%,color-mix(in srgb,currentColor 70%,black));
   box-shadow:0 8px 14px -8px currentColor,inset 0 1px 0 rgba(255,255,255,.5),inset 0 -2px 4px rgba(0,0,0,.2)}
 .act .t{font-weight:600;font-size:13px;line-height:1.25;color:var(--ink)}
-.act .s{font:11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.act .s{font:500 12.5px var(--body)}
 .act.good{color:var(--good)} .act.ok{color:var(--ok)} .act.bad{color:var(--bad)} .act.na{color:var(--muted)}
 .ruler{position:relative;height:76px;margin:6px 6px 0}
 .ruler .bar{position:absolute;left:0;right:0;top:31px;height:8px;border-radius:999px;background:linear-gradient(90deg,var(--bad),var(--ok) 45%,var(--good));box-shadow:inset 0 1px 2px rgba(0,0,0,.3),0 0 0 1px var(--line)}
@@ -223,7 +225,7 @@ td select{font:12px var(--mono);padding:4px 6px;min-height:0}
 @media (max-width:860px){.rtgrid{grid-template-columns:minmax(0,1fr)}}
 .fields{display:grid;gap:10px;align-content:start}
 .fields input{width:100%}
-details.how{font-size:13px;color:var(--muted)} details.how summary{cursor:pointer;color:var(--ink)}
+details.how{font-size:13px;color:var(--muted)} details.how summary{cursor:pointer;color:var(--ink);min-height:28px;display:flex;align-items:center;gap:6px}
 details.how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
 .qs{display:grid;gap:8px}
 .q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--well);border:1px solid var(--line)}
@@ -234,7 +236,7 @@ details.how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
 @media (max-width:560px){.rtsum{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}}
 .rtsum svg{width:132px;height:132px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25))}
 .counts{display:flex;gap:8px;flex-wrap:wrap}
-.sev{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 55%,transparent);background:color-mix(in srgb,currentColor 10%,transparent);white-space:nowrap}
+.sev{font:600 12px var(--body);padding:3px 9px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 55%,transparent);background:color-mix(in srgb,currentColor 10%,transparent);white-space:nowrap}
 .sev.critical{color:var(--bad)} .sev.high{color:var(--high)} .sev.medium{color:var(--ok)} .sev.low{color:var(--muted)}
 .sev.kev{color:#fff;background:linear-gradient(160deg,color-mix(in srgb,var(--bad) 80%,white),var(--bad));border-color:transparent;box-shadow:0 4px 10px -6px var(--bad)}
 .sev.aff{color:var(--bad)} .sev.not{color:var(--good)} .sev.unk{color:var(--ok)}
@@ -250,7 +252,7 @@ details.how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:4px}
 .fixsteps li{display:list-item;padding:0;background:none;border:0;grid-template-columns:none}
 details.fixbox{font-size:13px} details.fixbox summary{cursor:pointer;font-weight:600;color:var(--accent);list-style-position:inside;padding:4px 0}
 .fixlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.fixlinks a{font:12px var(--mono);color:var(--accent);text-decoration:none;border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--soft)}
+.fixlinks a{font:13px var(--body);color:var(--accent);text-decoration:none;border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--soft)}
 .fixlinks a:hover{border-color:var(--accent)}
 .verify{font-size:12px;color:var(--muted);margin:6px 0 0}
 
@@ -259,12 +261,12 @@ details.fixbox{font-size:13px} details.fixbox summary{cursor:pointer;font-weight
   background:radial-gradient(120% 90% at 50% 0%,var(--soft),transparent 70%),var(--well);box-shadow:inset 0 2px 8px var(--well-in)}
 canvas#map{width:100%;aspect-ratio:16/9;height:auto;display:block}
 @media (max-width:640px){canvas#map{aspect-ratio:4/3}}
-.lvbadge{position:absolute;left:12px;bottom:12px;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:999px;display:flex;gap:7px;align-items:center;
+.lvbadge{position:absolute;left:12px;bottom:12px;font:600 12.5px var(--body);padding:5px 11px;border-radius:999px;display:flex;gap:7px;align-items:center;
   background:var(--glass);border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi),0 8px 16px -10px rgba(0,0,0,.6);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .lvbadge i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .lvbadge.live i{background:var(--bad);box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 25%,transparent)}
 canvas#tele{width:100%;height:180px;display:block}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font:12px var(--mono);color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:13px var(--body);color:var(--muted)}
 .legend span{display:inline-flex;gap:6px;align-items:center}
 .legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
 
@@ -290,10 +292,10 @@ canvas#tele{width:100%;height:180px;display:block}
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
 .stat{padding:11px 13px;border-radius:12px;background:var(--soft);border:1px solid var(--line);box-shadow:inset 0 1px 0 var(--hi);min-width:0}
 .stat b{display:block;font:500 24px/1.15 var(--num);font-variant-numeric:tabular-nums;letter-spacing:-.02em;overflow-wrap:anywhere}
-.stat small{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.stat small{font:12.5px var(--body);color:var(--muted)}
 canvas.tchart{width:100%;height:150px;display:block}
 .kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;font-size:14px}
-.kv dt{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding-top:3px} .kv dd{margin:0;overflow-wrap:anywhere;font-weight:500}
+.kv dt{font:13px var(--body);color:var(--muted);padding-top:3px} .kv dd{margin:0;overflow-wrap:anywhere;font-weight:500}
 .callout{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:13px;box-shadow:inset 3px 0 0 var(--muted)}
 .callout.warn{box-shadow:inset 3px 0 0 var(--ok)} .callout.bad{box-shadow:inset 3px 0 0 var(--bad)} .callout.good{box-shadow:inset 3px 0 0 var(--good)}
 .meter{height:8px;border-radius:999px;background:var(--track);overflow:hidden;box-shadow:inset 0 1px 2px var(--well-in)}
@@ -315,14 +317,14 @@ textarea.tin{min-height:110px;font:13px var(--mono)}
 .srv:hover{background:var(--soft)}
 .srv .nm{min-width:0} .srv .nm div:first-child{font-weight:500;overflow-wrap:anywhere} .srv .nm div:last-child{font:13px var(--body);color:var(--muted)}
 .srv .pg{font:13px var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;min-width:62px}
-.grp{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:9px 14px;background:var(--soft);border-bottom:1px solid var(--line);position:sticky;top:0;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.grp{font:600 12.5px var(--body);color:var(--muted);padding:9px 14px;background:var(--soft);border-bottom:1px solid var(--line);position:sticky;top:0;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .consent{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;max-width:75ch;flex-wrap:wrap;min-height:36px}
 .customrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 14px}
 
 /* ---------- Comparison ---------- */
 .cmpctl{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
 .ctl{display:grid;gap:5px}
-.ctl label,.ctl .cap{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctl label,.ctl .cap{font:500 13px var(--body);color:var(--muted)}
 .cmpgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
 @media (max-width:860px){.cmpgrid{grid-template-columns:minmax(0,1fr)}}
 .bars{display:grid;gap:10px;align-content:start}
@@ -346,25 +348,30 @@ canvas#trend{width:100%;height:170px;display:block}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
 table{border-collapse:collapse;width:100%;font:13px var(--mono);font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-weight:500;color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+th{font:500 12.5px var(--body);color:var(--muted)}
 tbody tr{transition:background-color var(--t-fast) var(--ease)} tbody tr:hover{background:var(--soft)}
 td .note{white-space:normal;min-width:18ch;font:12px var(--body)}
 .settings{display:flex;flex-wrap:wrap;gap:18px 26px;align-items:end}
-footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8px}
+footer{font:13px var(--body);color:var(--muted);text-align:center;padding-top:8px}
 
 /* Large screens: more air between objects */
 @media (min-width:1280px){.pad{padding:26px 28px}.readouts{padding:28px 26px}.gaugebox{padding:28px 24px 24px}}
 
+/* Windows high-contrast / forced colours: keep every control and panel outlined and the dial readable. */
+@media (forced-colors:active){.glass,.tile,.tool,.ghost,.go2,.stopbtn,.seg,.tile2,.q,.cve,.fixes>li,.macrow,.stat,.act{border:1px solid CanvasText}
+  .orb{forced-color-adjust:none} .seg button[aria-pressed="true"]{outline:2px solid Highlight;outline-offset:-2px} .skip{border:2px solid CanvasText}}
 /* Motion off: every state still shows, nothing moves. */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to the speed test</a>
 <div class="wrap">
   <header>
     <h1>Clean<span>Speed</span></h1>
-    <div class="tag">No ads · No trackers · Results stay on this device</div>
+    <div class="tag">No ads or trackers. Your results stay on this device.</div>
   </header>
+<main id="main" tabindex="-1">
 
   <!-- ============ Instrument ============ -->
   <section class="glass instrument" id="instrument" aria-label="Speed test">
@@ -373,13 +380,13 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
         <span class="step" id="stPing"><i></i>Ping</span><span class="step" id="stDown"><i></i>Download</span><span class="step" id="stUp"><i></i>Upload</span>
       </div>
       <div class="gaugewrap">
-        <canvas id="gauge" width="860" height="688" aria-label="Speed gauge"></canvas>
-        <button class="orb" id="go" aria-label="Start speed test">GO</button>
+        <canvas id="gauge" width="860" height="688" role="img" aria-label="Speed gauge"></canvas>
+        <button class="orb" id="go" aria-label="Start speed test">Go</button>
       </div>
       <button class="stopbtn" id="stopTest" hidden>Stop test</button>
       <button class="ghost shieldbtn" id="rtOpen" aria-controls="rtPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Router security check</button>
-      <div class="phase" id="phase">Tap GO to start</div>
-      <div class="netpick" id="netPick"><span>Network:</span><div class="seg" id="netSeg" role="radiogroup" aria-label="Network type"><button data-n="Wi-Fi" role="radio">Wi-Fi</button><button data-n="Mobile data" role="radio">Mobile</button><button data-n="Ethernet" role="radio">Ethernet</button></div><span class="auto" id="netAuto"></span></div>
+      <div class="phase" id="phase" role="status" aria-live="polite">Tap Go to start a test</div>
+      <div class="netpick" id="netPick"><span>Network:</span><div class="seg" id="netSeg" role="group" aria-label="Network type"><button data-n="Wi-Fi">Wi-Fi</button><button data-n="Mobile data">Mobile</button><button data-n="Ethernet">Ethernet</button></div><span class="auto" id="netAuto"></span></div>
       <div class="serverchip"><span>Server: <b id="srvName">Automatic</b></span><button class="ghost" id="srvOpen">Change server</button></div>
       <div class="err" id="err" role="alert"></div>
     </div>
@@ -390,7 +397,7 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
         <div class="tile u"><div class="lbl"><span class="dot" style="color:var(--up);background:var(--up)"></span>Upload</div>
           <div><span class="val" id="ul">—</span><span class="unit" data-unit></span></div></div>
       </div>
-      <canvas class="spark" id="spark" width="900" height="152" aria-label="Throughput over time"></canvas>
+      <canvas class="spark" id="spark" width="900" height="152" role="img" aria-label="Throughput over time"></canvas>
       <div class="small">
         <div class="tile"><div class="lbl">Ping</div><div><span class="val" id="ping">—</span><span class="unit">ms</span></div></div>
         <div class="tile"><div class="lbl">Jitter</div><div><span class="val" id="jit">—</span><span class="unit">ms</span></div></div>
@@ -403,11 +410,11 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
 
   <!-- ============ Live network map ============ -->
   <section class="glass pad" id="livePanel" aria-label="Live network map">
-    <div class="srvhead"><h2>Live network <em>map</em></h2>
+    <div class="srvhead"><h2>Live network map</h2>
       <div class="row"><button class="ghost" id="lvLocate">Use precise location</button>
         <label class="consent" style="align-items:center"><input type="checkbox" id="lvAnim" checked> Animate</label>
         <label class="consent" style="align-items:center" title="While the map is on screen, ping the last test server every 2 seconds"><input type="checkbox" id="lvLive"> Live ping</label></div></div>
-    <div class="mapwrap"><canvas id="map" width="1200" height="560" aria-label="Map of the route between you and the test server"></canvas>
+    <div class="mapwrap"><canvas id="map" width="1200" height="560" role="img" aria-label="Map of the route between you and the test server"></canvas>
       <div class="lvbadge" id="lvBadge"><i></i><span id="lvState">Idle</span></div></div>
     <p class="note" id="lvKey" aria-live="off"></p>
     <div class="stats">
@@ -419,14 +426,14 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
       <div class="stat"><small>Elapsed</small><b id="lvTime">0 s</b></div>
     </div>
     <div class="legend"><span><i style="background:var(--down)"></i>Download</span><span><i style="background:var(--up)"></i>Upload</span><span><i style="background:var(--ok)"></i>Ping (right axis)</span></div>
-    <canvas id="tele" width="1000" height="360" aria-label="Live timeline of download, upload and ping"></canvas>
+    <canvas id="tele" width="1000" height="360" role="img" aria-label="Live timeline of download, upload and ping"></canvas>
     <p class="note" id="lvRoute">Run a test to trace the route to the server.</p>
     <p class="cant" id="lvWhere">Stylised map. Your position comes from your time zone (or, during a Cloudflare test, Cloudflare's rough estimate from your IP) unless you allow precise location or run My IP &amp; ISP; it stays on this device. Server cities are known for LibreSpeed and M-Lab; for Cloudflare the app asks Cloudflare which data centre answered. Each moving dot is real data counted as it arrives or leaves; dots travel slower than real so the eye can follow them.</p>
   </section>
 
   <!-- ============ Toolkit ============ -->
   <section class="glass pad" id="toolkit" aria-label="Network toolkit">
-    <div class="srvhead"><h2>Network <em>toolkit</em></h2><span class="tag">10 tools · no sign-up</span></div>
+    <div class="srvhead"><h2>Network toolkit</h2><span class="tag">10 tools, no sign-up</span></div>
     <div class="toolgrid" id="toolGrid"></div>
     <div id="toolBody" hidden>
 
@@ -440,7 +447,7 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
           <div class="stat"><small>Min / max</small><b id="pmMinMax">—</b></div><div class="stat"><small>Jitter</small><b id="pmJit">—</b></div>
           <div class="stat"><small>Packet loss</small><b id="pmLoss">—</b></div><div class="stat"><small>Outages</small><b id="pmOut">0</b></div>
         </div>
-        <canvas class="tchart" id="pmChart" width="1000" height="300" aria-label="Latency over time"></canvas>
+        <canvas class="tchart" id="pmChart" width="1000" height="300" role="img" aria-label="Latency over time"></canvas>
         <div id="pmLog" class="note"></div>
         <p class="cant">Times a small web request, so values run a little higher than a command-line ping. A drop is logged after 3 missed checks in a row.</p>
       </div>
@@ -512,7 +519,7 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
 
   <!-- ============ Server picker ============ -->
   <section class="glass pad" id="srvPanel" hidden aria-label="Choose server">
-    <div class="srvhead"><h2>Test <em>server</em></h2>
+    <div class="srvhead"><h2>Test server</h2>
       <div class="row"><button class="ghost" id="srvPing">Measure ping to all</button><button class="ghost" id="srvClose">Done</button></div></div>
     <p class="note">The closest server gives the truest result. Pick a distant one to see how far your connection reaches. Automatic picks the lowest-ping server each time.</p>
     <div class="srvlist" id="srvList" role="radiogroup" aria-label="Servers"></div>
@@ -523,11 +530,11 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
 
   <!-- ============ Router security ============ -->
   <section class="glass pad" id="rtPanel" hidden aria-label="Router security check">
-    <div class="srvhead"><h2>Router <em>security</em> check</h2><button class="ghost" id="rtClose">Close</button></div>
+    <div class="srvhead"><h2>Router security check</h2><button class="ghost" id="rtClose">Close</button></div>
     <p class="note">This checks your router's model and firmware against the U.S. National Vulnerability Database (NVD), flags issues being actively exploited, and grades your settings. Web browsers don't let any website log into your router or scan your home network, so you enter the details once; they stay on this device.</p>
     <div class="rtgrid">
       <div class="fields">
-        <div class="lbl">1 · Your router</div>
+        <div class="lbl">Step 1: your router</div>
         <div class="ctl"><label for="rtBrand">Brand</label><input type="text" id="rtBrand" list="rtBrands" placeholder="e.g. TP-Link" autocomplete="off"></div>
         <div class="ctl"><label for="rtModel">Model</label><input type="text" id="rtModel" placeholder="e.g. Archer C6" autocomplete="off"></div>
         <div class="ctl"><label for="rtHw">Hardware version (optional)</label><input type="text" id="rtHw" placeholder="e.g. V3" autocomplete="off"></div>
@@ -540,7 +547,7 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
         </ul></details>
       </div>
       <div class="qs">
-        <div class="lbl">2 · Your settings</div>
+        <div class="lbl">Step 2: your settings</div>
         <div class="q"><span>Wi-Fi security type</span>
           <select id="rtEnc" aria-label="Wi-Fi security type"><option value="">Not sure</option><option value="wpa3">WPA3</option><option value="mixed">WPA2/WPA3 mixed</option><option value="wpa2">WPA2 (AES)</option><option value="tkip">WPA2-TKIP or WPA</option><option value="open">WEP or no password</option></select></div>
         <div id="rtQs" class="qs"></div>
@@ -587,7 +594,7 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
 
   <!-- ============ Global comparison ============ -->
   <section class="glass pad" aria-label="Global comparison">
-    <h2>How you <em>compare</em></h2>
+    <h2>How you compare</h2>
     <div class="cmpctl">
       <div class="ctl"><label for="cmpType">Compare as</label>
         <select id="cmpType"><option value="mobile">Mobile data</option><option value="fixed">Wi-Fi / broadband</option></select></div>
@@ -604,13 +611,13 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
 
   <!-- ============ History ============ -->
   <section class="glass pad" aria-label="History">
-    <div class="srvhead"><h2>Your <em>history</em></h2>
+    <div class="srvhead"><h2>Your history</h2>
       <div class="row">
         <select id="histFilter" aria-label="Filter by network"><option value="">All networks</option><option>Wi-Fi</option><option>Mobile data</option><option>Ethernet</option><option>Unknown</option></select>
         <button class="ghost" id="exp">Export CSV</button><button class="ghost" id="clr">Clear</button></div></div>
     <p class="note" id="expMsg" role="status" aria-live="polite"></p>
     <div class="lbl"><span class="dot" style="color:var(--down);background:var(--down)"></span>Download <span class="dot" style="color:var(--up);background:var(--up);margin-left:10px"></span>Upload · last 20 tests</div>
-    <canvas id="trend" width="1000" height="340" aria-label="Speed trend across tests"></canvas>
+    <canvas id="trend" width="1000" height="340" role="img" aria-label="Speed trend across tests"></canvas>
     <div class="tablewrap"><table>
       <thead><tr><th>When</th><th>Network</th><th>Download</th><th>Upload</th><th>Ping</th><th>Jitter</th><th>Loaded</th><th>Server</th></tr></thead>
       <tbody id="rows"></tbody></table></div>
@@ -634,7 +641,8 @@ footer{font:12px var(--mono);color:var(--muted);text-align:center;padding-top:8p
     <p class="note">1 byte = 8 bits, so 1 MB/s = 8 Mbps and 1 GB/s = 8 Gbps. Internet plans are sold in bits (Mbps/Gbps); file downloads show bytes (MB/s). Each test moves roughly your speed × twice the phase length, so lower the seconds per phase on mobile data.</p>
   </section>
 
-  <footer>CleanSpeed · open source · no cookies, no analytics · servers: Cloudflare, LibreSpeed volunteers, Measurement Lab</footer>
+</main>
+  <footer>CleanSpeed is open source. No cookies or analytics. Test servers: Cloudflare, LibreSpeed volunteers and Measurement Lab.</footer>
 </div>
 
 <script>
@@ -761,7 +769,7 @@ function detectedNet(){
 let netPick=detectedNet()||store.get("netPick",null), netAutoOn=!!detectedNet();
 function connLabel(){ return netPick||"Unknown" }
 function syncNet(){
-  document.querySelectorAll("#netSeg button").forEach(b=>{const on=b.dataset.n===netPick; b.setAttribute("aria-pressed",on); b.setAttribute("aria-checked",on)});
+  document.querySelectorAll("#netSeg button").forEach(b=>{const on=b.dataset.n===netPick; b.setAttribute("aria-pressed",on); });
   $("netAuto").textContent=netAutoOn?"detected":netPick?"":"pick one";
   showConn();
 }
@@ -956,7 +964,7 @@ async function probeBaseline(){
 let last=null;
 function setRunning(on){ running=on; document.body.classList.toggle("testing",on); gaugeKick(); $("go").hidden=on; $("stopTest").hidden=!on; $("rtOpen").hidden=on;
   if(on) $("instrument").style.transform="";
-  else { $("go").textContent="RETEST"; $("go").classList.add("again"); $("go").setAttribute("aria-label","Run the speed test again") } }
+  else { $("go").textContent="Retest"; $("go").classList.add("again"); $("go").setAttribute("aria-label","Run the speed test again") } }
 async function run(){
   if(running) return;
   if(selected==="mlab"&&!$("mlabOk").checked){ $("srvPanel").hidden=false; $("mlabConsent").hidden=false;
@@ -1009,15 +1017,15 @@ async function run(){
     }
     setGauge(0); setStep("done"); telEnd(true,res);
     showResult(res);
-    $("phase").textContent="Complete · tap RETEST to test again";
+    $("phase").textContent="Done. Tap Retest to test again.";
     const h=store.get("history",[]); h.unshift(res); store.set("history",h.slice(0,300));
     last=res; $("copyRes").disabled=false;
     if(res.net==="Mobile data") $("cmpType").value="mobile"; else if(res.net==="Wi-Fi"||res.net==="Ethernet") $("cmpType").value="fixed";
     renderHist(); fillWhich(); $("cmpWhich").value="0"; renderAll();
   }catch(e){
     setGauge(0); setStep(null); telEnd(false);
-    if(e&&e.message===STOPPED||stopped()){ $("phase").textContent="Stopped · tap RETEST to run again"; $("err").textContent="" }
-    else { $("phase").textContent="Stopped · tap RETEST to try again"; $("err").textContent=e.message||String(e) }
+    if(e&&e.message===STOPPED||stopped()){ $("phase").textContent="Stopped. Tap Retest to run again."; $("err").textContent="" }
+    else { $("phase").textContent="Stopped. Tap Retest to try again."; $("err").textContent=e.message||String(e) }
   }finally{ testCtl=null; setRunning(false); phaseColor="--accent"; syncServerName() }
 }
 function showResult(r){
@@ -1304,7 +1312,7 @@ const ENC={"":{w:7,fix:"Check the Wi-Fi security type in the router's Wireless S
 let rtAnswers={};
 function rtLoad(){
   const r=store.get("router",{}); ["Brand","Model","Hw","Fw"].forEach(k=>$("rt"+k).value=r[k]||""); $("rtEnc").value=r.enc||""; rtAnswers=r.answers||{};
-  $("rtQs").innerHTML=RT_Q.map(q=>`<div class="q"><span>${esc(q.q)}</span><div class="seg" data-q="${q.id}" role="radiogroup" aria-label="${esc(q.q)}">${["yes","no","unsure"].map(v=>`<button data-v="${v}" aria-pressed="${rtAnswers[q.id]===v}">${{yes:"Yes",no:"No",unsure:"Not sure"}[v]}</button>`).join("")}</div></div>`).join("");
+  $("rtQs").innerHTML=RT_Q.map(q=>`<div class="q"><span>${esc(q.q)}</span><div class="seg" data-q="${q.id}" role="group" aria-label="${esc(q.q)}">${["yes","no","unsure"].map(v=>`<button data-v="${v}" aria-pressed="${rtAnswers[q.id]===v}">${{yes:"Yes",no:"No",unsure:"Not sure"}[v]}</button>`).join("")}</div></div>`).join("");
 }
 function rtSave(){ store.set("router",{Brand:$("rtBrand").value.trim(),Model:$("rtModel").value.trim(),Hw:$("rtHw").value.trim(),Fw:$("rtFw").value.trim(),enc:$("rtEnc").value,answers:rtAnswers}) }
 
@@ -1514,7 +1522,7 @@ function youLoc(){
   const g=store.get("geo",null); if(g&&g.src) return {lat:g.lat,lon:g.lon,label:g.src==="device"?"You (device location)":"You (from IP lookup)",exact:g.src==="device"};
   if(cfYou) return cfYou;
   const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||"", z=TZ_LOC[tz];
-  return z?{lat:z[0],lon:z[1],label:`You (approx. · ${z[2]} time zone)`,exact:false}:null;
+  return z?{lat:z[0],lon:z[1],label:`You (approx., ${z[2]} time zone)`,exact:false}:null;
 }
 function serverLoc(s,loc){
   if(!s) return null;
@@ -1537,7 +1545,7 @@ async function cfLocate(){
   const get=async(u,json)=>{ const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),3000);
     try{ const r=await fetch(u,{cache:"no-store",credentials:"omit",signal:ctl.signal}); if(!r.ok) throw new Error(r.status); return json?await r.json():await r.text() } finally{ clearTimeout(tm) } };
   try{ const m=await get("https://speed.cloudflare.com/meta?r="+nonce(),true), c=m&&m.colo;
-    if(fin(+m.latitude)&&fin(+m.longitude)) cfYou={lat:+(+m.latitude).toFixed(1),lon:+(+m.longitude).toFixed(1),label:"You (approx. · from Cloudflare)",exact:false};
+    if(fin(+m.latitude)&&fin(+m.longitude)) cfYou={lat:+(+m.latitude).toFixed(1),lon:+(+m.longitude).toFixed(1),label:"You (approx., from Cloudflare)",exact:false};
     if(c&&fin(+c.lat)&&fin(+c.lon)) return cfColo={lat:+c.lat,lon:+c.lon,label:`Cloudflare · ${c.city||c.iata}`,iata:c.iata} }catch{}
   for(const u of ["https://speed.cloudflare.com/cdn-cgi/trace","https://1.1.1.1/cdn-cgi/trace"]){
     try{ const t=await get(u+"?r="+nonce()), code=(t.match(/^colo=([A-Z]{3})\s*$/m)||[])[1];
