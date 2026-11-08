@@ -333,9 +333,11 @@ footer{font-size:12px;color:var(--muted);text-align:center}
   <section class="glass pad" id="livePanel" aria-label="Live network map">
     <div class="srvhead"><h2>Live network map</h2>
       <div class="row"><button class="ghost" id="lvLocate">Use precise location</button>
-        <label class="consent" style="align-items:center"><input type="checkbox" id="lvAnim" checked> Animate</label></div></div>
+        <label class="consent" style="align-items:center"><input type="checkbox" id="lvAnim" checked> Animate</label>
+        <label class="consent" style="align-items:center" title="While the map is on screen, ping the last test server every 2 seconds"><input type="checkbox" id="lvLive"> Live ping</label></div></div>
     <div class="mapwrap"><canvas id="map" width="1200" height="560" aria-label="Map of the route between you and the test server"></canvas>
       <div class="lvbadge" id="lvBadge"><i></i><span id="lvState">Idle</span></div></div>
+    <p class="note" id="lvKey" aria-live="off"></p>
     <div class="stats">
       <div class="stat"><small>Download now</small><b id="lvDown">—</b></div>
       <div class="stat"><small>Upload now</small><b id="lvUp">—</b></div>
@@ -347,7 +349,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <div class="legend"><span><i style="background:var(--down)"></i>Download</span><span><i style="background:var(--up)"></i>Upload</span><span><i style="background:var(--ok)"></i>Ping (right axis)</span></div>
     <canvas id="tele" width="1000" height="360" aria-label="Live timeline of download, upload and ping"></canvas>
     <p class="note" id="lvRoute">Run a test to trace the route to the server.</p>
-    <p class="cant" id="lvWhere">Stylised map. Your position comes from your time zone unless you allow precise location or run My IP &amp; ISP; it stays on this device. Server cities are known for LibreSpeed and M-Lab; Cloudflare doesn't tell web pages which of its cities answered.</p>
+    <p class="cant" id="lvWhere">Stylised map. Your position comes from your time zone (or, during a Cloudflare test, Cloudflare's rough estimate from your IP) unless you allow precise location or run My IP &amp; ISP; it stays on this device. Server cities are known for LibreSpeed and M-Lab; for Cloudflare the app asks Cloudflare which data centre answered. Each moving dot is real data counted as it arrives or leaves; dots travel slower than real so the eye can follow them.</p>
   </section>
 
   <!-- ============ Toolkit ============ -->
@@ -1402,8 +1404,11 @@ let VIEW=null; // fitted window: {lon0,lat1,ppd}; set per frame size and route
 const proj=(lon,lat)=>[(lon-VIEW.lon0)*VIEW.ppd,(VIEW.lat1-lat)*VIEW.ppd];
 function fitView(W,H,pts){
   let lo0=-180,lo1=180,la0=LAT_BOT,la1=LAT_TOP;
-  if(pts.length){ lo0=Math.min(...pts.map(p=>p.lon))-28; lo1=Math.max(...pts.map(p=>p.lon))+28; la0=Math.min(...pts.map(p=>p.lat))-16; la1=Math.max(...pts.map(p=>p.lat))+18;
-    if(lo1-lo0<80){ const c=(lo0+lo1)/2; lo0=c-40; lo1=c+40 } }
+  if(pts.length){ // zoom so the route fills the frame: a short route (London–Frankfurt) gets a regional view, not a world view
+    const mnLo=Math.min(...pts.map(p=>p.lon)), mxLo=Math.max(...pts.map(p=>p.lon)), mnLa=Math.min(...pts.map(p=>p.lat)), mxLa=Math.max(...pts.map(p=>p.lat));
+    const pLo=Math.max(8,(mxLo-mnLo)*0.45), pLa=Math.max(6,(mxLa-mnLa)*0.45);
+    lo0=mnLo-pLo; lo1=mxLo+pLo; la0=mnLa-pLa; la1=mxLa+pLa+4;
+    if(lo1-lo0<32){ const c=(lo0+lo1)/2; lo0=c-16; lo1=c+16 } }
   let ppd=Math.min(W/(lo1-lo0),H/(la1-la0)); // same scale both ways, then grow the short side to fill the frame
   const cl=(lo0+lo1)/2, ca=(la0+la1)/2, spanLo=W/ppd, spanLa=H/ppd;
   let lon0=Math.max(-180,Math.min(180-spanLo,cl-spanLo/2)); if(spanLo>=360) lon0=-180-(spanLo-360)/2;
@@ -1430,12 +1435,13 @@ const TZ_LOC={"Asia/Kolkata":[20.6,78.9,"India"],"Asia/Calcutta":[20.6,78.9,"Ind
  "America/Sao_Paulo":[-23.5,-46.6,"São Paulo"],"America/Argentina/Buenos_Aires":[-34.6,-58.4,"Buenos Aires"],"Australia/Sydney":[-33.9,151.2,"Sydney"],
  "Australia/Melbourne":[-37.8,145,"Melbourne"],"Australia/Perth":[-31.95,115.9,"Perth"],"Pacific/Auckland":[-36.85,174.8,"Auckland"]};
 // Airport codes in M-Lab machine names (e.g. mlab1-maa02 → Chennai) and city names in LibreSpeed server names.
-const IATA=Object.fromEntries(`maa 13.08 80.27 Chennai|bom 19.08 72.88 Mumbai|del 28.61 77.21 Delhi|blr 12.97 77.59 Bengaluru|hyd 17.39 78.49 Hyderabad|ccu 22.57 88.36 Kolkata|sin 1.35 103.82 Singapore|hkg 22.32 114.17 Hong Kong|tpe 25.03 121.56 Taipei|nrt 35.68 139.69 Tokyo|hnd 35.68 139.69 Tokyo|tyo 35.68 139.69 Tokyo|kix 34.69 135.5 Osaka|icn 37.57 126.98 Seoul|syd -33.87 151.21 Sydney|mel -37.81 144.96 Melbourne|akl -36.85 174.76 Auckland|bkk 13.75 100.5 Bangkok|kul 3.14 101.69 Kuala Lumpur|cgk -6.2 106.85 Jakarta|mnl 14.6 120.98 Manila|dxb 25.2 55.27 Dubai|doh 25.29 51.53 Doha|bah 26.23 50.58 Bahrain|tlv 32.08 34.78 Tel Aviv|ist 41.01 28.98 Istanbul|jnb -26.2 28.05 Johannesburg|cpt -33.92 18.42 Cape Town|nbo -1.29 36.82 Nairobi|los 6.52 3.38 Lagos|cai 30.04 31.24 Cairo|tun 36.8 10.18 Tunis|lhr 51.51 -0.13 London|lon 51.51 -0.13 London|ams 52.37 4.9 Amsterdam|fra 50.11 8.68 Frankfurt|cdg 48.86 2.35 Paris|par 48.86 2.35 Paris|mad 40.42 -3.7 Madrid|lis 38.72 -9.14 Lisbon|mil 45.46 9.19 Milan|mxp 45.46 9.19 Milan|fco 41.9 12.5 Rome|vie 48.21 16.37 Vienna|prg 50.08 14.44 Prague|waw 52.23 21.01 Warsaw|arn 59.33 18.07 Stockholm|cph 55.68 12.57 Copenhagen|osl 59.91 10.75 Oslo|hel 60.17 24.94 Helsinki|dub 53.35 -6.26 Dublin|ath 37.98 23.73 Athens|svo 55.76 37.62 Moscow|lga 40.71 -74.01 New York|jfk 40.71 -74.01 New York|ewr 40.71 -74.01 New York|nyc 40.71 -74.01 New York|iad 38.9 -77.04 Washington|was 38.9 -77.04 Washington|atl 33.75 -84.39 Atlanta|mia 25.76 -80.19 Miami|ord 41.88 -87.63 Chicago|chi 41.88 -87.63 Chicago|dfw 32.78 -96.8 Dallas|iah 29.76 -95.37 Houston|den 39.74 -104.99 Denver|lax 34.05 -118.24 Los Angeles|sjc 37.34 -121.89 San Jose|sfo 37.77 -122.42 San Francisco|sea 47.61 -122.33 Seattle|pdx 45.52 -122.68 Portland|phx 33.45 -112.07 Phoenix|slc 40.76 -111.89 Salt Lake City|msp 44.98 -93.27 Minneapolis|bos 42.36 -71.06 Boston|yyz 43.65 -79.38 Toronto|yul 45.5 -73.57 Montreal|yvr 49.28 -123.12 Vancouver|gru -23.55 -46.63 São Paulo|scl -33.45 -70.67 Santiago|bog 4.71 -74.07 Bogotá|eze -34.6 -58.38 Buenos Aires|mex 19.43 -99.13 Mexico City|lim -12.05 -77.04 Lima`
+const IATA=Object.fromEntries(`maa 13.08 80.27 Chennai|bom 19.08 72.88 Mumbai|del 28.61 77.21 Delhi|blr 12.97 77.59 Bengaluru|hyd 17.39 78.49 Hyderabad|ccu 22.57 88.36 Kolkata|sin 1.35 103.82 Singapore|hkg 22.32 114.17 Hong Kong|tpe 25.03 121.56 Taipei|nrt 35.68 139.69 Tokyo|hnd 35.68 139.69 Tokyo|tyo 35.68 139.69 Tokyo|kix 34.69 135.5 Osaka|icn 37.57 126.98 Seoul|syd -33.87 151.21 Sydney|mel -37.81 144.96 Melbourne|akl -36.85 174.76 Auckland|bkk 13.75 100.5 Bangkok|kul 3.14 101.69 Kuala Lumpur|cgk -6.2 106.85 Jakarta|mnl 14.6 120.98 Manila|dxb 25.2 55.27 Dubai|doh 25.29 51.53 Doha|bah 26.23 50.58 Bahrain|tlv 32.08 34.78 Tel Aviv|ist 41.01 28.98 Istanbul|jnb -26.2 28.05 Johannesburg|cpt -33.92 18.42 Cape Town|nbo -1.29 36.82 Nairobi|los 6.52 3.38 Lagos|cai 30.04 31.24 Cairo|tun 36.8 10.18 Tunis|lhr 51.51 -0.13 London|lon 51.51 -0.13 London|ams 52.37 4.9 Amsterdam|fra 50.11 8.68 Frankfurt|cdg 48.86 2.35 Paris|par 48.86 2.35 Paris|mad 40.42 -3.7 Madrid|lis 38.72 -9.14 Lisbon|mil 45.46 9.19 Milan|mxp 45.46 9.19 Milan|fco 41.9 12.5 Rome|vie 48.21 16.37 Vienna|prg 50.08 14.44 Prague|waw 52.23 21.01 Warsaw|arn 59.33 18.07 Stockholm|cph 55.68 12.57 Copenhagen|osl 59.91 10.75 Oslo|hel 60.17 24.94 Helsinki|dub 53.35 -6.26 Dublin|ath 37.98 23.73 Athens|svo 55.76 37.62 Moscow|lga 40.71 -74.01 New York|jfk 40.71 -74.01 New York|ewr 40.71 -74.01 New York|nyc 40.71 -74.01 New York|iad 38.9 -77.04 Washington|was 38.9 -77.04 Washington|atl 33.75 -84.39 Atlanta|mia 25.76 -80.19 Miami|ord 41.88 -87.63 Chicago|chi 41.88 -87.63 Chicago|dfw 32.78 -96.8 Dallas|iah 29.76 -95.37 Houston|den 39.74 -104.99 Denver|lax 34.05 -118.24 Los Angeles|sjc 37.34 -121.89 San Jose|sfo 37.77 -122.42 San Francisco|sea 47.61 -122.33 Seattle|pdx 45.52 -122.68 Portland|phx 33.45 -112.07 Phoenix|slc 40.76 -111.89 Salt Lake City|msp 44.98 -93.27 Minneapolis|bos 42.36 -71.06 Boston|yyz 43.65 -79.38 Toronto|yul 45.5 -73.57 Montreal|yvr 49.28 -123.12 Vancouver|gru -23.55 -46.63 São Paulo|scl -33.45 -70.67 Santiago|bog 4.71 -74.07 Bogotá|eze -34.6 -58.38 Buenos Aires|mex 19.43 -99.13 Mexico City|lim -12.05 -77.04 Lima|amd 23.02 72.57 Ahmedabad|bbi 20.3 85.82 Bhubaneswar|cok 9.93 76.27 Kochi|nag 21.15 79.09 Nagpur|pat 25.59 85.14 Patna|ixc 30.73 76.78 Chandigarh|cmb 6.93 79.85 Colombo|dac 23.81 90.41 Dhaka|ktm 27.72 85.32 Kathmandu|khi 24.86 67 Karachi|isb 33.68 73.05 Islamabad|ruh 24.71 46.68 Riyadh|jed 21.49 39.19 Jeddah|mct 23.59 58.41 Muscat|kwi 29.38 47.99 Kuwait City|zrh 47.38 8.54 Zurich|gva 46.2 6.14 Geneva|bru 50.85 4.35 Brussels|man 53.48 -2.24 Manchester|edi 55.95 -3.19 Edinburgh|mrs 43.3 5.37 Marseille|bcn 41.39 2.17 Barcelona|muc 48.14 11.58 Munich|ham 53.55 9.99 Hamburg|dus 51.23 6.78 Düsseldorf|txl 52.52 13.4 Berlin|ber 52.52 13.4 Berlin|bud 47.5 19.04 Budapest|otp 44.43 26.1 Bucharest|sof 42.7 23.32 Sofia|kbp 50.45 30.52 Kyiv|bne -27.47 153.03 Brisbane|per -31.95 115.86 Perth|adl -34.93 138.6 Adelaide|han 21.03 105.85 Hanoi|sgn 10.82 106.63 Ho Chi Minh City|pnh 11.56 104.92 Phnom Penh|rgn 16.87 96.2 Yangon|cmn 33.57 -7.59 Casablanca|acc 5.6 -0.19 Accra|dar -6.79 39.21 Dar es Salaam|kgl -1.94 30.06 Kigali|gig -22.91 -43.17 Rio de Janeiro|for -3.72 -38.54 Fortaleza|uio -0.18 -78.47 Quito|pty 8.98 -79.52 Panama City|qro 20.59 -100.39 Querétaro|yyc 51.05 -114.07 Calgary|las 36.17 -115.14 Las Vegas|mci 39.1 -94.58 Kansas City|clt 35.23 -80.84 Charlotte|tpa 27.95 -82.46 Tampa|bna 36.16 -86.78 Nashville|ind 39.77 -86.16 Indianapolis|cmh 39.96 -83 Columbus|phl 39.95 -75.17 Philadelphia|pit 40.44 -80 Pittsburgh|stl 38.63 -90.2 St. Louis|sat 29.42 -98.49 San Antonio|aus 30.27 -97.74 Austin|hnl 21.31 -157.86 Honolulu|anc 61.22 -149.9 Anchorage|fuk 33.59 130.4 Fukuoka|ngo 35.18 136.91 Nagoya|cts 43.06 141.35 Sapporo`
  .split("|").map(r=>{const p=r.split(" "); return [p[0],[+p[1],+p[2],p.slice(3).join(" ")]]}));
 const CITY=Object.fromEntries(`Roma 41.9 12.5|Rome 41.9 12.5|London 51.51 -0.13|Frankfurt 50.11 8.68|Amsterdam 52.37 4.9|New York 40.71 -74.01|Atlanta 33.75 -84.39|Los Angeles 34.05 -118.24|Poznan 52.41 16.93|Prague 50.08 14.44|Tokyo 35.68 139.69|Las Vegas 36.17 -115.14|Denver 39.74 -104.99|Chicago 41.88 -87.63|Grand Rapids 42.96 -85.67|Helsinki 60.17 24.94|Novi Sad 45.27 19.83|Argalasti 39.23 23.22|Belgrade 44.8 20.46|Paris 48.86 2.35|Madrid 40.42 -3.7|Milan 45.46 9.19|Vienna 48.21 16.37|Warsaw 52.23 21.01|Stockholm 59.33 18.07|Oslo 59.91 10.75|Zurich 47.38 8.54|Singapore 1.35 103.82|Mumbai 19.08 72.88|Chennai 13.08 80.27|Delhi 28.61 77.21|Dallas 32.78 -96.8|Miami 25.76 -80.19|Seattle 47.61 -122.33|Toronto 43.65 -79.38|Sydney -33.87 151.21|Hong Kong 22.32 114.17`
  .split("|").map(r=>{const p=r.split(" "); return [p.slice(0,-2).join(" "),[+p[p.length-2],+p[p.length-1]]]}));
 function youLoc(){
   const g=store.get("geo",null); if(g&&g.src) return {lat:g.lat,lon:g.lon,label:g.src==="device"?"You (device location)":"You (from IP lookup)",exact:g.src==="device"};
+  if(cfYou) return cfYou;
   const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||"", z=TZ_LOC[tz];
   return z?{lat:z[0],lon:z[1],label:`You (approx. · ${z[2]} time zone)`,exact:false}:null;
 }
@@ -1450,22 +1456,40 @@ const hav=(a,b)=>{ const R=6371, r=Math.PI/180, dLa=(b.lat-a.lat)*r, dLo=(b.lon-
   return 2*R*Math.asin(Math.sqrt(Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2)) };
 
 let tel={on:false,t0:0,phase:"idle",rates:[],pings:[],bytes:{down:0,up:0},cur:{down:0,up:0,ping:NaN},you:null,srv:null,phases:[]};
-function telStart(){ tel={on:true,t0:performance.now(),phase:"ping",rates:[],pings:[],bytes:{down:0,up:0},cur:{down:0,up:0,ping:NaN},you:youLoc(),srv:null,phases:[{p:"ping",t:0}]};
+function telStart(){ clearTimeout(idleT); idleOn=false; pk=[]; hits=[]; pkSeen.dir=""; const last=tel.lastSrv; tel={lastSrv:last,on:true,t0:performance.now(),phase:"ping",rates:[],pings:[],bytes:{down:0,up:0},cur:{down:0,up:0,ping:NaN},you:youLoc(),srv:null,phases:[{p:"ping",t:0}]};
   $("lvBadge").classList.add("live"); $("lvState").textContent="Live · ping"; mapKick(); telDraw() }
-function telServer(s,loc){ tel.srv=serverLoc(s,loc); tel.srvName=s.name; mapBase=null; routeText(null) }
+/* Cloudflare is anycast: ask it which data centre (and roughly which client position) answered.
+   Tried in order; each is optional and silent if the browser or network refuses it. */
+let cfColo=null, cfYou=null;
+async function cfLocate(){
+  if(cfColo) return cfColo;
+  const get=async(u,json)=>{ const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),3000);
+    try{ const r=await fetch(u,{cache:"no-store",credentials:"omit",signal:ctl.signal}); if(!r.ok) throw new Error(r.status); return json?await r.json():await r.text() } finally{ clearTimeout(tm) } };
+  try{ const m=await get("https://speed.cloudflare.com/meta?r="+nonce(),true), c=m&&m.colo;
+    if(fin(+m.latitude)&&fin(+m.longitude)) cfYou={lat:+(+m.latitude).toFixed(1),lon:+(+m.longitude).toFixed(1),label:"You (approx. · from Cloudflare)",exact:false};
+    if(c&&fin(+c.lat)&&fin(+c.lon)) return cfColo={lat:+c.lat,lon:+c.lon,label:`Cloudflare · ${c.city||c.iata}`,iata:c.iata} }catch{}
+  for(const u of ["https://speed.cloudflare.com/cdn-cgi/trace","https://1.1.1.1/cdn-cgi/trace"]){
+    try{ const t=await get(u+"?r="+nonce()), code=(t.match(/^colo=([A-Z]{3})\s*$/m)||[])[1];
+      if(code){ const c=IATA[code.toLowerCase()]; return cfColo=c?{lat:c[0],lon:c[1],label:`Cloudflare · ${c[2]}`,iata:code}:{near:true,label:`Cloudflare · ${code}`,iata:code} } }catch{}
+  }
+  return null;
+}
+function telServer(s,loc){ tel.srv=s.id==="cf"&&cfColo?cfColo:serverLoc(s,loc); tel.srvName=s.name; tel.lastSrv=s; mapBase=null; routeText(null);
+  if(s.id==="cf"&&!cfColo) cfLocate().then(c=>{ if(c&&tel.srvName===s.name){ tel.srv=c; if(!store.get("geo",null)&&cfYou) tel.you=cfYou; mapBase=null; routeText(null); mapKick() } });
+}
 function telPhase(p){ if(!tel.on) return; tel.phase=p; tel.phases.push({p,t:(performance.now()-tel.t0)/1000}); $("lvState").textContent="Live · "+({ping:"ping",down:"download",up:"upload"}[p]||p); if(p!=="down") tel.cur.down=0 }
 function telRate(dir,r){ if(!tel.on) return; tel.cur[dir]=r; tel.rates.push({t:(performance.now()-tel.t0)/1000,dir,r}); telDraw() }
-function telPing(ms){ if(!tel.on||!fin(ms)) return; tel.cur.ping=ms; tel.pings.push({t:(performance.now()-tel.t0)/1000,ms}); }
+function telPing(ms){ if(!tel.on||!fin(ms)) return; tel.cur.ping=ms; tel.pings.push({t:(performance.now()-tel.t0)/1000,ms}); if(tel.phase==="ping") pkPing(ms) }
 function telEnd(ok,res){
   tel.on=false; tel.phase="done"; tel.cur.down=tel.cur.up=0; if(res&&fin(res.ping)) tel.cur.ping=res.ping; $("lvBadge").classList.remove("live");
-  $("lvState").textContent=ok?`Last test · ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`:"Stopped";
-  telDraw(); routeText(res);
+  tel.endText=ok?`Last test · ${new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`:"Stopped"; $("lvState").textContent=tel.endText;
+  telDraw(); routeText(res); setTimeout(idleTick,1500);
 }
 function mb(b){ return b>=1e9?(b/1e9).toFixed(2)+" GB":(b/1e6).toFixed(b>=1e8?0:1)+" MB" }
 function telDraw(){
   $("lvDown").textContent=tel.cur.down?fmt(tel.cur.down)+" "+unitLabel():"—"; $("lvUp").textContent=tel.cur.up?fmt(tel.cur.up)+" "+unitLabel():"—";
   $("lvPing").textContent=fin(tel.cur.ping)?tel.cur.ping.toFixed(0)+" ms":"—";
-  document.querySelector("#lvPing").previousElementSibling.textContent=tel.on?"Ping now":"Ping (idle)";
+  document.querySelector("#lvPing").previousElementSibling.textContent=tel.on||idleOn?"Ping now":"Ping (idle)";
   $("lvBD").textContent=mb(tel.bytes.down); $("lvBU").textContent=mb(tel.bytes.up);
   $("lvTime").textContent=tel.t0?((tel.on?(performance.now()-tel.t0):(tel.rates.length?tel.rates[tel.rates.length-1].t*1000:0))/1000).toFixed(0)+" s":"0 s";
   const c=$("tele"), x=c.getContext("2d"), W=c.width, H=c.height, L=80, R=70, T=26, B=36; x.clearRect(0,0,W,H);
@@ -1495,14 +1519,42 @@ function routeText(res){
   if(s.near){ el.textContent="Cloudflare answers from its data centre closest to you, so the route is short. It doesn't tell web pages which city that is."; return }
   const d=hav(y,s), light=2*d/200; // light in optical fibre ≈ 200 km per millisecond
   const ping=res&&fin(res.ping)?res.ping:NaN;
-  el.innerHTML=`Route ≈ <b>${Math.round(d).toLocaleString()} km</b> to ${esc(s.label)}${y.exact?"":" (from your approximate position)"}. Light in optical fibre needs at least <b>${light.toFixed(0)} ms</b> for that round trip`+
+  el.innerHTML=`Route ≈ <b>${Math.round(d).toLocaleString()} km</b> to ${esc(s.label)}${y.exact?"":" (from your approximate position)"}. Light in optical fibre needs ${light<1?"<b>under 1 ms</b>":`at least <b>${light.toFixed(0)} ms</b>`} for that round trip`+
     (fin(ping)?`; you measured <b>${ping.toFixed(0)} ms</b>`+(ping>=light?`, so about ${(ping-light).toFixed(0)} ms is routing detours, Wi-Fi and processing.`
       :`. That's faster than light could cover this distance, so your real position${y.exact?"":" (estimated from your time zone)"} or the server's is closer than shown${y.exact?"":". Tap \"Use precise location\" for an exact route"}.`):".")+
     (d>3000?" A closer server would give higher speeds and lower ping.":"");
 }
 
 /* ---- map rendering: static dots cached; arc and particles drawn at ≤30 fps ---- */
-let mapBase=null, mapBaseTheme="", parts=[], mapRaf=0, mapLast=0;
+let mapBase=null, mapBaseTheme="", mapRaf=0, mapLast=0;
+/* Packet view. A dot is spawned only when that much data has really arrived (download) or been sent (upload),
+   counted from the same byte counters as the result. A dot's trip lasts the measured one-way delay (ping ÷ 2)
+   slowed down SLOW times, so the eye can follow it; pings go out and back over their measured round-trip time. */
+const SLOW=20, DOT_STEPS=[16e3,64e3,256e3,1e6,4e6,16e6,64e6,256e6];
+let pk=[], hits=[], pkSeen={down:0,up:0,acc:0,dir:"",tLast:0}, pkPer=0;
+const pkDur=ms=>Math.min(2400,Math.max(380,(fin(ms)?ms:60)/2*SLOW));
+function pkPing(ms){ if(!$("lvAnim").checked||!fin(ms)) return; pk.push({t0:performance.now(),dur:Math.min(4000,Math.max(700,ms*SLOW)),dir:"ping"}); mapKick() }
+function pkFeed(now){
+  const dir=tel.phase; if(dir!=="down"&&dir!=="up"){ pkSeen.dir=""; return }
+  const b=tel.bytes[dir]||0; if(pkSeen.dir!==dir){ pkSeen.dir=dir; pkSeen[dir]=b; pkSeen.acc=0; pkSeen.tLast=now; return }
+  const got=Math.max(0,b-pkSeen[dir]); pkSeen[dir]=b; pkSeen.acc+=got;
+  const rate=tel.cur[dir]||0; pkPer=DOT_STEPS.find(v=>rate/v<=50)||DOT_STEPS[DOT_STEPS.length-1];
+  let n=Math.floor(pkSeen.acc/pkPer); pkSeen.acc-=n*pkPer; n=Math.min(n,14);
+  const dur=pkDur(tel.cur.ping), gap=n>1?Math.min(120,(now-pkSeen.tLast)/n):0;
+  for(let i=0;i<n;i++) pk.push({t0:now+i*gap,dur,dir,j:(Math.random()-.5)});
+  pkSeen.tLast=now;
+}
+const sizeTxt=b=>b>=1e6?(b/1e6)+" MB":(b/1e3)+" KB";
+let keyTxt="";
+function mapKey(){
+  const s=tel.lastSrv, ping=tel.cur.ping;
+  const t=tel.on&&(tel.phase==="down"||tel.phase==="up")&&pkPer
+    ? `● 1 dot = ${sizeTxt(pkPer)} of data actually ${tel.phase==="down"?"received":"sent"}. Each trip lasts the measured one-way delay (≈${fin(ping)?(ping/2).toFixed(0):"?"} ms) shown ${SLOW}× slower.`
+    : tel.on&&tel.phase==="ping" ? `● Ping: each dot goes out and back over its measured round-trip time, shown ${SLOW}× slower.`
+    : idleOn&&s ? `● Live ping to ${s.name} every 2 s, shown ${SLOW}× slower. Untick "Live ping" to stop.`
+    : "";
+  if(t!==keyTxt){ keyTxt=t; $("lvKey").textContent=t }
+}
 function drawMapBase(W,H,u){
   const off=document.createElement("canvas"); off.width=W; off.height=H; const x=off.getContext("2d");
   x.fillStyle=css("--muted"); x.globalAlpha=.34;
@@ -1524,41 +1576,63 @@ function drawMap(ts){
   // Labels: try a few positions so "You" and the server never sit on top of each other when the two are close (e.g. London–Frankfurt).
   const placed=[], hit=(a,b)=>a[0]<b[0]+b[2]&&b[0]<a[0]+a[2]&&a[1]<b[1]+b[3]&&b[1]<a[1]+a[3];
   const label=(txt,X,Yp,dy)=>{ x.font=`600 ${12*u}px ${css("--body")}`; const w=x.measureText(txt).width;
-    let lx,ly; for(const [side,d] of [[0,dy],[0,-dy+4*u],[1,dy],[1,-dy+4*u],[0,dy+(dy<0?-18:18)*u],[1,dy+(dy<0?-18:18)*u]]){
-      const right=(X+14*u+w>W-6*u)!==!!side; lx=Math.max(6*u,Math.min(W-w-6*u,right?X-14*u-w:X+14*u)); ly=Math.min(H-8*u,Math.max(14*u,Yp+d));
-      if(!placed.some(r=>hit(r,[lx-4*u,ly-10*u,w+8*u,16*u]))) break }
+    // Candidates: beside the marker (preferred side, then the other), then centred above / below it, then further out.
+    const cl=v=>Math.max(6*u,Math.min(W-w-6*u,v)), fy=v=>Math.min(H-8*u,Math.max(14*u,v)), flip=X+14*u+w>W-6*u;
+    const side=(sd,d)=>[cl((flip!==!!sd)?X-14*u-w:X+14*u),fy(Yp+d)];
+    let lx,ly; for(const [cx,cy] of [side(0,dy),side(1,dy),[cl(X-w/2),fy(Yp-16*u)],[cl(X-w/2),fy(Yp+24*u)],side(0,-dy+4*u),side(1,-dy+4*u),side(0,dy+(dy<0?-18:18)*u),side(1,dy+(dy<0?-18:18)*u)]){
+      lx=cx; ly=cy; if(!placed.some(r=>hit(r,[lx-4*u,ly-10*u,w+8*u,16*u]))) break }
     placed.push([lx-4*u,ly-10*u,w+8*u,16*u]);
     x.fillStyle=css("--glass-strong"); x.globalAlpha=.85; x.fillRect(lx-4*u,ly-10*u,w+8*u,16*u); x.globalAlpha=1;
     x.fillStyle=css("--ink"); x.textAlign="left"; x.textBaseline="middle"; x.fillText(txt,lx,ly-2*u) };
   if(!y){ x.fillStyle=css("--muted"); x.font=`500 ${12*u}px ${css("--mono")}`; x.textAlign="center"; x.fillText("Tap \"Use precise location\" to place yourself",W/2,H/2); return }
   const Y=proj(y.lon,y.lat); let S=null; if(s&&!s.near) S=proj(s.lon,s.lat);
   const rate=tel.phase==="up"?tel.cur.up:tel.cur.down, lvl=rate>0?Math.min(1,Math.log10(1+bpsToMbps(rate))/3):0; // 0..1 across 1 Mbps–1 Gbps
-  if(S&&Math.hypot(S[0]-Y[0],S[1]-Y[1])>24*u){
+  const now=performance.now(); if(tel.on&&anim) pkFeed(now); if(!anim){ pk=[]; hits=[] }
+  let near=false;
+  // Same area (e.g. Cloudflare in your own city): draw the server a short way off, labelled "near you", so the trips stay visible.
+  if(S&&Math.hypot(S[0]-Y[0],S[1]-Y[1])<36*u){ const sep=Math.max(60*u,W*0.26), dx=Y[0]+sep<W-20*u?sep:-sep; S=[Y[0]+dx,Math.max(24*u,Y[1]-sep*0.45)]; near=true }
+  for(const m of [Y,S]) if(m) placed.push([m[0]-10*u,m[1]-10*u,20*u,20*u]); // labels never cover either marker
+  if(S){
     const mid=[(S[0]+Y[0])/2,(S[1]+Y[1])/2], dist=Math.hypot(S[0]-Y[0],S[1]-Y[1]), C=[mid[0],Math.max(10*u,mid[1]-dist*0.3)];
+    for(const k of [.2,.35,.5,.65,.8]){ const q=arcPt(S,Y,C,k); placed.push([q[0]-6*u,q[1]-6*u,12*u,12*u]) } // keep labels off the route
     x.strokeStyle=css("--muted"); x.globalAlpha=.6; x.lineWidth=1.5*u; x.setLineDash([4*u,5*u]); x.beginPath(); x.moveTo(S[0],S[1]); x.quadraticCurveTo(C[0],C[1],Y[0],Y[1]); x.stroke(); x.setLineDash([]); x.globalAlpha=1;
-    if(tel.on&&anim&&(tel.phase==="down"||tel.phase==="up")){
-      if(parts.length<10+lvl*40&&Math.random()<0.25+lvl) parts.push({t:0,v:0.004+0.012*lvl+Math.random()*0.004});
-      const col=tel.phase==="down"?css("--down"):css("--up");
-      parts=parts.filter(p=>(p.t+=p.v)<1);
-      for(const p of parts){ const q=tel.phase==="down"?arcPt(S,Y,C,p.t):arcPt(Y,S,C,p.t); glow(x,q[0],q[1],7*u,col); x.fillStyle="#fff"; x.beginPath(); x.arc(q[0],q[1],1.6*u,0,Math.PI*2); x.fill() }
-    } else if(tel.on&&anim&&tel.phase==="ping"){
-      const k=(t*0.8)%1; for(const q of [arcPt(S,Y,C,k),arcPt(Y,S,C,k)]) glow(x,q[0],q[1],8*u,css("--ok"));
-    } else parts=[];
+    const cD=css("--down"), cU=css("--up"), cP=css("--ok"), nx=-(S[1]-Y[1])/dist, ny=(S[0]-Y[0])/dist;
+    pk=pk.filter(p=>{
+      const k=(now-p.t0)/p.dur; if(k<0) return true;
+      if(k>=1){ const end=p.dir==="up"?S:Y; hits.push({x:end[0],y:end[1],t0:now,col:p.dir==="down"?cD:p.dir==="up"?cU:cP}); return false }
+      let q,col;
+      if(p.dir==="ping"){ q=k<.5?arcPt(Y,S,C,k*2):arcPt(S,Y,C,(k-.5)*2); col=cP }
+      else { q=p.dir==="down"?arcPt(S,Y,C,k):arcPt(Y,S,C,k); col=p.dir==="down"?cD:cU; const off=p.j*6*u*Math.sin(Math.PI*k); q=[q[0]+nx*off,q[1]+ny*off] }
+      glow(x,q[0],q[1],(p.dir==="ping"?8:6)*u,col); x.fillStyle="#fff"; x.beginPath(); x.arc(q[0],q[1],(p.dir==="ping"?2.2:1.6)*u,0,Math.PI*2); x.fill(); return true });
+    hits=hits.filter(h=>{ const k=(now-h.t0)/350; if(k>=1) return false; x.strokeStyle=h.col; x.globalAlpha=1-k; x.lineWidth=1.5*u; x.beginPath(); x.arc(h.x,h.y,5*u+k*12*u,0,Math.PI*2); x.stroke(); x.globalAlpha=1; return true });
     glow(x,S[0],S[1],16*u,cSrv); x.fillStyle=cSrv; x.beginPath(); x.arc(S[0],S[1],4.5*u,0,Math.PI*2); x.fill();
-    label(s.label,S[0],S[1],-12*u);
-  } else if(tel.on&&anim){ // server near you (Cloudflare) or location unknown: pulses around you
+    label(s.label+(near?" (near you)":""),S[0],S[1],-12*u);
+  } else if(tel.on&&anim){ // server position unknown: pulses around you
     const col=tel.phase==="up"?css("--up"):tel.phase==="down"?css("--down"):css("--ok");
     for(let i=0;i<3;i++){ const k=((t*(0.6+lvl))+i/3)%1; x.strokeStyle=col; x.globalAlpha=1-k; x.lineWidth=2*u; x.beginPath(); x.arc(Y[0],Y[1],6*u+k*45*u,0,Math.PI*2); x.stroke() } x.globalAlpha=1;
   }
   glow(x,Y[0],Y[1],18*u,cYou); x.fillStyle=cYou; x.beginPath(); x.arc(Y[0],Y[1],5*u,0,Math.PI*2); x.fill(); x.strokeStyle="#fff"; x.lineWidth=1.5*u; x.stroke();
   label(y.label,Y[0],Y[1],S&&S[1]<Y[1]?16*u:-12*u);
   if(s&&s.near) label(s.label,Y[0],Y[1],32*u);
+  mapKey();
 }
 function mapLoop(ts){
   mapRaf=0; if(ts-mapLast>=33){ drawMap(ts); mapLast=ts }
-  if(tel.on||parts.length) mapRaf=requestAnimationFrame(mapLoop);
+  if(tel.on||pk.length||hits.length) mapRaf=requestAnimationFrame(mapLoop);
 }
 function mapKick(){ if(!mapRaf) mapRaf=requestAnimationFrame(mapLoop) }
+var idleT=0, idleOn=false, mapVis=false; // var: read by telDraw, which can run before this line
+function idleTick(){
+  clearTimeout(idleT); const s=tel.lastSrv;
+  const ok=!running&&!tel.on&&mapVis&&!document.hidden&&$("lvLive").checked&&s&&s.kind==="http";
+  if(!ok){ if(idleOn){ idleOn=false; if(!tel.on){ $("lvBadge").classList.remove("live"); if(tel.endText) $("lvState").textContent=tel.endText } telDraw(); mapKey() } return }
+  idleOn=true; $("lvBadge").classList.add("live");
+  pingURL(s.ping(),3000).then(ms=>{ if(tel.on||!idleOn) return; tel.cur.ping=ms; pkPing(ms); telDraw(); $("lvState").textContent=`Live ping · ${ms.toFixed(0)} ms`; mapKey() })
+    .catch(()=>{ if(idleOn&&!tel.on) $("lvState").textContent="Live ping · no reply" })
+    .finally(()=>{ if(idleOn) idleT=setTimeout(idleTick,2000) });
+}
+if("IntersectionObserver" in window) new IntersectionObserver(e=>{ mapVis=e[0].isIntersecting; idleTick() }).observe($("map"));
+document.addEventListener("visibilitychange",idleTick);
 function locate(){
   if(!navigator.geolocation){ $("lvRoute").textContent="This browser can't share location."; return }
   $("lvLocate").disabled=true; $("lvRoute").textContent="Waiting for location permission…";
@@ -1825,7 +1899,8 @@ $("rtQs").onclick=e=>{ const b=e.target.closest("button"), g=e.target.closest(".
   rtAnswers[g.dataset.q]=b.dataset.v; g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b)); rtSave() };
 ["rtBrand","rtModel","rtHw","rtFw","rtEnc"].forEach(id=>$(id).addEventListener("change",rtSave));
 $("rtRun").onclick=runRouterCheck;
-$("lvLocate").onclick=locate; $("lvAnim").onchange=()=>{ if(!$("lvAnim").checked) parts=[]; drawMap(performance.now()) };
+$("lvLocate").onclick=locate; $("lvAnim").onchange=()=>{ if(!$("lvAnim").checked){ pk=[]; hits=[] } drawMap(performance.now()) };
+$("lvLive").checked=store.get("livePing",true); $("lvLive").onchange=()=>{ store.set("livePing",$("lvLive").checked); idleTick() };
 if((store.get("geo",{})||{}).src==="device") $("lvLocate").textContent="Location set";
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ mapBase=null; drawMap(performance.now()); telDraw() });
 drawMap(performance.now()); telDraw();

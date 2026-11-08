@@ -71,8 +71,11 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 |:--:|:--:|
 | <img src="docs/screenshots/04-live-map-download.png" width="300"> | <img src="docs/screenshots/05-live-map-upload.png" width="300"> |
 
-- **Map** — a stylised dot-matrix world. Particles flow **server → you** during download and **you → server** during upload; their density follows the current speed. When you and the server are close (e.g. Cloudflare's nearest city), it shows pulses around you instead.
-- **Your position** comes from your time zone by default. Tap **Use precise location** for GPS (rounded to ~1 km and kept on your device), or run **My IP & ISP** to use the IP-based city.
+- **Map** — a stylised dot-matrix world, zoomed to fit the route. Every moving dot is **real data**: a dot leaves only when that much data has actually been received (download, **server → you**, cyan) or sent (upload, **you → server**, violet), counted from the same byte counters as the result. The legend under the map says how much each dot stands for (16 KB to 256 MB, so there are never more than about 50 a second).
+- **Timing** — each dot's trip lasts the measured one-way delay (ping ÷ 2) shown **20× slower**, so the eye can follow it; a ring flashes when it lands. Pings (green) go out and come back over their measured round-trip time.
+- **Live ping** — after a test, while the map is on screen and the page is in front, the app pings the last server every 2 seconds and animates each one. Untick **Live ping** to stop; the setting is remembered.
+- **Cloudflare** — the app asks Cloudflare which data centre answered (its `/meta` and `/cdn-cgi/trace` endpoints) and draws the route to that city. If you and that data centre are in the same area, the server is drawn a short way off and labelled *near you*.
+- **Your position** comes from your time zone by default, or from Cloudflare's rough estimate based on your IP during a Cloudflare test (used for the drawing only, never stored). Tap **Use precise location** for GPS (rounded to ~1 km and kept on your device), or run **My IP & ISP** to use the IP-based city.
 - **Live tiles** — download now, upload now, ping now, data down, data up, elapsed.
 - **Timeline** — download and upload on the left axis, ping (orange dots) on the right axis, with phase bands.
 - **Route facts** — straight-line distance and the physical minimum round trip (light in fibre ≈ 200 km per ms). If your ping is *lower* than that minimum, you weren't really connected to that city (often a VPN or iCloud Private Relay).
@@ -119,7 +122,7 @@ Open with **Change server**.
 | Server | What it is | Notes |
 |---|---|---|
 | **Automatic** | Lowest ping among Cloudflare and LibreSpeed | Default |
-| **Cloudflare** | `speed.cloudflare.com`, anycast to the nearest of 300+ cities | Doesn't tell web pages which city answered, so the map shows pulses around you |
+| **Cloudflare** | `speed.cloudflare.com`, anycast to the nearest of 300+ cities | The app asks Cloudflare which data centre answered, so the map shows the real route |
 | **Measurement Lab** | Nearest M-Lab site via the ndt7 protocol | **Asks before use**: M-Lab publishes test results, including your IP address, as open data |
 | **LibreSpeed** | 22 volunteer servers (Europe, Americas, Asia, Oceania) | List refreshed from librespeed.org when reachable; a built-in snapshot otherwise |
 | **Your own server** | Any URL running `server/server.py` | See [Self-host a test server](#self-host-a-test-server) |
@@ -270,11 +273,12 @@ No accounts, no ads, no analytics, no cookies, no third-party scripts. Results, 
 
 | Feature | Contacts | What is sent |
 |---|---|---|
-| Speed test | The test server you pick; `1.1.1.1` for loaded ping | Test traffic only (random bytes) |
+| Speed test | The test server you pick; `1.1.1.1` for loaded ping; for Cloudflare, `speed.cloudflare.com/meta` and `/cdn-cgi/trace` to learn which data centre answered | Test traffic only (random bytes) |
 | Measurement Lab | M-Lab locate API + test site | Test traffic; **M-Lab publishes results with your IP** (asked first) |
 | LibreSpeed list refresh | librespeed.org | A request for the server list |
 | Router check | services.nvd.nist.gov | Brand and model only — never your settings answers or firmware version |
 | Ping monitor | 1.1.1.1, google.com or your test server | Tiny requests |
+| Live ping on the map | The last test server, every 2 s, only while the map is on screen | Tiny requests; untick **Live ping** to stop |
 | DNS benchmark | Cloudflare, Google, Quad9, AdGuard, OpenDNS DoH | DNS queries for test names |
 | My IP & ISP | ipinfo.io, ipify.org | A request (they see your IP, like any website) |
 | Device lookup | **Nothing** — uses the bundled `oui.txt` | — (api.maclookup.app only if `oui.txt` is missing) |
@@ -345,7 +349,7 @@ Open `http://<server-ip>:8080/` to run CleanSpeed against it directly — good f
 
 - **A browser can't do everything a native app can:** no traceroute, port scan, Wi-Fi channel scan or signal strength, and no router login. The router check relies on your answers plus public vulnerability data.
 - **The map is stylised**, not a geographic map; positions are approximate.
-- **Cloudflare doesn't tell web pages which city served the test**, so the route can't be drawn for it.
+- **Cloudflare's data centre** is located only when the browser can read Cloudflare's `/meta` or `/cdn-cgi/trace` reply; if both are blocked (some content blockers do), the map falls back to pulses around you.
 - **The router check** can only be as current and precise as NVD's records. "Can't confirm" means the record lacks version data — check the maker's advisory.
 - **Global medians** are third-party compilations of Ookla data with a publication lag.
 - **Speeds above a few Gbps** may be limited by the device's browser and CPU rather than the line.
@@ -411,6 +415,7 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
+| *latest* | Live map: dots driven by real bytes and measured delay, live ping after a test, Cloudflare data-centre lookup, zoom to fit short routes, labels never cover markers or the route |
 | `e427d4e` | Detailed README with fictional sample screenshots (router, CVEs, speeds, history, MACs, IPs); self-host test server; map labels no longer overlap when you and the server are close; records covering only another firmware line count as "fixed in your version" |
 | `f7f4ce8` | Device lookup: on-device IEEE maker registry (no third-party lookup) |
 | `c4a10ea` | Router check: manufacturer-only fixes, firmware-line-aware matching |
