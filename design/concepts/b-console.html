@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Concept B · Console</title>
+<link rel="stylesheet" href="_fonts.css">
+<style>
+:root{--bg:#08090b;--p1:#0e1013;--p2:#13161a;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);--ink:#eceef1;--muted:#8a9099;--dim:#5a6069;--down:#4cc9f0;--up:#f5a524;--good:#3ecf8e;--bad:#f2555a}
+body{font-family:"Instrument Sans",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:-20% 0 auto;height:70vh;z-index:-1;background:radial-gradient(50% 60% at 50% 0,rgba(76,201,240,.13),transparent 70%)}
+.mono{font-family:"Geist Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+aside{border-right:1px solid var(--line);padding:16px 10px;background:rgba(14,16,19,.7)}
+.brand{display:flex;gap:10px;align-items:center;padding:6px 10px 16px;font-weight:600;font-size:15px}
+.brand i{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--down),#1d6fa5);box-shadow:0 0 18px rgba(76,201,240,.45)}
+.search{display:flex;justify-content:space-between;margin:0 6px 14px;padding:8px 10px;border:1px solid var(--line2);border-radius:8px;color:var(--dim);font-size:13px;background:var(--p1)}
+.search kbd{font-family:"Geist Mono";font-size:11px;border:1px solid var(--line2);border-radius:4px;padding:0 5px;color:var(--muted)}
+.grp{font-size:11px;color:var(--dim);padding:14px 12px 6px;letter-spacing:.04em}
+nav a{display:flex;justify-content:space-between;padding:7px 12px;border-radius:7px;color:var(--muted);text-decoration:none;font-size:13.5px}
+nav a.on{background:var(--p2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+nav a kbd{font-family:"Geist Mono";font-size:10.5px;color:var(--dim)}
+main{padding:0 28px 28px}
+.bar{display:flex;justify-content:space-between;align-items:center;height:56px;border-bottom:1px solid var(--line);margin:0 -28px 24px;padding:0 28px}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink);font-weight:500}
+.acts{display:flex;gap:8px}
+.btn{padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--p1);color:var(--ink);font:500 13px "Instrument Sans"}
+.btn.pri{background:var(--ink);color:#000;border-color:var(--ink)}
+.status{display:inline-flex;gap:7px;align-items:center;color:var(--muted);font-size:12.5px}
+.status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--down);box-shadow:0 0 10px var(--down)}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.p{background:var(--p1);border:1px solid var(--line);border-radius:12px;padding:18px}
+.p h4{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;justify-content:space-between;margin-bottom:14px}
+.hero{grid-column:span 7;display:flex;gap:28px;align-items:center}
+.dial{width:300px;flex:none;position:relative}
+.dial .v{position:absolute;left:0;right:0;top:46%;text-align:center}
+.dial .v b{font-size:52px;font-weight:500;letter-spacing:-.04em;display:block}
+.dial .v span{color:var(--muted);font-size:13px}
+.steps{display:flex;flex-direction:column;gap:10px;flex:1}
+.step{display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--p2)}
+.step i{width:8px;height:8px;border-radius:50%;background:var(--dim);margin:auto}
+.step.done i{background:var(--good)}.step.run{border-color:rgba(76,201,240,.4);box-shadow:0 0 0 3px rgba(76,201,240,.08)}.step.run i{background:var(--down);box-shadow:0 0 10px var(--down)}
+.step em{font-style:normal;color:var(--muted)}
+.side{grid-column:span 5;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.k b{font-size:30px;font-weight:500;letter-spacing:-.03em}.k span{color:var(--muted);font-size:12px;margin-left:4px}
+.k .d{font-size:12px;margin-top:6px;color:var(--good)}
+.spark{grid-column:span 8}.hist{grid-column:span 4}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:9px 0;border-top:1px solid var(--line)}td:last-child{text-align:right}
+.tag{font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid var(--line2);color:var(--muted)}
+.tools{grid-column:span 12;display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0;overflow:hidden}
+.tools div{padding:16px 18px;border-right:1px solid var(--line);border-top:1px solid var(--line)}
+.tools div:nth-child(-n+4){border-top:0}.tools div:nth-child(4n){border-right:0}
+.tools b{font-weight:500;display:block;margin-bottom:3px}.tools span{color:var(--muted);font-size:12.5px}
+.mtabs{display:none}
+@media(max-width:900px){
+ .app{grid-template-columns:minmax(0,1fr)}aside{display:none}main{min-width:0}
+ main{padding:0 16px 24px}.bar{margin:0 -16px 16px;padding:0 16px}.acts .btn:not(.pri){display:none}
+ .grid{grid-template-columns:minmax(0,1fr);gap:12px}.side{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.mtabs{scrollbar-width:none}.hero,.side,.spark,.hist,.tools{grid-column:auto}
+ .hero{flex-direction:column;gap:16px}.dial{width:100%;max-width:300px}
+ .steps{width:100%}.tools{grid-template-columns:1fr 1fr}
+ .tools div:nth-child(n){border-top:1px solid var(--line);border-right:1px solid var(--line)}.tools div:nth-child(-n+2){border-top:0}.tools div:nth-child(2n){border-right:0}
+ .mtabs{display:flex;gap:6px;overflow:auto;margin-bottom:14px}
+ .mtabs span{flex:none;padding:6px 12px;border-radius:7px;border:1px solid var(--line2);color:var(--muted);font-size:13px}
+ .mtabs span.on{background:var(--ink);color:#000;border-color:var(--ink)}
+}
+</style></head><body>
+<div class="app">
+<aside>
+ <div class="brand"><i></i>CleanSpeed</div>
+ <div class="search"><span>Search or run…</span><kbd>⌘K</kbd></div>
+ <nav>
+  <div class="grp">MEASURE</div>
+  <a class="on" href="#">Speed test<kbd>G</kbd></a><a href="#">Live map<kbd>M</kbd></a><a href="#">Packet collider<kbd>C</kbd></a><a href="#">Insights<kbd>I</kbd></a><a href="#">History<kbd>H</kbd></a>
+  <div class="grp">SECURE</div><a href="#">Router check<kbd>R</kbd></a>
+  <div class="grp">TOOLS</div><a href="#">Ping monitor</a><a href="#">DNS benchmark</a><a href="#">My IP & ISP</a><a href="#">Subnet calculator</a><a href="#">Ask CleanSpeed</a>
+ </nav>
+</aside>
+<main>
+ <div class="bar"><span class="crumb">Measure / <b>Speed test</b></span>
+  <div class="acts"><span class="status">Running · Frankfurt</span><button class="btn">Server</button><button class="btn">Wi-Fi ▾</button><button class="btn pri">Stop</button></div></div>
+ <div class="mtabs"><span class="on">Test</span><span>Map</span><span>Collider</span><span>Insights</span><span>History</span><span>Router</span></div>
+ <div class="grid">
+  <section class="p hero">
+   <div class="dial">
+    <svg viewBox="0 0 200 150" width="100%"><g transform="translate(100 105)">
+     <g id="t"></g></g>
+     <path d="M22 105 A78 78 0 0 1 178 105" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="10"/>
+     <path d="M22 105 A78 78 0 0 1 152 49" fill="none" stroke="#4cc9f0" stroke-width="10" style="filter:drop-shadow(0 0 6px rgba(76,201,240,.6))"/>
+    </svg>
+    <div class="v"><b class="mono">36.49</b><span class="mono">MB/s ↓</span></div>
+   </div>
+   <div class="steps">
+    <div class="step done"><i></i><span>Latency</span><em class="mono">9.1 ms</em></div>
+    <div class="step run"><i></i><span>Download</span><em class="mono">36.49 MB/s</em></div>
+    <div class="step"><i></i><span>Upload</span><em class="mono">—</em></div>
+    <div class="step"><i></i><span>Loaded latency</span><em class="mono">26.6 ms</em></div>
+   </div>
+  </section>
+  <section class="side">
+   <div class="p k"><h4>Download</h4><b class="mono" style="color:var(--down)">36.49</b><span class="mono">MB/s</span><div class="d mono">+4.1% vs avg</div></div>
+   <div class="p k"><h4>Upload</h4><b class="mono" style="color:var(--up)">11.33</b><span class="mono">MB/s</span><div class="d mono">+0.8% vs avg</div></div>
+   <div class="p k"><h4>Jitter</h4><b class="mono">2.9</b><span class="mono">ms</span><div class="d mono">stable</div></div>
+   <div class="p k"><h4>Grade</h4><b class="mono">A+</b><span>responsive</span><div class="d mono">top 18% · DE</div></div>
+  </section>
+  <section class="p spark"><h4>Throughput <span class="mono">0–14 s</span></h4>
+   <svg viewBox="0 0 600 140" width="100%" preserveAspectRatio="none">
+    <g stroke="rgba(255,255,255,.05)"><path d="M0 35H600M0 70H600M0 105H600"/></g>
+    <path d="M0 130 L40 90 80 52 120 44 160 40 200 46 240 38 280 42 320 36 360 40 400 34 440 38 480 33 520 36 560 32 600 35" fill="none" stroke="#4cc9f0" stroke-width="2"/>
+    <path d="M0 135 L40 118 80 104 120 100 160 98 200 101 240 97 280 99 320 96 360 98 400 95 440 97 480 94 520 96 560 95 600 96" fill="none" stroke="#f5a524" stroke-width="2" stroke-dasharray="4 4"/></svg></section>
+  <section class="p hist"><h4>Recent <span>Export CSV</span></h4>
+   <table class="mono"><tr><td>Today 09:12</td><td><span class="tag">Wi-Fi</span></td><td>36.5 / 11.3</td></tr><tr><td>Yesterday</td><td><span class="tag">Mobile</span></td><td>18.2 / 4.0</td></tr><tr><td>Nov 21</td><td><span class="tag">Ethernet</span></td><td>94.1 / 39.7</td></tr></table></section>
+  <section class="p tools">
+   <div><b>Router check</b><span>Score, CVEs, vendor fixes</span></div><div><b>Ping monitor</b><span>Outage timeline</span></div><div><b>DNS benchmark</b><span>7 resolvers raced</span></div><div><b>My IP & ISP</b><span>v4 · v6 · ASN</span></div>
+   <div><b>Data calculator</b><span>Size ⇄ time</span></div><div><b>Wi-Fi password</b><span>Generate & audit</span></div><div><b>Device lookup</b><span>MAC → maker</span></div><div><b>Subnet calc</b><span>CIDR ranges</span></div>
+  </section>
+ </div>
+</main></div>
+<script>const g=document.getElementById('t');for(let i=0;i<=40;i++){const a=Math.PI*(1+i/40),r1=i%5?86:84,r2=90;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',Math.cos(a)*r1);l.setAttribute('y1',Math.sin(a)*r1);l.setAttribute('x2',Math.cos(a)*r2);l.setAttribute('y2',Math.sin(a)*r2);l.setAttribute('stroke',i%5?'rgba(255,255,255,.15)':'rgba(255,255,255,.4)');g.appendChild(l)}</script>
+</body></html>
