@@ -53,12 +53,15 @@ export default function App() {
   // Wire the engine once, after the markup exists.
   useEffect(() => {
     if (booted.current) return; booted.current = true;
-    boot({
-      go,
-      sheet: (on) => setSheet(on),
-      running: (on) => setRunning(on),
-      onView: (f) => { watchers.current.add(f); },
-    });
+    // An engine error (for example from tampered saved data) must not take the whole app down with it.
+    try {
+      boot({
+        go,
+        sheet: (on) => setSheet(on),
+        running: (on) => setRunning(on),
+        onView: (f) => { watchers.current.add(f); },
+      });
+    } catch (e) { console.error("CleanSpeed engine:", e); }
   }, [go]);
 
   // On every screen change: canvases that were hidden measure themselves again, focus moves to the new heading.

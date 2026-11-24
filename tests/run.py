@@ -72,9 +72,11 @@ def check(name, cond, detail=""):
     print(("  PASS " if cond else "  FAIL ") + name + (f" — {detail}" if detail and not cond else ""))
     return cond
 
-def new_page(browser, port, *, width=390, height=844, scheme="dark", mobile=False, reduced=False):
+def new_page(browser, port, *, width=390, height=844, scheme="dark", mobile=False, reduced=False, csp=False):
+    # The app's Content-Security-Policy also blocks the harness's own injected helpers (Playwright polling, axe-core),
+    # so tests run with bypass_csp; the security suite opens one page with csp=True to prove the policy is enforced.
     kw = dict(viewport={"width": width, "height": height}, color_scheme=scheme, accept_downloads=True,
-              reduced_motion="reduce" if reduced else "no-preference")
+              reduced_motion="reduce" if reduced else "no-preference", bypass_csp=not csp)
     if mobile and browser.browser_type.name != "firefox":
         kw.update(is_mobile=True, has_touch=True)
     ctx = browser.new_context(**kw)
@@ -381,13 +383,142 @@ def wcag(browser, port):
     else:
         print("  SKIP axe-core scan (set AXE_PATH to node_modules/axe-core/axe.min.js)")
 
+# ------------------------------------------------------------------ security (OWASP Top 10:2025, client and self-hosted server)
+XSS = '"><img src=x onerror="window.__xss=(window.__xss||0)+1"><svg onload="window.__xss=(window.__xss||0)+1">'
+PROBE = """()=>({xss: window.__xss||0,
+  handlers: [...document.querySelectorAll('*')].filter(e=>[...e.attributes].some(a=>/^on/i.test(a.name))).map(e=>e.outerHTML.slice(0,80)),
+  jslinks: [...document.querySelectorAll('a[href]')].filter(a=>!/^(https?:|mailto:|#)/i.test(a.getAttribute('href'))).map(a=>a.getAttribute('href').slice(0,60)),
+  imgs: document.querySelectorAll('img[src="x"],svg[onload]').length})"""
+
+def hostile(page, port):
+    """Serve hostile data from every outside source the app reads (all fictional)."""
+    evil = json.loads(json.dumps(NVD))
+    c = evil["vulnerabilities"][0]["cve"]
+    c["descriptions"][0]["value"] = "FICTIONAL " + XSS
+    c["metrics"]["cvssMetricV31"][0]["cvssData"]["baseSeverity"] = XSS
+    c["metrics"]["cvssMetricV31"][0]["cvssData"]["baseScore"] = XSS
+    c["published"] = XSS
+    c["references"].insert(0, {"url": "javascript://www.examplenet.example/%0awindow.__xss=1", "tags": ["Vendor Advisory"]})
+    c["references"].insert(0, {"url": "data:text/html,<script>parent.__xss=1</script>//www.examplenet.example/", "tags": ["Patch"]})
+    info = dict(IPINFO, org="AS64500 " + XSS, city=XSS, region=XSS, timezone=XSS, ip="203.0.113.42" + XSS)
+    cors = {"Access-Control-Allow-Origin": "*", "Cache-Control": "no-store"}
+    def handler(route):
+        u = route.request.url
+        if "services.nvd.nist.gov" in u:
+            return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps(evil))
+        if "ipinfo.io" in u:
+            return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps(info))
+        return route.fallback()
+    page.route("**/*", handler)
+
+def security(browser, port):
+    print("\n[security: OWASP Top 10:2025]")
+    import urllib.request, http.client
+    ctx, page = new_page(browser, port, width=1280, height=900)
+    csp = page.eval_on_selector("meta[http-equiv='Content-Security-Policy']", "m=>m.content") if page.locator("meta[http-equiv='Content-Security-Policy']").count() else ""
+    script_src = (re.search(r"script-src ([^;]*)", csp) or [None, ""])[1]
+    check("A02 Content-Security-Policy set in the page", bool(csp), csp[:80])
+    check("A05 CSP blocks inline and injected scripts (hashes only, no 'unsafe-inline' or 'unsafe-eval')",
+          script_src and "unsafe-inline" not in script_src and "unsafe-eval" not in script_src and "sha256-" in script_src, script_src[:120])
+    check("A05 CSP forbids plugins, <base> hijack and form posts", all(d in csp for d in ("object-src 'none'", "base-uri 'none'", "form-action 'none'")), csp)
+    check("A02 no referrer leaks to outside services", page.evaluate("(document.querySelector('meta[name=referrer]')||{}).content") == "no-referrer")
+    probe = page.evaluate(PROBE)
+    check("A05 no inline event handlers in the page", not probe["handlers"], "; ".join(probe["handlers"][:3]))
+    check("A01 every new-tab link is rel=noopener", page.evaluate("[...document.querySelectorAll('a[target=_blank]')].every(a=>/noopener/.test(a.rel))"))
+    ctx.close()
+
+    # the policy is really enforced: with the CSP active, injected markup and inline script don't run, and the app still works
+    ctx, page = new_page(browser, port, width=1280, height=900, csp=True)
+    page.evaluate("""()=>{ const d=document.createElement('div'); d.innerHTML='<img src=x onerror="window.__xss=1">';
+      document.body.append(d); const s=document.createElement('script'); s.textContent='window.__xss=2'; document.body.append(s) }""")
+    page.wait_for_timeout(400)
+    check("A05 browser enforces the CSP (injected handlers and scripts are blocked)", page.evaluate("window.__xss") is None, str(page.evaluate("window.__xss")))
+    check("A02 the app runs under its own CSP without errors", not page.errors and page.locator("[data-go]").count() > 0, "; ".join(page.errors)[:200])
+    ctx.close()
+
+    # hostile outside data: vulnerability database, IP lookup
+    ctx, page = new_page(browser, port, width=1280, height=900)
+    hostile(page, port)
+    page.click("#rtOpen")
+    page.fill("#rtBrand", "ExampleNet"); page.fill("#rtModel", "XR-1000"); page.fill("#rtFw", "2.1.0_1043")
+    page.click("#rtRun"); page.wait_for_function("!document.getElementById('rtReport').hidden", timeout=15000)
+    page.evaluate("document.querySelectorAll('details').forEach(d=>d.open=true)")
+    goto(page, "tools"); page.click(".tile2[data-tool='ip']"); page.click("#ipRun"); page.wait_for_timeout(900)
+    probe = page.evaluate(PROBE)
+    check("A05 hostile vulnerability-database records render as text", probe["xss"] == 0 and probe["imgs"] == 0 and not probe["handlers"], json.dumps(probe)[:200])
+    check("A08 advisory links accept only https (no javascript: or data: smuggled behind a maker's host)", not probe["jslinks"], ", ".join(probe["jslinks"]))
+    check("A05 hostile IP-lookup answers render as text", "onerror" in page.inner_text("#ipOut") and page.locator("#ipOut img").count() == 0)
+    ctx.close()
+
+    # tampered device storage (another script on the device, a shared computer, a restored backup)
+    ctx, page = new_page(browser, port, width=1280, height=900)
+    page.evaluate("""x=>{ const r={t:x,down:x,up:x,ping:x,jitter:x,lping:x,net:x,server:x,srvId:x};
+      localStorage.setItem('history', JSON.stringify([r, {t:Date.now(),down:3e7,up:1e7,ping:9,jitter:2,lping:20,net:'Wi-Fi',server:x}]));
+      localStorage.setItem('customURL', JSON.stringify(x)); localStorage.setItem('server', JSON.stringify(x));
+      localStorage.setItem('router', JSON.stringify({brand:x,model:x,hw:x,fw:x,enc:x,answers:{[x]:x}}));
+      localStorage.setItem('cmpCountry', JSON.stringify(x)); localStorage.setItem('unit', JSON.stringify(x)); localStorage.setItem('geo', JSON.stringify({lat:x,lon:x,src:x})) }""", XSS)
+    page.reload(); page.wait_for_timeout(600)
+    for v in ("history", "insights", "router", "live", "test"): goto(page, v)
+    page.click("#srvOpen"); page.wait_for_timeout(200); page.click("#srvClose")
+    page.goto(f"http://127.0.0.1:{port}/#/{XSS}"); page.wait_for_timeout(400)
+    probe = page.evaluate(PROBE)
+    check("A08 tampered saved data can't inject markup", probe["xss"] == 0 and probe["imgs"] == 0 and not probe["handlers"], json.dumps(probe)[:200])
+    check("A10 the app still starts with tampered saved data", not page.errors and page.is_visible("#go"), "; ".join(page.errors)[:200])
+    check("A01 unknown screen links fall back to the speed test", page.evaluate("!document.querySelector('.view-test').hidden"))
+    ctx.close()
+
+    # hostile typed input: help assistant, device lookup, subnet calculator, password check
+    ctx, page = new_page(browser, port, width=1280, height=900)
+    goto(page, "ask"); page.fill("#hQ", XSS[:190]); page.press("#hQ", "Enter")
+    goto(page, "tools")
+    page.click(".tile2[data-tool='mac']"); page.fill("#macIn", XSS); page.click("#macRun"); page.wait_for_timeout(400)
+    page.click(".tile2[data-tool='subnet']"); page.fill("#snIn", XSS)
+    page.click(".tile2[data-tool='pw']"); page.fill("#pwTest", XSS)
+    probe = page.evaluate(PROBE)
+    check("A05 typed input renders as text in every tool", probe["xss"] == 0 and probe["imgs"] == 0 and not probe["handlers"], json.dumps(probe)[:200])
+    ctx.close()
+
+    # self-hosted server (server/server.py)
+    def raw(method, path, headers=None, body=None):
+        c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+        c.putrequest(method, path, skip_accept_encoding=True)
+        for k, v in (headers or {}).items(): c.putheader(k, v)
+        c.endheaders()
+        if body: c.send(body)
+        r = c.getresponse(); data = r.read(); c.close(); return r, data
+    r, _ = raw("GET", "/")
+    h = {k.lower(): v for k, v in r.getheaders()}
+    check("A02 server sends security headers with the app",
+          all(k in h for k in ("content-security-policy", "x-content-type-options", "referrer-policy", "x-frame-options")) and "frame-ancestors 'none'" in h.get("content-security-policy", ""),
+          ", ".join(sorted(h)))
+    check("A02 server doesn't reveal its software version", "python" not in h.get("server", "").lower(), h.get("server", ""))
+    for path in ("/assets/3d/../../server/server.py", "/assets/3d/..%2f..%2fserver%2fserver.py", "/../index.html", "/oui.txt/../server/server.py", "//etc/passwd"):
+        r, data = raw("GET", path)
+        if r.status == 200 and b"BaseHTTPRequestHandler" in data:
+            check("A01 server refuses path traversal", False, path); break
+    else:
+        check("A01 server refuses path traversal", True)
+    r, _ = raw("POST", "/up", {"Content-Length": "abc"})
+    check("A10 malformed upload length gets 400, not a crash", r.status == 400, str(r.status))
+    r, _ = raw("POST", "/up", {"Content-Length": str(10**12)})
+    check("A06 oversized upload refused up front (413)", r.status == 413, str(r.status))
+    r, data = raw("GET", "/down?bytes=-5")
+    check("A10 negative download size handled", r.status in (200, 400) and len(data) == 0, f"{r.status} {len(data)}")
+    r, _ = raw("GET", "/down?bytes=1e99")
+    check("A10 non-integer download size gets 400", r.status == 400, str(r.status))
+    s = socket.create_connection(("127.0.0.1", port)); s.settimeout(40); t0 = time.time()
+    try: closed = s.recv(1) == b""
+    except OSError: closed = True
+    s.close()
+    check("A06 idle connections are closed (slow-client protection)", closed and time.time() - t0 < 35, f"{time.time()-t0:.0f}s")
+
 # ------------------------------------------------------------------ main
 def main():
     from playwright.sync_api import sync_playwright
     ap = argparse.ArgumentParser()
     ap.add_argument("--browser", action="append", choices=["chromium", "firefox", "webkit"])
     ap.add_argument("--chrome", help="path to a Chrome/Chromium binary (optional)")
-    ap.add_argument("--only", choices=["e2e", "wcag"])
+    ap.add_argument("--only", choices=["e2e", "wcag", "security"])
     a = ap.parse_args()
     port = free_port()
     srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "server", "server.py"), "--host", "127.0.0.1", "--port", str(port)],
@@ -404,7 +535,7 @@ def main():
                 except Exception as e:
                     print(f"\n== {name}: not installed, skipped ({str(e).splitlines()[0]})"); continue
                 print(f"\n== {name} {browser.version}")
-                for suite in (e2e, wcag):
+                for suite in (e2e, wcag, security):
                     if a.only and suite.__name__ != a.only: continue
                     try: suite(browser, port)
                     except Exception as e:

@@ -7,5 +7,4 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig({
   plugins: [react(), viteSingleFile({ removeViteModuleLoader: true })],
   build: { target: "es2020", assetsInlineLimit: 100000000, cssCodeSplit: false, reportCompressedSize: false },
-  server: { fs: { allow: [".."] } },
 });
