@@ -84,10 +84,22 @@ def new_page(browser, port, *, width=390, height=844, scheme="dark", mobile=Fals
     page.errors = []
     page.on("pageerror", lambda e: page.errors.append(str(e)))
     install_mocks(page, port)
+    if not csp:
+        # WebKit ignores bypass_csp for a page's own policy, so the harness serves its pages with the policy removed.
+        def strip(route):
+            r = route.fetch()
+            body = re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', "", r.text())
+            route.fulfill(response=r, body=body, headers={k: v for k, v in r.headers.items() if k.lower() not in ("content-security-policy", "content-length")})
+        page.route(re.compile(rf"^http://127\.0\.0\.1:{port}/(index\.html)?(\?.*)?$"), strip)
     page.goto(f"http://127.0.0.1:{port}/")
     page.evaluate("localStorage.clear(); localStorage.setItem('netPick', JSON.stringify('Wi-Fi')); localStorage.setItem('livePing','false')")
-    page.reload(); page.wait_for_timeout(500)
+    reload(page)
     return ctx, page
+
+def reload(page):
+    """Reload and count only the new page's errors. WebKit reports fetches cut off by the reload
+    ("… due to access control checks") as page errors of the page being left; those are the harness's doing."""
+    page.reload(); page.wait_for_timeout(500); page.errors.clear()
 
 def tap(page, sel):
     """Click like a person: bring the control into view first, then click it."""
@@ -138,7 +150,7 @@ def e2e(browser, port):
     check("browser Back returns to the previous screen", page.evaluate("!document.querySelector('.view-ask').hidden"))
     page.goto(f"http://127.0.0.1:{port}/#/history"); page.wait_for_timeout(400)
     check("a screen's link opens that screen", page.evaluate("!document.querySelector('.view-history').hidden"))
-    page.goto(f"http://127.0.0.1:{port}/"); page.wait_for_timeout(400)
+    page.goto(f"http://127.0.0.1:{port}/"); page.wait_for_timeout(400); page.errors.clear()  # errors of the page just left (see reload)
 
     use_own_server(page, port)
     check("own server selected", "Custom" in page.inner_text("#srvName"), page.inner_text("#srvName"))
@@ -414,7 +426,7 @@ def hostile(page, port):
 def security(browser, port):
     print("\n[security: OWASP Top 10:2025]")
     import urllib.request, http.client
-    ctx, page = new_page(browser, port, width=1280, height=900)
+    ctx, page = new_page(browser, port, width=1280, height=900, csp=True)
     csp = page.eval_on_selector("meta[http-equiv='Content-Security-Policy']", "m=>m.content") if page.locator("meta[http-equiv='Content-Security-Policy']").count() else ""
     script_src = (re.search(r"script-src ([^;]*)", csp) or [None, ""])[1]
     check("A02 Content-Security-Policy set in the page", bool(csp), csp[:80])
@@ -457,7 +469,7 @@ def security(browser, port):
       localStorage.setItem('customURL', JSON.stringify(x)); localStorage.setItem('server', JSON.stringify(x));
       localStorage.setItem('router', JSON.stringify({brand:x,model:x,hw:x,fw:x,enc:x,answers:{[x]:x}}));
       localStorage.setItem('cmpCountry', JSON.stringify(x)); localStorage.setItem('unit', JSON.stringify(x)); localStorage.setItem('geo', JSON.stringify({lat:x,lon:x,src:x})) }""", XSS)
-    page.reload(); page.wait_for_timeout(600)
+    reload(page); page.wait_for_timeout(100)
     for v in ("history", "insights", "router", "live", "test"): goto(page, v)
     page.click("#srvOpen"); page.wait_for_timeout(200); page.click("#srvClose")
     page.goto(f"http://127.0.0.1:{port}/#/{XSS}"); page.wait_for_timeout(400)

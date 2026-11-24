@@ -557,7 +557,7 @@ The suite starts `server/server.py` on localhost (it serves the app and acts as 
 | Layout | No sideways scroll at 320, 390, 768, 1024 and 1440 px in dark and light themes |
 | WCAG 2.2 AA | Contrast (text and gradient stops), names, roles and states, landmarks, skip link, headings, labelled graphics, live status, target size (24 px; 44 px on touch), keyboard reach, visible focus, no trap, reflow at 320 px / 200% text, text spacing, reduced motion, axe-core rules |
 
-Contrast is checked on every screen, every tool and the server sheet. `python tests/screens.py` regenerates the README screenshots from the build.
+Contrast is checked on every screen, every tool and the server sheet. The app's Content-Security-Policy would also block the harness's own helpers (Playwright polling, axe-core), so the harness serves its pages with the policy removed; the security suite loads the real page separately to prove the browser enforces it. `python tests/screens.py` regenerates the README screenshots from the build.
 
 GitHub Actions builds the React app, checks the committed `index.html` matches the source, then runs the whole suite in **Chromium, Firefox and WebKit** on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)).
 
