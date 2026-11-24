@@ -1,8 +1,10 @@
 # CleanSpeed — Speedtest without the bloat
 
-Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, trackers, accounts or bloatware**. One HTML file, runs in any modern browser, installs to the home screen like an app.
+Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, trackers, accounts or bloatware**. Built with React, shipped as one HTML file, runs in any modern browser, installs to the home screen like an app.
 
 **▶ Run it: https://jsankr.github.io/Speedtest/**
+
+<p><img src="docs/screenshots/00-desktop.png" alt="CleanSpeed on a laptop: the speed test bento with gauge, result tiles, latency, throughput, grade and router check"></p>
 
 <p>
 <img src="docs/screenshots/01-home.png" width="200" alt="Home screen with the GO button">
@@ -48,7 +50,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | **Router security** | Scores your router settings, looks up known vulnerabilities for your exact model and firmware in the U.S. National Vulnerability Database (NVD), and gives step-by-step fixes — **manufacturer-approved fixes only**. |
 | **Help assistant** | "Ask CleanSpeed": a built-in assistant with a knowledge base about the app. Ask in plain words, or press *Diagnose my last test* to check your last saved result for a 100 Mbps cap, bufferbloat, high ping or jitter, and lopsided upload. Runs entirely in the page; nothing is sent. |
 | **Toolkit** | Ping & outage monitor, DNS benchmark, My IP & ISP, data/time calculator, Wi-Fi password generator & strength check, device (MAC) lookup, subnet calculator, global compare. |
-| **App** | Single HTML file, "glass instrument" design (see [DESIGN.md](DESIGN.md)) that fits phones, tablets and laptops, dark and light themes, reduced-motion support, installable, no build step, no third-party scripts, no analytics. |
+| **App** | React app built into a single HTML file. "Aurora Bento" design (see [DESIGN.md](DESIGN.md)): sidebar on laptops, floating tab bar on phones and tablets, one screen per area, light, dark or match-device theme, reduced-motion support, installable, no third-party scripts, no analytics. |
 
 ---
 
@@ -59,11 +61,12 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 | Ready | Testing | Done |
 |:--:|:--:|:--:|
 | <img src="docs/screenshots/01-home.png" width="250"> | <img src="docs/screenshots/02-test-running.png" width="250"> | <img src="docs/screenshots/03-results.png" width="250"> |
-| Tap **Go**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **Retest** replaces GO. The chart overlays download (cyan) and upload (amber). |
+| Tap **Go**. The tiles show the most recent saved result. | The gauge and chart update live. **Stop test** cancels instantly. | **Retest** replaces GO. The chart overlays download (blue) and upload (coral). |
 
 - **Steps** at the top light up in order: Ping → Download → Upload.
 - **Network** — pick Wi-Fi, Mobile or Ethernet. Browsers on iPhone don't reveal the connection type, so CleanSpeed asks once and remembers. Where the browser does report it (some Android/desktop Chrome builds), it's detected automatically.
-- **Router security check** sits directly under GO (see [section 7](#7-router-security-check)).
+- **Router security check** has its own tile on the home screen and its own screen (see [section 7](#7-router-security-check)).
+- **Screens:** Speed test, Live map, Packet collider, Insights, History, Router check, Toolkit, Ask CleanSpeed and Settings. A test keeps running while you switch between them.
 - **Copy result** copies a one-line summary, e.g. `Download 35.19 MB/s · Upload 12.44 MB/s · Ping … · Server Frankfurt, Germany (Clouvider)` (sample).
 - **Ping / Jitter / Loaded**: idle round-trip time, its variation, and round-trip time while the download is running.
 
@@ -73,7 +76,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 |:--:|:--:|
 | <img src="docs/screenshots/04-live-map-download.png" width="300"> | <img src="docs/screenshots/05-live-map-upload.png" width="300"> |
 
-- **Map** — a stylised dot-matrix world, zoomed to fit the route. Every moving dot is **real data**: a dot leaves only when that much data has actually been received (download, **server → you**, cyan) or sent (upload, **you → server**, amber), counted from the same byte counters as the result. The legend under the map says how much each dot stands for (16 KB to 256 MB, so there are never more than about 50 a second).
+- **Map** — a stylised dot-matrix world, zoomed to fit the route. Every moving dot is **real data**: a dot leaves only when that much data has actually been received (download, **server → you**, blue) or sent (upload, **you → server**, coral), counted from the same byte counters as the result. The legend under the map says how much each dot stands for (16 KB to 256 MB, so there are never more than about 50 a second).
 - **Timing** — each dot's trip lasts the measured one-way delay (ping ÷ 2) shown **20× slower**, so the eye can follow it; a ring flashes when it lands. Pings (green) go out and come back over their measured round-trip time.
 - **Live ping** — after a test, while the map is on screen and the page is in front, the app pings the last server every 2 seconds and animates each one. Untick **Live ping** to stop; the setting is remembered.
 - **Cloudflare** — the app asks Cloudflare which data centre answered (its `/meta` and `/cdn-cgi/trace` endpoints) and draws the route to that city. If you and that data centre are in the same area, the server is drawn a short way off and labelled *near you*.
@@ -91,8 +94,8 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 The same test drawn as a particle collider, modelled on the real structure of CERN's CMS detector sitting on the LHC ring. The detector, the GO sphere and the dial's metal bezel are **rendered in Blender** (Cycles path tracing, physical materials: painted iron, brushed aluminium, polished steel, brass, lead-tungstate crystal glass) and shipped as small WebP plates in `assets/3d/`. The live data — bunches, tracks, hits, probes, labels — is drawn on top in the browser, projected through the exact Blender camera (`assets/3d/scene.json`), so packets ride the rendered beam pipe. If the plates are missing (for example the single-file download), the app falls back to its own canvas-drawn 3D model, so nothing breaks.
 
 - **The model, from the beam outwards:** silicon tracker, crystal electromagnetic calorimeter (teal), brass hadron calorimeter, the superconducting solenoid (silver) and the red iron return yoke with grey muon chambers, built as a 12-sided barrel of five wheels plus two endcaps. The wedge facing you is cut away, like an event display, so the collision point is visible. Blue dipole magnets mark the ring; the ring is the route to the test server and the collision point is your device.
-- **Download:** for each chunk really received (the note under the picture gives the size), two cyan bunches race in along the beam pipe from both sides and collide in the centre. Tracks curl in the magnetic field and light up where they stop: electrons in the crystal calorimeter, hadrons in the brass one.
-- **Upload:** an amber bunch leaves the centre along the pipe for each chunk really sent.
+- **Download:** for each chunk really received (the note under the picture gives the size), two blue bunches race in along the beam pipe from both sides and collide in the centre. Tracks curl in the magnetic field and light up where they stop: electrons in the crystal calorimeter, hadrons in the brass one.
+- **Upload:** a coral bunch leaves the centre along the pipe for each chunk really sent.
 - **Ping:** green probes run along the pipe and back over each measured round trip (slowed 20×), and the time flashes in the centre.
 - **Rendering pipeline:** `blender/render_plates.py` builds the scene in code and `.github/workflows/render.yml` renders it with Blender 4.2 LTS on GitHub Actions whenever the script changes, then commits the plates. Nine teardown frames are rendered and cross-faded as the detector opens. About 1 MB in total, loaded after the page is usable.
 - **Teardown:** when the test ends, the detector opens the way CMS is opened for maintenance — endcaps slide out along the beam and the barrel wheels part — and each part carries a result: ping and jitter, download, upload. The last saved result is shown this way when the page opens.
@@ -332,11 +335,11 @@ Open **https://jsankr.github.io/Speedtest/** in Safari, Chrome, Edge or Firefox.
 
 ### Host your own copy
 
-The whole app is `index.html`, plus `oui.txt` for offline device lookup and `assets/3d/` for the rendered 3D plates (optional: without them the app draws its own).
+The whole app is the built `index.html` (React and all styles and fonts inlined), plus `oui.txt` for offline device lookup and `assets/3d/` for the rendered 3D plates (optional: without them the app draws its own).
 
 1. Fork or copy this repository.
 2. **Settings → Pages → Deploy from a branch → `main` / root.**
-3. Replace `index.html` to update; Pages republishes automatically in about a minute. No settings change is needed per update.
+3. To change the app, edit the source in `app/`, run `cd app && npm ci && npm run build` (writes `index.html` at the root) and commit both. CI fails if the two don't match. Pages republishes automatically in about a minute.
 
 Any static host works (Netlify, Cloudflare Pages, nginx, or opening the file directly — offline device lookup needs `oui.txt` beside it and a web server, since browsers block reading local files).
 
@@ -393,8 +396,8 @@ Open `http://<server-ip>:8080/` to run CleanSpeed against it directly — good f
 
 ```mermaid
 flowchart LR
-    subgraph Browser["index.html (single file)"]
-        UI[Instrument UI · gauge · charts · map canvas]
+    subgraph Browser["index.html (React, built into one file)"]
+        UI[React shell · screens · navigation · theme]
         ENG[Test engine<br/>download · upload · ping · ndt7]
         RT[Router check<br/>NVD matcher · fix builder]
         TK[Toolkit<br/>monitor · DNS · IP · MAC · subnet · calc · password]
@@ -414,14 +417,21 @@ flowchart LR
 
 ```
 .
-├── index.html            # the whole app: HTML, CSS and JavaScript, no dependencies
+├── index.html            # the built app (generated by app/, committed so Pages serves it)
+├── app/                  # React source (Vite)
+│   ├── src/App.jsx       # shell: sidebar, tab bar, routing (#/test, #/live, …), theme, server sheet
+│   ├── src/views/        # one component per screen; element ids are the engine's contract
+│   ├── src/engine/       # measurement, router check, toolkit, map, collider, help assistant
+│   ├── src/styles/       # fonts.css (bundled faces), base.css (components), theme.css (tokens, shell, bento)
+│   └── scripts/place.mjs # copies the single-file build to the repository root
 ├── oui.txt               # IEEE MAC maker registry (offline device lookup)
 ├── oui-LICENSE.txt       # licence for oui.txt
-├── assets/3d/            # Blender-rendered plates (collider teardown frames, GO sphere, bezel) + scene.json camera
+├── assets/3d/            # Blender-rendered plates (collider teardown frames; the GO sphere and bezel plates are no longer used) + scene.json camera
 ├── blender/render_plates.py  # builds and renders the 3D scene (Blender 4.2 LTS, Cycles)
 ├── fonts/                # Instrument Sans, Instrument Serif, Geist Mono (Latin subset, WOFF) + OFL licences
 ├── DESIGN.md             # design system: tokens, components, motion, accessibility
 ├── tests/run.py          # end-to-end + WCAG 2.2 AA tests (Chromium, Firefox, WebKit)
+├── tests/screens.py      # regenerates docs/screenshots from the build (sample data)
 ├── .github/workflows/    # CI: tests on every push; render.yml re-renders the 3D plates
 ├── docs/TEARDOWN.md      # design, usability and accessibility audit
 ├── server/
@@ -429,7 +439,9 @@ flowchart LR
 └── docs/screenshots/     # images used in this README (sample data)
 ```
 
-- No framework, no build step, no package manager. Charts, gauge and map are drawn with Canvas 2D; the 3D objects are pre-rendered in Blender and live data is overlaid on them.
+- React 18 renders the screens; Vite and `vite-plugin-singlefile` inline everything (React, CSS, fonts) into one `index.html`, so the app still deploys and installs as a single file and makes no requests for code. The only runtime dependencies are `react` and `react-dom`.
+- React draws each screen's markup once; the engine (`app/src/engine/engine.js`, the proven measurement and tool code) wires behaviour to the same element ids. Every screen stays mounted and is hidden when not in view, so a test keeps running while you look at the map, the collider or your history.
+- Charts, gauge and map are drawn with Canvas 2D; the collider's 3D plates are pre-rendered in Blender and live data is overlaid on them.
 - Icons and the web-app manifest are embedded as data URIs.
 - Tests cancel cleanly through an `AbortController`; every network request has a timeout.
 
@@ -439,12 +451,12 @@ flowchart LR
 
 The look and behaviour are written down in **[DESIGN.md](DESIGN.md)**, so every change stays consistent.
 
-- **Glass instrument:** frosted-glass panels over still cyan and amber light, engraved wells for readouts and inputs, and lit 3D objects — the GO sphere, a glass dial with a bead on the needle, colour-coded tool chips — all lit from the top-left. The GO sphere, dial bezel and collider are path-traced in Blender. No violet.
-- **Typography:** Instrument Serif for section titles, Instrument Sans for reading text, labels and buttons (sentence case), Geist Mono only for numbers, units and addresses. The fonts are bundled, so the page makes no font requests.
-- **One meaning per colour:** cyan is always download, amber is always upload; green / yellow / red only for pass / caution / fail, and always with words.
-- **One button family:** a cyan glass object for the main action, raised glass for the rest, tinted red glass for Stop.
-- **Motion with a job:** one entrance on load, hover lift and press on controls (140–220 ms), live data. No pulsing dots, looping rings, tilt or fade-in-on-scroll. Animation loops stop when nothing changes. With *Reduce motion* turned on in your system settings, transitions are cut and the map starts without animation.
-- **Fits every screen:** one column on phones (320 px and up), stacked panels on tablets, two-column speed test and wider spacing on laptops and desktops; the throughput chart stretches to fill the space.
+- **Aurora Bento:** frosted-glass panels over soft blue, pink and mint light on a warm cream ground (deep ink in dark mode), arranged as a bento grid of tiles. Solid colour tiles carry the results: ink for download, coral for upload, sky for latency, lilac for responsiveness, mint for your place in the world.
+- **Typography:** Instrument Serif for screen titles and the big result numbers, Instrument Sans for reading text, labels and buttons (sentence case), Geist Mono for live numbers, units and addresses. The fonts are bundled, so the page makes no font requests.
+- **One meaning per colour:** blue is always download, coral is always upload; green / yellow / red only for pass / caution / fail, and always with words. The lime sphere is the one primary action (GO / Retest).
+- **Navigation:** a glass sidebar on laptops; a floating black tab bar (Test, Live, History, Router, More) on phones and tablets. The current screen is a solid pill. Every screen has its own link (`#/history`), and Back works.
+- **Motion with a job:** a short slide when a screen opens, hover lift and press on controls (140–220 ms), live data. Animation loops stop when nothing changes. With *Reduce motion* turned on, transitions are cut and the map starts without animation.
+- **Fits every screen:** results first on phones (320 px and up), two-column bento on tablets, three-column bento with sidebar on laptops and desktops.
 - **Browsers:** Chrome / Edge 111+, Safari 16.2+ (Mac, iPhone, iPad), Firefox 113+. Browsers without backdrop blur get solid panels.
 - **Accessibility (WCAG 2.2 AA):** text contrast at least 4.5:1 in both themes, visible focus outlines, touch targets at least 44 px, no sideways scrolling at 320 px.
 
@@ -473,13 +485,16 @@ The suite starts `server/server.py` on localhost (it serves the app and acts as 
 
 | Area | Checks |
 |---|---|
+| Navigation | Every screen opens from the sidebar or tab bar and shows only itself, Back returns to the previous screen, screen links open directly |
 | Speed test | Own server selected, download and upload measured, Stop within 3 s, Retest, history saved, unit switch, CSV export, page and chart height stay sane after a test |
 | Router check | Score shown, exploited record flagged, fix links only on the maker's domain, third-party exploit write-ups never linked, no beta firmware, other firmware lines not marked as affecting |
 | Toolkit | Subnet (carrier-grade NAT), data calculator, password generator, device lookup from the bundled registry (incl. private and invalid addresses), IP lookup, DNS benchmark |
 | Layout | No sideways scroll at 320, 390, 768, 1024 and 1440 px in dark and light themes |
 | WCAG 2.2 AA | Contrast (text and gradient stops), names, roles and states, landmarks, skip link, headings, labelled graphics, live status, target size (24 px; 44 px on touch), keyboard reach, visible focus, no trap, reflow at 320 px / 200% text, text spacing, reduced motion, axe-core rules |
 
-GitHub Actions runs the whole suite in **Chromium, Firefox and WebKit** on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)).
+Contrast is checked on every screen, every tool and the server sheet. `python tests/screens.py` regenerates the README screenshots from the build.
+
+GitHub Actions builds the React app, checks the committed `index.html` matches the source, then runs the whole suite in **Chromium, Firefox and WebKit** on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)).
 
 ## Data sources and licences
 
@@ -501,7 +516,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | Help assistant: on-device knowledge base (about 40 entries with sources), retrieval, one-press diagnosis of the last test, no network; tests and screenshot added |
+| *latest* | **CleanSpeed 2:** rebuilt in React (Vite, single-file build) with the "Aurora Bento" design: sidebar and floating tab bar, one screen per area with its own link, bento result tiles, gradient ring gauge, lime GO sphere, light/dark/auto theme switch, results-first phone layout; every module kept; tests updated for screen navigation and run on every screen; screenshots regenerated |
+| `d6b89e7` | Help assistant: on-device knowledge base (about 40 entries with sources), retrieval, one-press diagnosis of the last test, no network; tests and screenshot added |
 | `da345f9` | Real 3D rendering with Blender: the collider (9 teardown frames), GO sphere (light and dark) and dial bezel are path-traced in Cycles on GitHub Actions; live packets, tracks and labels are overlaid through the Blender camera; collision tracks spray in 3D; teardown labels never overlap |
 | `e0e1858` | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
 | `f5985d7` | Packet collider: 3D view of ping, download and upload driven by the real byte counters, with a teardown of the result; tests and screenshots updated |

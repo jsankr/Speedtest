@@ -94,12 +94,27 @@ def tap(page, sel):
     page.wait_for_timeout(100)
     loc.click()
 
+VIEWS = ["test", "live", "collider", "insights", "history", "router", "tools", "ask", "settings"]
+RUNNING = "document.body.classList.contains('testing')"
+
+def goto(page, view):
+    """Open a screen the way a person does: the sidebar on wide screens, the tab bar (or its More sheet) on phones."""
+    link = page.locator(f"[data-go='{view}']:visible")
+    if link.count() == 0:
+        page.click("[data-go='more']")
+        link = page.locator(f"[data-go='{view}']:visible")
+    link.first.click()
+    page.wait_for_function(f"document.getElementById('h-{view}') && document.getElementById('h-{view}').offsetParent", timeout=3000)
+
 def use_own_server(page, port, secs=4):
+    goto(page, "test")
     page.click("#srvOpen")
     page.fill("#custom", f"http://127.0.0.1:{port}")
     page.click("#customUse"); page.click("#srvClose")
+    goto(page, "settings")
     page.fill("#dur", str(secs)); page.fill("#streams", "2")
     page.dispatch_event("#dur", "change"); page.dispatch_event("#streams", "change")
+    goto(page, "test")
 
 # ------------------------------------------------------------------ end-to-end
 def e2e(browser, port):
@@ -107,22 +122,28 @@ def e2e(browser, port):
     ctx, page = new_page(browser, port, width=1280, height=900)
     check("loads without script errors", not page.errors, "; ".join(page.errors))
     check("title is CleanSpeed", page.title() == "CleanSpeed", page.title())
-    sc = page.evaluate("""()=>{ window.scrollTo(0, 3000); const r=document.getElementById('unitB').getBoundingClientRect();
-        const se=document.scrollingElement; const out={y:Math.round(scrollY), sh:se.scrollHeight, ch:se.clientHeight, top:Math.round(r.top), h:Math.round(r.height),
-        bodyOv:getComputedStyle(document.body).overflowY, htmlOv:getComputedStyle(document.documentElement).overflowY}; window.scrollTo(0,0); return out }""")
-    check("page scrolls to lower sections", sc["y"] > 0, json.dumps(sc))
-    check("page height is sane (no runaway growth)", sc["sh"] < 12000, json.dumps(sc))
-    page.locator("#unitB").scroll_into_view_if_needed()
-    vis = page.evaluate("(()=>{const r=document.getElementById('unitB').getBoundingClientRect(); return [Math.round(r.top), innerHeight, Math.round(scrollY)]})()")
-    check("controls far down the page can be scrolled into view", 0 <= vis[0] < vis[1], str(vis))
-    page.evaluate("window.scrollTo(0,0)")
+    # every screen opens from the navigation, shows only itself, and keeps a sane height
+    seen, tall = [], []
+    for v in VIEWS:
+        goto(page, v)
+        shown = page.evaluate("[...document.querySelectorAll('.view')].filter(e=>!e.hidden).map(e=>e.className)")
+        seen.append(len(shown) == 1 and v in shown[0])
+        h = page.evaluate("document.scrollingElement.scrollHeight")
+        if h >= 12000: tall.append(f"{v}:{h}")
+    check("every screen opens from the navigation", all(seen), str(seen))
+    check("page height is sane on every screen (no runaway growth)", not tall, ", ".join(tall))
+    page.go_back(); page.wait_for_timeout(200)
+    check("browser Back returns to the previous screen", page.evaluate("!document.querySelector('.view-ask').hidden"))
+    page.goto(f"http://127.0.0.1:{port}/#/history"); page.wait_for_timeout(400)
+    check("a screen's link opens that screen", page.evaluate("!document.querySelector('.view-history').hidden"))
+    page.goto(f"http://127.0.0.1:{port}/"); page.wait_for_timeout(400)
 
     use_own_server(page, port)
     check("own server selected", "Custom" in page.inner_text("#srvName"), page.inner_text("#srvName"))
     page.click("#go")
     page.wait_for_function("document.getElementById('stopTest') && !document.getElementById('stopTest').hidden", timeout=5000)
     check("Stop button shows while testing", page.is_visible("#stopTest"))
-    page.wait_for_function("!running", timeout=60000)
+    page.wait_for_function("!"+RUNNING, timeout=60000)
     dl, ul = page.inner_text("#dl"), page.inner_text("#ul")
     num = lambda t: float(re.sub(r"[^\d.]", "", t) or 0)
     check("download measured", num(dl) > 0, dl)
@@ -137,13 +158,14 @@ def e2e(browser, port):
     check("throughput chart keeps a sensible height", 60 <= sp <= 700, f"{sp}px")
     check("Copy result enabled", page.is_enabled("#copyRes"))
 
-    tap(page, "#unitb button[data-u='Mb']")
+    goto(page, "settings"); tap(page, "#unitb button[data-u='Mb']"); goto(page, "test")
     check("unit switch updates labels", "bps" in page.inner_text(".tile.d .unit").lower(), page.inner_text(".tile.d .unit"))
 
     page.click("#go"); page.wait_for_timeout(1200); t0 = time.time(); page.click("#stopTest")
-    page.wait_for_function("!running", timeout=5000)
+    page.wait_for_function("!"+RUNNING, timeout=5000)
     check("Stop ends a running test within 3 s", time.time() - t0 < 3, f"{time.time()-t0:.1f}s")
 
+    goto(page, "history")
     with page.expect_download(timeout=5000) as dl_info:
         tap(page, "#exp")
     path = dl_info.value.path(); head = open(path, encoding="utf-8-sig").readline().strip()
@@ -154,6 +176,7 @@ def e2e(browser, port):
     # router check (fictional ExampleNet XR-1000)
     ctx, page = new_page(browser, port, width=1280, height=900)
     page.click("#rtOpen")
+    check("router check opens its own screen", page.is_visible("#rtBrand") and page.is_hidden("#go"))
     page.fill("#rtBrand", "ExampleNet"); page.fill("#rtModel", "XR-1000"); page.fill("#rtHw", "V2"); page.fill("#rtFw", "2.1.0_1043")
     page.select_option("#rtEnc", "wpa2")
     for q, v in [("pw", "yes"), ("remote", "yes"), ("wps", "no"), ("fw", "yes"), ("eol", "yes"), ("upnp", "no"), ("pf", "yes"), ("guest", "no"), ("devices", "unsure"), ("ssid", "yes")]:
@@ -174,6 +197,7 @@ def e2e(browser, port):
 
     # toolkit
     ctx, page = new_page(browser, port, width=390, height=844)
+    goto(page, "tools")
     def tool(t): tap(page, f".tile2[data-tool='{t}']")
     tool("subnet"); page.fill("#snIn", "100.72.10.5/10"); page.wait_for_timeout(150)
     check("subnet calculator spots carrier-grade NAT", "carrier-grade" in page.inner_text("#snOut").lower())
@@ -198,6 +222,7 @@ def e2e(browser, port):
     ctx, page = new_page(browser, port, width=390, height=844)
     page.goto(f"http://127.0.0.1:{port}/")
     page.evaluate("localStorage.setItem('history',JSON.stringify([{down:93e6,up:20e6,ping:20,jitter:4,lping:180,t:Date.now()}]))")
+    goto(page, "ask")
     def ask(q):
         page.fill("#hQ", q); page.press("#hQ", "Enter")
         return page.eval_on_selector_all("#hLog .hm.bot", "e=>e[e.length-1].innerText")
@@ -261,10 +286,20 @@ def wcag(browser, port):
     print("\n[wcag 2.2 AA]")
     for scheme in ("dark", "light"):
         ctx, page = new_page(browser, port, width=1280, height=900, scheme=scheme)
-        # open everything that can be opened so hidden panels are checked too
-        page.click("#rtOpen"); page.click("#srvOpen")
+        # every screen, with everything that can be opened open, then the server sheet
+        bad = []
         page.evaluate("document.querySelectorAll('details').forEach(d=>d.open=true)")
-        bad = page.evaluate(CONTRAST_JS)
+        for v in VIEWS:
+            goto(page, v)
+            if v == "tools":
+                for t in ("ping", "dns", "ip", "calc", "pw", "mac", "subnet"):
+                    page.click(f".tile2[data-tool='{t}']"); bad += [f"[{v}/{t}] {x}" for x in page.evaluate(CONTRAST_JS)]
+            else:
+                bad += [f"[{v}] {x}" for x in page.evaluate(CONTRAST_JS)]
+        goto(page, "test"); page.click("#srvOpen")
+        bad += ["[server sheet] " + x for x in page.evaluate(CONTRAST_JS)]
+        page.click("#srvClose")
+        bad = list(dict.fromkeys(bad))
         check(f"1.4.3 text contrast ≥ 4.5:1 / 3:1 ({scheme})", not bad, "; ".join(bad[:8]))
         if scheme == "dark":
             check("3.1.1 page language set", page.get_attribute("html", "lang") == "en")

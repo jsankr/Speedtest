@@ -1,0 +1,6 @@
+@font-face{font-family:"Instrument Sans";src:url(../../fonts/InstrumentSans.woff) format("woff");font-weight:400 700}
+@font-face{font-family:"Instrument Serif";src:url(../../fonts/InstrumentSerif.woff) format("woff")}
+@font-face{font-family:"Instrument Serif";font-style:italic;src:url(../../fonts/InstrumentSerif-Italic.woff) format("woff")}
+@font-face{font-family:"Geist Mono";src:url(../../fonts/GeistMono.woff) format("woff");font-weight:100 900}
+*{box-sizing:border-box;margin:0;padding:0}
+svg{display:block}

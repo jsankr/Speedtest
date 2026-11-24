@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Concept A · Aurora</title>
+<link rel="stylesheet" href="_fonts.css">
+<style>
+:root{--ink:#0b1220;--muted:#5b6478;--card:rgba(255,255,255,.62);--line:rgba(255,255,255,.75);--down:#2f6bff;--up:#ff5a8a;--good:#12b76a;--shadow:0 1px 0 rgba(255,255,255,.9) inset,0 20px 50px -20px rgba(30,40,90,.25)}
+body{font-family:"Instrument Sans",system-ui,sans-serif;color:var(--ink);min-height:100vh;background:#eef1f8;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:-1;background:
+ radial-gradient(40% 50% at 12% 10%,#c8d8ff 0,transparent 70%),
+ radial-gradient(35% 45% at 88% 18%,#ffd3e2 0,transparent 70%),
+ radial-gradient(45% 50% at 70% 95%,#c9f2e4 0,transparent 70%),
+ radial-gradient(30% 40% at 20% 90%,#e7dcff 0,transparent 70%),#f3f5fb}
+.app{display:grid;grid-template-columns:248px 1fr;gap:20px;padding:20px;max-width:1440px;margin:auto}
+.card{background:var(--card);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
+aside{padding:22px 14px;position:sticky;top:20px;height:calc(100vh - 40px);display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px;font-weight:650;font-size:18px;letter-spacing:-.02em}
+.logo{width:34px;height:34px;border-radius:11px;background:conic-gradient(from 210deg,#2f6bff,#7b5cff,#ff5a8a,#ffb057,#2f6bff);box-shadow:0 6px 16px -6px #2f6bff}
+nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:500}
+nav a.on{background:#fff;color:var(--ink);box-shadow:0 4px 14px -6px rgba(30,40,90,.25)}
+nav a i{width:20px;height:20px;border-radius:7px;display:inline-block;background:currentColor;opacity:.18}
+nav a.on i{opacity:1;background:linear-gradient(135deg,#2f6bff,#7b5cff)}
+.navh{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:16px 12px 6px}
+.side-foot{margin-top:auto;padding:14px;border-radius:18px;background:rgba(255,255,255,.7);font-size:13px;color:var(--muted)}
+.side-foot b{color:var(--ink);display:block;font-size:14px}
+main{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-content:start}
+.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:4px 6px}
+.top h1{font-size:30px;font-weight:650;letter-spacing:-.03em}
+.top p{color:var(--muted);font-size:14px;margin-top:2px}
+.pills{display:flex;gap:8px}
+.pill{padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--line);font-size:13.5px;font-weight:550;display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 4px rgba(18,183,106,.15)}
+.hero{padding:28px;display:flex;flex-direction:column;align-items:center;grid-row:span 2}
+.seg{display:flex;background:rgba(15,25,60,.06);border-radius:999px;padding:4px;gap:2px}
+.seg span{padding:7px 16px;border-radius:999px;font-size:13.5px;font-weight:550;color:var(--muted)}
+.seg span.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px -2px rgba(30,40,90,.2)}
+.gauge{position:relative;width:min(380px,82vw);aspect-ratio:1;margin:22px 0 8px}
+.gauge .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.big{font-size:76px;font-weight:600;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.unit{color:var(--muted);font-size:15px;margin-top:6px}
+.phase{margin-top:14px;font-size:12.5px;font-weight:600;color:var(--down);background:rgba(47,107,255,.1);padding:5px 12px;border-radius:999px}
+.go{margin-top:12px;padding:15px 44px;border:0;border-radius:999px;font:600 16px "Instrument Sans";color:#fff;background:linear-gradient(135deg,#2f6bff,#7b5cff);box-shadow:0 12px 28px -10px #5a5cff,0 1px 0 rgba(255,255,255,.4) inset}
+.meta{display:flex;gap:18px;margin-top:18px;color:var(--muted);font-size:13px}
+.meta b{color:var(--ink);font-weight:600}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px}
+.kpi{padding:18px;border-radius:22px;background:rgba(255,255,255,.75)}
+.kpi small{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px;font-weight:550}
+.kpi small:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+.kpi b{display:block;font-size:34px;font-weight:600;letter-spacing:-.03em;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi b em{font-style:normal;font-size:14px;color:var(--muted);font-weight:500;margin-left:4px}
+.kpi.mini b{font-size:24px}
+.chart{padding:20px 22px}
+.h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.h h3{font-size:16px;font-weight:650;letter-spacing:-.01em}.h span{font-size:12.5px;color:var(--muted)}
+.tools{grid-column:1/-1;padding:20px 22px}
+.tgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.tool{padding:16px;border-radius:20px;background:rgba(255,255,255,.75);font-size:14px;font-weight:600}
+.tool i{display:block;width:38px;height:38px;border-radius:12px;margin-bottom:12px;background:var(--g)}
+.tool small{display:block;font-weight:400;color:var(--muted);font-size:12.5px;margin-top:3px}
+.tabbar{display:none}
+@media(max-width:900px){
+ .app{grid-template-columns:1fr;padding:14px 14px 100px;gap:14px}
+ aside{display:none} main{grid-template-columns:1fr;gap:14px}
+ .top h1{font-size:26px}.pills .pill:not(:first-child){display:none}
+ .hero{padding:22px 16px}.big{font-size:64px}
+ .tgrid{grid-template-columns:repeat(2,1fr)}
+ .tabbar{display:flex;background:rgba(255,255,255,.88);position:fixed;left:14px;right:14px;bottom:16px;justify-content:space-around;padding:10px 6px;border-radius:26px}
+ .tabbar a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted);text-decoration:none;font-weight:550}
+ .tabbar a i{width:24px;height:24px;border-radius:8px;background:currentColor;opacity:.2}
+ .tabbar a.on{color:var(--down)}.tabbar a.on i{opacity:1;background:linear-gradient(135deg,#2f6bff,#7b5cff)}
+}
+</style></head><body><div class="bg"></div>
+<div class="app">
+<aside class="card">
+ <div class="brand"><span class="logo"></span>CleanSpeed</div>
+ <nav>
+  <a class="on" href="#"><i></i>Speed test</a><a href="#"><i></i>Live map</a><a href="#"><i></i>Packet collider</a><a href="#"><i></i>Insights</a><a href="#"><i></i>History</a>
+  <div class="navh">Security & tools</div>
+  <a href="#"><i></i>Router check</a><a href="#"><i></i>Toolkit</a><a href="#"><i></i>Ask CleanSpeed</a><a href="#"><i></i>Settings</a>
+ </nav>
+ <div class="side-foot"><b>No ads. No trackers.</b>Everything stays on this device.</div>
+</aside>
+<main>
+ <div class="top"><div><h1>Speed test</h1><p>Frankfurt, DE · Clouvider · 12 ms away</p></div>
+  <div class="pills"><span class="pill"><span class="dot"></span>Wi-Fi</span><span class="pill">Change server</span><span class="pill">MB/s</span></div></div>
+ <section class="card hero">
+  <div class="seg"><span>Ping</span><span class="on">Download</span><span>Upload</span></div>
+  <div class="gauge">
+   <svg viewBox="0 0 200 200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2f6bff"/><stop offset=".55" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5a8a"/></linearGradient></defs>
+    <circle cx="100" cy="100" r="84" fill="none" stroke="rgba(15,25,60,.07)" stroke-width="14" stroke-linecap="round" stroke-dasharray="395.8 527.8" transform="rotate(135 100 100)"/>
+    <circle cx="100" cy="100" r="84" fill="none" stroke="url(#g)" stroke-width="14" stroke-linecap="round" stroke-dasharray="262 527.8" transform="rotate(135 100 100)"/>
+    <circle cx="100" cy="100" r="66" fill="rgba(255,255,255,.55)"/></svg>
+   <div class="c"><div class="big">36.49</div><div class="unit">MB/s download</div><div class="phase">● Measuring download · 62%</div></div>
+  </div>
+  <button class="go">Stop test</button>
+  <div class="meta"><span>Ping <b>9.1 ms</b></span><span>Jitter <b>2.9 ms</b></span><span>Loaded <b>26.6 ms</b></span></div>
+ </section>
+ <section class="card kpis">
+  <div class="kpi" style="--c:var(--down)"><small>Download</small><b>36.49<em>MB/s</em></b></div>
+  <div class="kpi" style="--c:var(--up)"><small>Upload</small><b>11.33<em>MB/s</em></b></div>
+  <div class="kpi mini" style="--c:#12b76a"><small>Responsiveness</small><b>A+<em>grade</em></b></div>
+  <div class="kpi mini" style="--c:#ffb057"><small>World rank</small><b>Top 18<em>%</em></b></div>
+ </section>
+ <section class="card chart">
+  <div class="h"><h3>Live throughput</h3><span>last 14 s</span></div>
+  <svg viewBox="0 0 400 130" width="100%"><defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f6bff" stop-opacity=".35"/><stop offset="1" stop-color="#2f6bff" stop-opacity="0"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a8a" stop-opacity=".3"/><stop offset="1" stop-color="#ff5a8a" stop-opacity="0"/></linearGradient></defs>
+   <path d="M0 120 C30 90 50 40 90 38 S150 30 190 34 260 26 300 30 360 24 400 28 V130 H0Z" fill="url(#a)"/>
+   <path d="M0 120 C30 90 50 40 90 38 S150 30 190 34 260 26 300 30 360 24 400 28" fill="none" stroke="#2f6bff" stroke-width="2.5"/>
+   <path d="M0 125 C40 110 70 92 120 90 S200 86 250 88 330 84 400 86 V130 H0Z" fill="url(#b)"/>
+   <path d="M0 125 C40 110 70 92 120 90 S200 86 250 88 330 84 400 86" fill="none" stroke="#ff5a8a" stroke-width="2.5"/></svg>
+ </section>
+ <section class="card tools">
+  <div class="h"><h3>Toolkit</h3><span>8 tools · all on-device</span></div>
+  <div class="tgrid">
+   <div class="tool" style="--g:linear-gradient(135deg,#12b76a,#5ee0a8)"><i></i>Router check<small>Score & CVEs</small></div>
+   <div class="tool" style="--g:linear-gradient(135deg,#ffb057,#ff7a45)"><i></i>Ping monitor<small>Outages live</small></div>
+   <div class="tool" style="--g:linear-gradient(135deg,#2f6bff,#6aa2ff)"><i></i>DNS benchmark<small>Fastest resolver</small></div>
+   <div class="tool" style="--g:linear-gradient(135deg,#7b5cff,#b9a6ff)"><i></i>My IP & ISP<small>Who sees you</small></div>
+   <div class="tool" style="--g:linear-gradient(135deg,#ff5a8a,#ffa3be)"><i></i>Wi-Fi password<small>Generate & check</small></div>
+  </div>
+ </section>
+</main></div>
+<nav class="tabbar card"><a class="on" href="#"><i></i>Test</a><a href="#"><i></i>Map</a><a href="#"><i></i>History</a><a href="#"><i></i>Router</a><a href="#"><i></i>Tools</a></nav>
+</body></html>
