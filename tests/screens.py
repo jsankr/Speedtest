@@ -15,7 +15,7 @@ OUT = os.path.join(run.ROOT, "docs", "screenshots")
 
 
 def phone(browser, port, scheme="dark", w=390, h=844):
-    ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=2, color_scheme=scheme, accept_downloads=True)
+    ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=2, color_scheme=scheme, accept_downloads=True, bypass_csp=True)
     page = ctx.new_page(); page.errors = []
     run.install_mocks(page, port)
     page.goto(f"http://127.0.0.1:{port}/")
@@ -53,7 +53,7 @@ def capture(browser, port):
 
     # desktop overview, both themes
     for scheme, name in (("light", "00-desktop"), ("dark", "00-desktop-dark")):
-        ctx = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1, color_scheme=scheme)
+        ctx = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=1, color_scheme=scheme, bypass_csp=True)
         page = ctx.new_page(); run.install_mocks(page, port); page.goto(f"http://127.0.0.1:{port}/")
         page.evaluate("localStorage.clear(); localStorage.setItem('netPick', JSON.stringify('Wi-Fi')); localStorage.setItem('livePing','false')")
         page.reload(); page.wait_for_timeout(400); pace(page); run.use_own_server(page, port, secs=5)
@@ -131,6 +131,19 @@ def capture(browser, port):
     ctx.close()
 
 
+def evidence(browser, port):
+    """Pentest evidence: hostile records from outside services shown as plain text (see README, Security assessment)."""
+    ctx, page = phone(browser, port)
+    run.hostile(page, port)
+    page.click("#rtOpen")
+    page.fill("#rtBrand", "ExampleNet"); page.fill("#rtModel", "XR-1000"); page.fill("#rtFw", "2.1.0_1043")
+    page.click("#rtRun"); page.wait_for_function("!document.getElementById('rtReport').hidden", timeout=15000)
+    shot(page, "30-pentest-hostile-cve", "#rtCves")
+    run.goto(page, "tools"); page.click(".tile2[data-tool='ip']"); page.click("#ipRun"); page.wait_for_timeout(900)
+    shot(page, "31-pentest-hostile-ip", ".tool[data-tool='ip']")
+    ctx.close()
+
+
 def main():
     from playwright.sync_api import sync_playwright
     ap = argparse.ArgumentParser(); ap.add_argument("--chrome"); a = ap.parse_args()
@@ -143,7 +156,7 @@ def main():
             except OSError: time.sleep(0.1)
         with sync_playwright() as p:
             b = p.chromium.launch(executable_path=a.chrome) if a.chrome else p.chromium.launch()
-            capture(b, port); b.close()
+            capture(b, port); evidence(b, port); b.close()
     finally:
         srv.terminate()
 

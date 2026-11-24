@@ -3,7 +3,21 @@
    ui.go(view) switches the visible screen. */
 export function boot(ui){
 const $=id=>document.getElementById(id);
-const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch{return d}},
+// Saved data is checked on every read: anything on this device (another script, a restored backup) could have changed it.
+const NETS=["Wi-Fi","Mobile data","Ethernet","Unknown"];
+const numOr=v=>typeof v==="number"&&isFinite(v)?v:null, short=v=>typeof v==="string"?v.slice(0,160):"";
+const CLEAN={
+  history:v=>Array.isArray(v)?v.filter(r=>r&&typeof r==="object"&&typeof r.t==="number"&&isFinite(r.t)).slice(0,300).map(r=>({t:r.t,net:NETS.includes(r.net)?r.net:"Unknown",
+    down:numOr(r.down),up:numOr(r.up),ping:numOr(r.ping),jitter:numOr(r.jitter),lping:numOr(r.lping),server:short(r.server)})):undefined,
+  geo:v=>v&&typeof v==="object"&&typeof v.lat==="number"&&typeof v.lon==="number"&&Math.abs(v.lat)<=90&&Math.abs(v.lon)<=180?{lat:v.lat,lon:v.lon,src:["ip","device","tz"].includes(v.src)?v.src:"ip"}:undefined,
+  customURL:v=>typeof v==="string"&&/^https?:\/\/[^\s"'<>]+$/i.test(v)?v.slice(0,300):undefined,
+  server:v=>typeof v==="string"&&/^[\w.:-]{1,80}$/.test(v)?v:undefined,
+  unit:v=>["KB","MB","GB","Kb","Mb","Gb"].includes(v)?v:undefined,
+  base:v=>v===1000||v===1024?v:undefined,
+  cmpCountry:v=>typeof v==="string"&&/^[A-Z]{0,3}$/.test(v)?v:undefined,
+  netPick:v=>v==null||NETS.includes(v)?v:undefined,
+};
+const store={get(k,d){try{const v=localStorage.getItem(k); if(v==null) return d; const p=JSON.parse(v), c=CLEAN[k]?CLEAN[k](p):p; return c===undefined?d:c}catch{return d}},
              set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const onScheme=f=>{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",f); window.addEventListener("cs:theme",f) };
@@ -487,7 +501,7 @@ function renderInsights(){
 /* =================== History =================== */
 function renderHist(){
   const f=$("histFilter").value, h=store.get("history",[]).filter(r=>!f||r.net===f);
-  $("rows").innerHTML=h.length?h.map(r=>`<tr><td>${new Date(r.t).toLocaleString()}</td><td><select class="netfix" data-t="${r.t}" aria-label="Network for this test">${["Wi-Fi","Mobile data","Ethernet","Unknown"].map(o=>`<option${o===r.net?" selected":""}>${o}</option>`).join("")}</select></td><td>${fmt(r.down)} ${unitLabel()}</td><td>${fmt(r.up)} ${unitLabel()}</td>
+  $("rows").innerHTML=h.length?h.map(r=>`<tr><td>${new Date(r.t).toLocaleString()}</td><td><select class="netfix" data-t="${esc(String(r.t))}" aria-label="Network for this test">${["Wi-Fi","Mobile data","Ethernet","Unknown"].map(o=>`<option${o===r.net?" selected":""}>${o}</option>`).join("")}</select></td><td>${fmt(r.down)} ${unitLabel()}</td><td>${fmt(r.up)} ${unitLabel()}</td>
     <td>${fin(r.ping)?r.ping.toFixed(1)+" ms":"—"}</td><td>${fin(r.jitter)?r.jitter.toFixed(1)+" ms":"—"}</td><td>${fin(r.lping)?r.lping.toFixed(1)+" ms":"—"}</td><td>${esc(r.server||"")}</td></tr>`).join("")
     :`<tr><td colspan="8" style="color:var(--muted)">No tests yet. Results are kept only in this browser.</td></tr>`;
   drawTrend(h.slice(0,20).reverse());
@@ -628,7 +642,7 @@ const vendorKey=b=>(b||"").trim().toLowerCase().replace(/\s+/g,"-");
 const vendorLink=b=>(VENDORS[vendorKey(b)]||{}).dl||null;
 const BETA=/(?<![a-z])(beta|alpha|rc\d*|preview|pre-?release|test|dev)(?![a-z])|(?:\d|[._-])b\d+$/i;
 function isOfficial(url,brand){
-  let h; try{ h=new URL(url).hostname.toLowerCase() }catch{ return false }
+  let h; try{ const u=new URL(url); if(u.protocol!=="https:") return false; h=u.hostname.toLowerCase() }catch{ return false }
   if(BETA.test(url)) return false;
   const v=VENDORS[vendorKey(brand)];
   if(v) return v.dom.some(d=>h===d||h.endsWith("."+d));
@@ -715,9 +729,9 @@ function assessCve(c,re,fw,hw,brand){
   // "skip" = range written for another firmware line. If every range is on another line, the record doesn't cover your line.
   const real=statuses.filter(x=>x!=="skip"), st=real.includes("aff")?"aff":(real.includes("not")&&!real.includes("unk"))||(statuses.length&&!real.length)?"not":"unk";
   const mt=c.metrics||{}, pick=(mt.cvssMetricV40||mt.cvssMetricV31||mt.cvssMetricV30||[])[0], v2=(mt.cvssMetricV2||[])[0];
-  const score=pick?pick.cvssData.baseScore:v2?v2.cvssData.baseScore:null;
+  const score0=pick?pick.cvssData.baseScore:v2?v2.cvssData.baseScore:null, score=typeof score0==="number"&&score0>=0&&score0<=10?score0:null;
   const sevRaw=(pick?pick.cvssData.baseSeverity:v2?v2.baseSeverity:"")||"";
-  const sev=sevRaw.toLowerCase()||(score>=9?"critical":score>=7?"high":score>=4?"medium":score?"low":"medium");
+  const sevIn=String(sevRaw).toLowerCase(), sev=["critical","high","medium","low","none"].includes(sevIn)?sevIn:(score>=9?"critical":score>=7?"high":score>=4?"medium":score?"low":"medium");
   const cwes=(c.weaknesses||[]).flatMap(w=>(w.description||[]).map(d=>d.value)).filter(v=>/^CWE-\d+$/.test(v));
   const av=pick?pick.cvssData.attackVector:v2?v2.cvssData.accessVector:null;
   const good=["Vendor Advisory","Patch","Release Notes","Mitigation"];
@@ -789,7 +803,7 @@ function renderRouterReport(){
   const nvdLink=`https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&search_type=all&query=${encodeURIComponent(r.model)}`;
   const rank=c=>(c.kev?1000:0)+({aff:300,unk:200,not:0}[c.st])+(c.score||0);
   const list=[...r.aff,...r.unk].sort((a,b)=>rank(b)-rank(a));
-  const card=c=>`<div class="cve"><div class="top"><a href="https://nvd.nist.gov/vuln/detail/${esc(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a>${c.kev?'<span class="sev kev">Actively exploited</span>':""}<span class="sev ${c.sev}">${c.sev}${c.score!=null?" "+c.score:""}</span><span class="sev ${c.st}" title="Based on NVD's version analysis, not ${esc(r.brand||"the manufacturer")}'s">${{aff:"Affects your version",unk:"Can't confirm",not:"Fixed in your version"}[c.st]} · NVD</span><span class="note">${esc(c.published)}</span></div><p>${esc(c.desc.length>260?c.desc.slice(0,257)+"…":c.desc)}</p>${c.st==="not"?"":(()=>{const f=cveFix(c,r);
+  const card=c=>`<div class="cve"><div class="top"><a href="https://nvd.nist.gov/vuln/detail/${esc(c.id)}" target="_blank" rel="noopener">${esc(c.id)}</a>${c.kev?'<span class="sev kev">Actively exploited</span>':""}<span class="sev ${esc(c.sev)}">${esc(c.sev)}${fin(c.score)?" "+c.score:""}</span><span class="sev ${c.st}" title="Based on NVD's version analysis, not ${esc(r.brand||"the manufacturer")}'s">${{aff:"Affects your version",unk:"Can't confirm",not:"Fixed in your version"}[c.st]} · NVD</span><span class="note">${esc(c.published)}</span></div><p>${esc(c.desc.length>260?c.desc.slice(0,257)+"…":c.desc)}</p>${c.st==="not"?"":(()=>{const f=cveFix(c,r);
     return `<details class="fixbox"${c.st==="aff"?" open":""}><summary>How to fix${f.what?` · ${esc(f.what)}`:""}</summary><ol class="fixsteps">${f.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>${f.notes.map(n=>`<p class="verify">${esc(n)}</p>`).join("")}${f.links.length?`<div class="fixlinks">${f.links.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("")}</div>`:""}</details>`})()}</div>`;
   $("rtCves").innerHTML=r.lookupFailed?`<p class="note">Open <a href="${nvdLink}" target="_blank" rel="noopener">NVD search for “${esc(r.model)}”</a> to review known issues manually.</p>`
     :(list.length?list.slice(0,40).map(card).join(""):`<p class="note">No open issues found for “${esc(r.model)}”.</p>`)

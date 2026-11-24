@@ -26,6 +26,7 @@ Tests the internet speed of Wi-Fi, mobile data and Ethernet **without ads, track
 3. [How the measurement works](#how-the-measurement-works)
 4. [Router check: how vulnerabilities are matched](#router-check-how-vulnerabilities-are-matched)
 5. [Privacy: what leaves your device](#privacy-what-leaves-your-device)
+   - [Security assessment (OWASP Top 10:2025)](#security-assessment-owasp-top-102025)
 6. [Install, use and self-host](#install-use-and-self-host)
 7. [Troubleshooting](#troubleshooting)
 8. [Limitations](#limitations)
@@ -322,6 +323,68 @@ Precise location (optional) is rounded to two decimals and stored only on your d
 
 ---
 
+## Security assessment (OWASP Top 10:2025)
+
+**Overall: 8 of 10 categories compliant, 2 partially compliant with accepted, documented risk; 9 findings, all fixed and covered by automated tests.**
+
+| | |
+|---|---|
+| **Date** | 24 November 2026 (CleanSpeed 2, React build) |
+| **Standard** | OWASP Top 10:2025, the current edition (there is no 2026 edition) |
+| **Scope** | The built app (`index.html`), the self-hosted test server (`server/server.py`), the build and CI supply chain (`app/`, `.github/workflows/`) |
+| **Method** | Grey-box: source review of every place the app writes HTML, dependency audit (`npm audit`), and an automated attack suite run in real browsers. The suite feeds hostile data through every outside source (vulnerability database, IP lookup), tampers with everything the app saves on the device, sends hostile input to every tool, and probes the server with path traversal, malformed and oversized requests and idle connections. |
+| **Not in scope** | Cloudflare, LibreSpeed, M-Lab, NVD, ipinfo and ipify themselves; GitHub's hosting; denial-of-service load testing. This is a focused self-assessment, not a substitute for an independent penetration test. |
+| **Reproduce** | `python tests/run.py --only security` (23 checks; CI runs them in Chromium, Firefox and WebKit on every push) |
+
+### Compliance by category
+
+| OWASP 2025 | Status | Why, and the evidence |
+|---|---|---|
+| **A01** Broken Access Control | ✅ Compliant | No accounts, roles or server-side data to reach. The server only serves an allowlist of files (path-traversal probes refused); screen links accept only known screens; every new-tab link is `rel=noopener`. |
+| **A02** Security Misconfiguration | 🟡 Partial | **Fixed:** strict Content-Security-Policy, `no-referrer`, security headers and no version banner on the self-hosted server (CS-05, CS-06). **Remaining:** GitHub Pages can't send response headers, so the Pages copy has no `frame-ancestors` / `X-Frame-Options` (see R1). Self-hosted copies send them. |
+| **A03** Software Supply Chain Failures | ✅ Compliant | **Fixed:** build tools upgraded to clear 18 advisories (CS-08); GitHub Actions pinned to commit SHAs; Blender download checked against its published SHA-256 (CS-09). `npm ci` installs from a lockfile with integrity hashes; `npm audit` fails CI on any advisory; CI fails if the committed build doesn't match the source. The page loads no third-party scripts, fonts or CDNs; the only runtime code dependencies are React and React DOM, bundled at build time. |
+| **A04** Cryptographic Failures | ✅ Compliant | Every outside service is reached over HTTPS. Wi-Fi passwords come from the Web Crypto API with rejection sampling (no modulo bias) and are never stored or sent. No secrets exist to protect. Saved data (history, router model) sits unencrypted in browser storage and is low-sensitivity (R4). |
+| **A05** Injection | ✅ Compliant | **Fixed:** cross-site scripting through vulnerability-database fields (CS-01). Every outside or typed value is escaped; the CSP allows only the build's own script (SHA-256 hash), and the tests confirm the browser blocks injected handlers and scripts. |
+| **A06** Insecure Design | ✅ Compliant | **Fixed:** the server caps uploads (413 above 200 MB) and closes idle connections after 30 s (CS-07). By design there are no accounts, nothing is collected, and the router check never asks for router passwords. |
+| **A07** Authentication Failures | ✅ Not applicable | No logins, sessions or credentials anywhere in the app or the server. |
+| **A08** Software or Data Integrity Failures | ✅ Compliant | **Fixed:** advisory links must be `https:` (CS-02); everything read from device storage is checked for type, range and allowed values before use (CS-04). |
+| **A09** Security Logging & Alerting Failures | 🟡 Partial (by design) | The app and the server deliberately keep no logs about visitors (privacy promise). Alerting is in the pipeline instead: the security suite and `npm audit` fail CI on regressions or new advisories (R5). |
+| **A10** Mishandling of Exceptional Conditions | ✅ Compliant | **Fixed:** tampered saved data used to blank the whole app (CS-03); a malformed upload length crashed the server handler (CS-07). Engine errors can no longer unmount the interface, and every outside request has a timeout. |
+
+### Findings (all fixed)
+
+| ID | Severity | OWASP | Finding | Fix | Verified by |
+|---|---|---|---|---|---|
+| CS-01 | Medium | A05 | **Cross-site scripting from vulnerability-database data.** A record's severity and score were written into the router report without escaping; a hostile or spoofed response ran script (3 executions in the baseline test). Needs a compromised or spoofed NVD response (HTTPS), so likelihood is low and impact is high. | Severity limited to known values and escaped; score must be a number from 0 to 10; CSP added. | "hostile vulnerability-database records render as text" |
+| CS-02 | Medium | A08 | **Script links behind a maker's host name.** Advisory links were filtered by host name only, so `javascript://maker.com/%0a…` passed and would run when tapped. | Advisory links must use `https:`. | "advisory links accept only https" |
+| CS-03 | Medium | A10 | **Saved data could blank the app.** A non-numeric saved location made the map throw during start-up, and the error unmounted the whole React app until storage was cleared. | Saved data validated on every read; engine start-up errors contained. | "the app still starts with tampered saved data" |
+| CS-04 | Low | A08 | **Saved history trusted as-is.** A history timestamp went into an HTML attribute unescaped, and saved fields weren't type-checked. | Only known fields with the right types are kept; the attribute is escaped. | "tampered saved data can't inject markup" |
+| CS-05 | Medium | A02 | **No Content-Security-Policy and no referrer policy.** One escaping slip would have been enough for script injection, and outside services received the page address. | CSP generated at build time with the script's SHA-256 hash, `object-src`, `base-uri` and `form-action` set to `'none'`; `referrer: no-referrer`. | "CSP blocks inline and injected scripts", "browser enforces the CSP" |
+| CS-06 | Low | A02 | **Self-hosted server sent no security headers and advertised its Python version.** | CSP with `frame-ancestors 'none'`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` and `COOP` on the app; version removed. | "server sends security headers", "server doesn't reveal its software version" |
+| CS-07 | Medium | A06 / A10 | **Server robustness.** A non-numeric `Content-Length` raised an unhandled exception; uploads had no size limit; idle connections were never closed (slow-client exhaustion). | 400 for malformed lengths, 413 above 200 MB, 30 s idle timeout. | "malformed upload length gets 400", "oversized upload refused", "idle connections are closed" |
+| CS-08 | Medium | A03 | **Vulnerable build tools.** Vite 5.4.11 and esbuild had 18 advisories (dev server file reads and cross-origin requests; highest rated high). The dev server was also configured to serve the parent folder. Nothing shipped in the built page. | Vite 6.4.6, plugin-react 4.7.0, vite-plugin-singlefile 2.3.4; folder allowance removed; `npm audit` now gates CI. | `npm audit`: 0 vulnerabilities |
+| CS-09 | Medium | A03 | **Unpinned CI dependencies.** Actions used movable tags, and the Blender download, in a job that can push to the repository, wasn't checksum-verified. | Actions pinned to commit SHAs; Blender verified against SHA-256 `3a64efd1…a71ea3f4`. | Workflow review |
+
+### Accepted residual risks
+
+| ID | Risk | Rating | Why it's accepted |
+|---|---|---|---|
+| R1 | No anti-framing header on the GitHub Pages copy (clickjacking) | Low | Pages can't set headers and `frame-ancestors` doesn't work from a `<meta>` tag. The app holds no secrets and no action has a lasting cost. Self-hosted copies send `frame-ancestors 'none'`. |
+| R2 | `connect-src` allows any `https:`, `wss:` and `http:` host | Low | Speed-test servers are chosen by the user, including their own. Script execution, the real protection, is still locked to the build's hash. |
+| R3 | `style-src 'unsafe-inline'` | Low | The app sets style attributes for bars and colours. Styles can't run script. |
+| R4 | Saved history and router details aren't encrypted in browser storage | Low | Only readable from this device and browser profile, never sent anywhere, and deletable under History → Clear. |
+| R5 | No visitor logs | Accepted | A privacy promise. Security regressions surface in CI instead. |
+| R6 | The self-hosted server speaks plain HTTP | Low | Documented: put it behind TLS (Caddy or nginx). A page served over HTTPS can't use it otherwise. |
+
+### Sample screens (pentest evidence)
+
+| Hostile vulnerability record | Hostile IP-lookup answer |
+|:--:|:--:|
+| <img src="docs/screenshots/30-pentest-hostile-cve.png" width="300" alt="Router report showing a hostile vulnerability record as plain text, with only the https advisory link kept"> | <img src="docs/screenshots/31-pentest-hostile-ip.png" width="300" alt="My IP and ISP tool showing hostile provider and location values as plain text"> |
+| The description shows the injected markup as plain text; the bad severity falls back to "medium"; the `javascript:` and `data:` links were dropped, so only the maker's `https` advisory remains. | Provider, location and time zone carry `<img onerror>` and `<svg onload>` payloads, shown as text. |
+
+Every record in these screens is fictional test data.
+
 ## Install, use and self-host
 
 ### Use it
@@ -443,6 +506,7 @@ flowchart LR
 - React draws each screen's markup once; the engine (`app/src/engine/engine.js`, the proven measurement and tool code) wires behaviour to the same element ids. Every screen stays mounted and is hidden when not in view, so a test keeps running while you look at the map, the collider or your history.
 - Charts, gauge and map are drawn with Canvas 2D; the collider's 3D plates are pre-rendered in Blender and live data is overlaid on them.
 - Icons and the web-app manifest are embedded as data URIs.
+- `app/scripts/place.mjs` adds a Content-Security-Policy to the build that allows only the build's own script (by SHA-256 hash), and writes the same policy to `server/csp.txt` for the self-hosted server's headers.
 - Tests cancel cleanly through an `AbortController`; every network request has a timeout.
 
 ---
@@ -485,6 +549,7 @@ The suite starts `server/server.py` on localhost (it serves the app and acts as 
 
 | Area | Checks |
 |---|---|
+| Security (OWASP Top 10:2025) | CSP present and enforced, hostile vulnerability-database and IP-lookup data rendered as text, only https advisory links, tampered saved data can't inject or crash, hostile typed input, server headers, path traversal, malformed/oversized uploads, idle connections |
 | Navigation | Every screen opens from the sidebar or tab bar and shows only itself, Back returns to the previous screen, screen links open directly |
 | Speed test | Own server selected, download and upload measured, Stop within 3 s, Retest, history saved, unit switch, CSV export, page and chart height stay sane after a test |
 | Router check | Score shown, exploited record flagged, fix links only on the maker's domain, third-party exploit write-ups never linked, no beta firmware, other firmware lines not marked as affecting |
@@ -492,7 +557,7 @@ The suite starts `server/server.py` on localhost (it serves the app and acts as 
 | Layout | No sideways scroll at 320, 390, 768, 1024 and 1440 px in dark and light themes |
 | WCAG 2.2 AA | Contrast (text and gradient stops), names, roles and states, landmarks, skip link, headings, labelled graphics, live status, target size (24 px; 44 px on touch), keyboard reach, visible focus, no trap, reflow at 320 px / 200% text, text spacing, reduced motion, axe-core rules |
 
-Contrast is checked on every screen, every tool and the server sheet. `python tests/screens.py` regenerates the README screenshots from the build.
+Contrast is checked on every screen, every tool and the server sheet. The app's Content-Security-Policy would also block the harness's own helpers (Playwright polling, axe-core), so the harness serves its pages with the policy removed; the security suite loads the real page separately to prove the browser enforces it. `python tests/screens.py` regenerates the README screenshots from the build.
 
 GitHub Actions builds the React app, checks the committed `index.html` matches the source, then runs the whole suite in **Chromium, Firefox and WebKit** on every push ([`.github/workflows/tests.yml`](.github/workflows/tests.yml)).
 
@@ -516,7 +581,8 @@ CleanSpeed is not affiliated with Ookla, Speedtest®, Cloudflare, M-Lab, LibreSp
 
 | Commit | Change |
 |---|---|
-| *latest* | **CleanSpeed 2:** rebuilt in React (Vite, single-file build) with the "Aurora Bento" design: sidebar and floating tab bar, one screen per area with its own link, bento result tiles, gradient ring gauge, lime GO sphere, light/dark/auto theme switch, results-first phone layout; every module kept; tests updated for screen navigation and run on every screen; screenshots regenerated |
+| *latest* | **Security:** OWASP Top 10:2025 assessment (report above); fixed XSS from vulnerability-database fields, `javascript:` advisory links, crash on tampered saved data, server robustness (400/413, idle timeout), missing CSP and headers; build tools upgraded (0 advisories), Actions pinned, Blender checksum; 23-check security suite in CI |
+| `f35f7a6` | **CleanSpeed 2:** rebuilt in React (Vite, single-file build) with the "Aurora Bento" design: sidebar and floating tab bar, one screen per area with its own link, bento result tiles, gradient ring gauge, lime GO sphere, light/dark/auto theme switch, results-first phone layout; every module kept; tests updated for screen navigation and run on every screen; screenshots regenerated |
 | `d6b89e7` | Help assistant: on-device knowledge base (about 40 entries with sources), retrieval, one-press diagnosis of the last test, no network; tests and screenshot added |
 | `da345f9` | Real 3D rendering with Blender: the collider (9 teardown frames), GO sphere (light and dark) and dial bezel are path-traced in Cycles on GitHub Actions; live packets, tracks and labels are overlaid through the Blender camera; collision tracks spray in 3D; teardown labels never overlap |
 | `e0e1858` | Collider rebuilt on the real CMS/LHC structure: cutaway 12-sided detector (tracker, ECAL, HCAL, solenoid, iron yoke and muon chambers) on a ring of dipole magnets; colliding bunches; CMS-style opening teardown; detector drawn once and cached |
