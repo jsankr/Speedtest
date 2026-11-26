@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { ARTIFACT, FULL_APP } from "../engine/engine.js";
 
 const BRANDS = "TP-Link|Netgear|ASUS|D-Link|Linksys|Tenda|Mercusys|Xiaomi|Huawei|ZTE|Nokia|Ubiquiti|MikroTik|Zyxel|DrayTek|Totolink|Netis|Cisco|Sagemcom|Technicolor|Arris|Syrotech|Digisol|iBall|Synology|eero|Google".split("|");
 
@@ -8,6 +9,7 @@ export const RouterView = memo(function RouterView() {
       <section className="glass pad" id="rtPanel" aria-label="Router security check">
         <div className="srvhead"><h3>Check your router</h3><button className="ghost" id="rtClose">Back to speed test</button></div>
         <p className="note">This checks your router's model and firmware against the U.S. National Vulnerability Database (NVD), flags issues being actively exploited, and grades your settings. Web browsers don't let any website log into your router or scan your home network, so you enter the details once; they stay on this device.</p>
+        {ARTIFACT && <p className="callout warn">Inside a Claude artifact the vulnerability database can't be reached, so this check grades your settings only. Use the <a href={FULL_APP} target="_blank" rel="noopener">full app</a> to match known vulnerabilities to your firmware.</p>}
         <div className="rtgrid">
           <div className="fields">
             <div className="lbl">Step 1: your router</div>

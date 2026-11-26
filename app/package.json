@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/place.mjs"
+    "build": "vite build && node scripts/place.mjs",
+    "build:artifact": "node scripts/artifact.mjs"
   },
   "dependencies": {
     "react": "18.3.1",

@@ -1,4 +1,7 @@
 import { memo } from "react";
+import { ARTIFACT, FULL_APP } from "../engine/engine.js";
+
+const Blocked = ({ what }) => ARTIFACT ? <p className="callout warn">{what} needs outside services, which a Claude artifact can't reach. Use the <a href={FULL_APP} target="_blank" rel="noopener">full app</a> for this tool.</p> : null;
 
 export const ToolsView = memo(function ToolsView() {
   return (
@@ -25,6 +28,7 @@ export const ToolsView = memo(function ToolsView() {
 
           <div className="tool" data-tool="dns" hidden>
             <h3>DNS speed benchmark</h3>
+            <Blocked what="The DNS benchmark" />
             <p className="note">DNS turns names like google.com into addresses before every page loads. This compares five public DNS services from your connection, then tells you exactly what to enter in your router.</p>
             <div className="tctl"><button className="go2" id="dnsRun">Run DNS benchmark</button><span className="note" id="dnsMsg" role="status"></span></div>
             <div className="tablewrap"><table><thead><tr><th>Service</th><th>Cached</th><th>Fresh lookup</th><th>Router settings</th></tr></thead><tbody id="dnsRows"></tbody></table></div>
@@ -34,6 +38,7 @@ export const ToolsView = memo(function ToolsView() {
 
           <div className="tool" data-tool="ip" hidden>
             <h3>My IP &amp; ISP</h3>
+            <Blocked what="The IP lookup" />
             <p className="note">Shows your public address, provider and whether IPv6 works. Also checks for iCloud Private Relay or a VPN, which change speed-test results.</p>
             <div className="tctl"><button className="go2" id="ipRun">Look up my connection</button><span className="note" id="ipMsg" role="status"></span></div>
             <dl className="kv" id="ipOut"></dl>
@@ -69,6 +74,7 @@ export const ToolsView = memo(function ToolsView() {
 
           <div className="tool" data-tool="mac" hidden>
             <h3>Device maker lookup</h3>
+            {ARTIFACT && <p className="callout warn">The maker registry (1.6 MB) isn't bundled in the artifact edition. Use the <a href={FULL_APP} target="_blank" rel="noopener">full app</a> to look up devices.</p>}
             <p className="note">Paste MAC addresses from your router's connected-devices list to see who made each device. Unknown makers are worth blocking.</p>
             <textarea className="tin" id="macIn" aria-label="MAC addresses, one per line" placeholder="One per line, e.g. 3C:84:6A:12:34:56" spellCheck="false"></textarea>
             <div className="tctl"><button className="go2" id="macRun">Identify devices</button><span className="note" id="macMsg" role="status"></span></div>

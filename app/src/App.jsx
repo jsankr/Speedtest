@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
-import { boot } from "./engine/engine.js";
+import { boot, ARTIFACT, FULL_APP } from "./engine/engine.js";
 import { TestView } from "./views/Test.jsx";
 import { LiveView, ColliderView } from "./views/Live.jsx";
 import { InsightsView, HistoryView } from "./views/Insights.jsx";
@@ -21,7 +21,13 @@ export const VIEWS = [
 ];
 const TABS = ["test", "live", "history", "router"];
 const ids = new Set(VIEWS.map((v) => v.id));
-const fromHash = () => { const h = location.hash.replace(/^#\/?/, ""); return ids.has(h) ? h : null; };
+// Screen links: #/history on the full app. A Claude artifact passes only plain #names and reserves #settings,
+// so the artifact edition uses #history and #units.
+const ALIAS = { units: "settings" };
+const hashFor = (v) => ARTIFACT ? "#" + (v === "settings" ? "units" : v) : "#/" + v;
+const fromHash = () => { const h = location.hash.replace(/^#\/?/, ""); const v = ALIAS[h] || h; return ids.has(v) ? v : null; };
+// The viewer (a Claude artifact) may set data-theme itself; "Match device" hands control back to it.
+const hostTheme = document.documentElement.dataset.theme;
 const load = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } };
 
@@ -39,7 +45,7 @@ export default function App() {
   const go = useCallback((v) => {
     if (!ids.has(v)) return;
     setMore(false);
-    if (location.hash !== "#/" + v) history.pushState(null, "", "#/" + v);
+    if (location.hash !== hashFor(v)) { if (ARTIFACT) location.hash = hashFor(v); else history.pushState(null, "", hashFor(v)); }
     setView(v);
   }, []);
 
@@ -80,7 +86,7 @@ export default function App() {
   const setTheme = useCallback((t) => { setThemeState(t); save("theme", t); }, []);
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "auto") delete root.dataset.theme; else root.dataset.theme = theme;
+    if (theme === "auto") { if (hostTheme) root.dataset.theme = hostTheme; else delete root.dataset.theme; } else root.dataset.theme = theme;
     dispatchEvent(new Event("cs:theme"));
   }, [theme]);
   const nextTheme = { auto: "light", light: "dark", dark: "auto" }[theme];
@@ -121,6 +127,11 @@ export default function App() {
         </header>
 
         <main id="main" tabIndex={-1}>
+          {ARTIFACT && (
+            <p className="artnote" role="note">
+              <b>Artifact edition.</b> Claude artifacts can only reach files published with the page, so this speed test measures download and latency to the artifact host. Upload, the global test servers, the vulnerability lookup, My IP and the DNS benchmark need the <a href={FULL_APP} target="_blank" rel="noopener">full app</a>.
+            </p>
+          )}
           {VIEWS.map(({ id, label, sub, C }) => (
             <div key={id} className={"view view-" + id} hidden={view !== id}>
               <div className="viewhead">
