@@ -1,6 +1,10 @@
 /* CleanSpeed engine: measurement, router check, toolkit, map, collider and help assistant.
    Ported from the single-file app. React renders the markup (same element ids); boot() wires the behaviour.
    ui.go(view) switches the visible screen. */
+// Artifact edition (VITE_ARTIFACT=1): the page runs inside a Claude artifact, whose sandbox only lets it reach files
+// published with the page. The test then measures download and latency to that host; upload and outside services are off.
+export const ARTIFACT = import.meta.env.VITE_ARTIFACT === "1";
+export const FULL_APP = "https://jsankr.github.io/Speedtest/";
 export function boot(ui){
 const $=id=>document.getElementById(id);
 // Saved data is checked on every read: anything on this device (another script, a restored backup) could have changed it.
@@ -72,12 +76,20 @@ function customServer(url){
   return {id:"custom",group:"Your own server",kind:"http",name:"Custom server",where:b.replace(/^https?:\/\//,""),
     down:n=>`${b}/down?bytes=${n}&r=${nonce()}`, up:()=>`${b}/up?r=${nonce()}`, ping:()=>`${b}/ping?r=${nonce()}`};
 }
-let libre=LIBRE_SNAPSHOT;
+// The artifact host: files published beside the page (speedtest.png ≈ 12 MB of random bytes, ping.txt 1 byte).
+// A cache-busting query is tried first; if the host refuses query strings, plain paths are used (fetches are no-store anyway).
+let hostBust=true;
+const hostURL=f=>hostBust?`${f}?r=${nonce()}`:f;
+const HOST={id:"host",group:"This page's host",kind:"http",name:"Claude artifact host",where:"Test file published with this page",
+  down:()=>hostURL("speedtest.png"), up:null, ping:()=>hostURL("ping.txt")};
+async function hostCheck(){ try{ const r=await fetch(`ping.txt?r=${nonce()}`,{cache:"no-store"}); if(!r.ok) hostBust=false }catch{ hostBust=false } }
+let libre=ARTIFACT?[]:LIBRE_SNAPSHOT;
 const pings={};
 let selected=store.get("server","auto"), customURL=store.get("customURL","");
-function allServers(){ const l=[CLOUDFLARE,MLAB,...libre]; if(customURL) l.push(customServer(customURL)); return l }
+function allServers(){ if(ARTIFACT) return [HOST]; const l=[CLOUDFLARE,MLAB,...libre]; if(customURL) l.push(customServer(customURL)); return l }
 function byId(id){ return allServers().find(s=>s.id===id) }
 async function refreshLibre(){
+  if(ARTIFACT) return hostCheck();
   try{ const ctl=new AbortController(); setTimeout(()=>ctl.abort(),5000);
     const r=await fetch("https://librespeed.org/backend-servers/servers.php",{signal:ctl.signal,cache:"no-store"}); const j=await r.json();
     if(Array.isArray(j)&&j.length){ libre=j.filter(s=>s&&s.server&&s.dlURL).map(librespeed); renderServers() } }catch{}
@@ -103,6 +115,7 @@ async function pingAll(){
   for(let i=0;i<list.length;i+=6) await Promise.all(list.slice(i,i+6).map(async s=>{pings[s.id]=await quickPing(s); renderServers()}));
 }
 async function pickAuto(){
+  if(ARTIFACT) return HOST;
   $("phase").textContent="Finding the best server";
   const cand=[CLOUDFLARE,...libre];
   await Promise.all(cand.map(async s=>{ if(!fin(pings[s.id])) pings[s.id]=await quickPing(s) }));
@@ -114,7 +127,7 @@ function renderServers(){
   const groups={};
   const row=(id,name,where,pg)=>`<label class="srv"><input type="radio" name="srv" value="${esc(id)}" ${selected===id?"checked":""}>
     <div class="nm"><div>${esc(name)}</div><div>${esc(where)}</div></div><div class="pg">${pg}</div></label>`;
-  let html=`<div class="grp">Recommended</div>`+row("auto","Automatic","Lowest-ping server among Cloudflare and LibreSpeed","");
+  let html=`<div class="grp">Recommended</div>`+row("auto","Automatic",ARTIFACT?"The Claude artifact host, the only server this page can reach":"Lowest-ping server among Cloudflare and LibreSpeed","");
   for(const s of allServers()) (groups[s.group]=groups[s.group]||[]).push(s);
   for(const [g,ss] of Object.entries(groups)){
     html+=`<div class="grp">${esc(g)}</div>`;
@@ -362,21 +375,26 @@ async function run(){
       $("ping").textContent=p.ping.toFixed(1); $("jit").textContent=p.jitter.toFixed(1);
       // Loaded latency is probed on a different host, so the probe never queues behind this test's own
       // download on the same browser connection. Rise over that host's idle baseline = queueing on your line.
-      const base=await probeBaseline(), probe=fin(base)?()=>PROBE+"?r="+nonce():s.ping;
+      const base=ARTIFACT?NaN:await probeBaseline(), probe=fin(base)?()=>PROBE+"?r="+nonce():s.ping;
       const lp=[]; let probing=true;
       setStep("down"); telPhase("down"); $("phase").textContent="Testing download"; phaseColor="--down";
       // live ping during load = idle ping + queueing rise measured on the separate probe connection
       const shift=fin(base)?res.ping-base:0;
-      (async()=>{ while(probing){ try{const v=await pingURL(probe(),3000); lp.push(v); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
+      // In an artifact the only reachable host is the one being downloaded from, so a probe would queue behind the
+      // test's own data and report false bufferbloat: loaded latency is left unmeasured there.
+      if(!ARTIFACT) (async()=>{ while(probing){ try{const v=await pingURL(probe(),3000); lp.push(v); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
       res.down=await httpDown(s,streams,secs,downTick); probing=false;
       const rise=median(lp)-(fin(base)?base:res.ping);
       res.lping=fin(rise)?res.ping+Math.max(0,rise):NaN;
       setGauge(0); await sleep(400);
+      if(!s.up){ res.up=NaN; $("ul").textContent="—"; }  // the artifact note above the page explains why
+      else {
       setStep("up"); telPhase("up"); $("phase").textContent="Testing upload"; phaseColor="--up";
       let probingUp=true;
       (async()=>{ while(probingUp){ try{const v=await pingURL(probe(),3000); telPing(Math.max(res.ping,v+shift))}catch{} await sleep(350) } })();
       try{ res.up=await httpUp(s,streams,secs,upTick) } finally{ probingUp=false }
       if(!fin(res.up)) $("err").textContent=`Upload couldn't be measured: ${s.name} didn't confirm any upload in time. Download and ping were saved. Try another server under Change server.`;
+      }
     }
     setGauge(0); setStep("done"); telEnd(true,res);
     showResult(res);
@@ -532,6 +550,10 @@ async function exportCSV(){
   const msg=$("expMsg"), rows=store.get("history",[]);
   if(!rows.length){ msg.textContent="No tests to export yet."; return }
   const text=csvText(), name=`cleanspeed-history-${new Date().toISOString().slice(0,10)}.csv`;
+  if(ARTIFACT){ const ta=$("csv"); ta.value=text; ta.hidden=false; ta.focus(); ta.select();
+    try{ await navigator.clipboard.writeText(text); msg.textContent=`Copied ${rows.length} test${rows.length>1?"s":""} as CSV. Paste into a spreadsheet; the text is also shown below.` }
+    catch{ msg.textContent="Downloads are blocked inside a Claude artifact. The CSV is selected below: copy it into a spreadsheet." }
+    return }
   const blob=new Blob(["\ufeff"+text],{type:"text/csv"}); // BOM so Excel reads UTF-8 correctly
   const touch=matchMedia("(pointer:coarse)").matches;
   try{
@@ -1115,7 +1137,7 @@ async function fetchJSON(url,ms=6000){ const c=new AbortController(), t=setTimeo
   try{ const r=await fetch(url,{signal:c.signal,cache:"no-store"}); return r.ok?await r.json():null }catch{ return null }finally{ clearTimeout(t) } }
 
 /* ---- Ping & outage monitor ---- */
-const PM_T={cf:()=>"https://1.1.1.1/cdn-cgi/trace?r="+nonce(), google:()=>"https://www.google.com/generate_204?r="+nonce(),
+const PM_T=ARTIFACT?{cf:()=>HOST.ping(),google:()=>HOST.ping(),server:()=>HOST.ping()}:{cf:()=>"https://1.1.1.1/cdn-cgi/trace?r="+nonce(), google:()=>"https://www.google.com/generate_204?r="+nonce(),
   server:()=>{ const s=selected==="auto"?CLOUDFLARE:byId(selected); return (s&&s.kind==="http"?s:CLOUDFLARE).ping() }};
 let pm={on:false,timer:null,samples:[],sent:0,lost:0,streak:0,outages:[],outStart:null};
 function pmStop(){ pm.on=false; clearTimeout(pm.timer); $("pmStart").textContent="Start monitoring" }

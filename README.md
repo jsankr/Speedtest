@@ -406,6 +406,14 @@ The whole app is the built `index.html` (React and all styles and fonts inlined)
 
 Any static host works (Netlify, Cloudflare Pages, nginx, or opening the file directly — offline device lookup needs `oui.txt` beside it and a web server, since browsers block reading local files).
 
+### Claude artifact edition
+
+`cd app && npm run build:artifact` builds a version that runs as a Claude artifact (written to `app/dist-artifact/`, published with its supporting files). Artifacts can only reach files published with the page, so that edition:
+
+- measures **download and latency** against `speedtest.png` (a valid PNG of random noise, which can't be compressed) and `ping.txt` on the artifact host; **upload** and **loaded latency** aren't measured, because there is no second host to probe;
+- turns off the features that need outside services (the global test servers, the vulnerability lookup, My IP, DNS benchmark), plus device lookup, whose 1.6 MB registry isn't bundled; each says so and links to the full app;
+- shows the CSV export as copyable text, because artifacts block downloads, and uses `#history`-style screen links (`#units` for Settings, a name claude.ai reserves).
+
 ### Self-host a test server
 
 `server/server.py` is a test server using only the Python 3.9+ standard library, with no request logging.
